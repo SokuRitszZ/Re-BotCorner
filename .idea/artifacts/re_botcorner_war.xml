@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="re-botcorner:war">
+    <output-path>$PROJECT_DIR$/re-botcorner-backend/target</output-path>
+    <properties id="maven-jee-properties">
+      <options>
+        <module>re-botcorner</module>
+        <packaging>war</packaging>
+      </options>
+    </properties>
+    <root id="archive" name="re-botcorner-0.0.1-SNAPSHOT.war">
+      <element id="artifact" artifact-name="re-botcorner:war exploded" />
+    </root>
+  </artifact>
+</component>
