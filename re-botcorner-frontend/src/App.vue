@@ -1,31 +1,125 @@
-<script setup>
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Vite + Vue" />
+  <Navbar>
+    <template v-slot:left>
+      <NavbarItem>
+        <router-link class="nav-link" to="#">
+          录像
+        </router-link>
+      </NavbarItem>
+    </template>
+    <template v-slot:right>
+      <template v-if="USER().checkIsPulling">
+        正在自动登录...
+      </template>
+      <template v-else-if="USER().checkIsLogined">
+        <NavbarItem :classes="['dropstart']">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            {{ USER().getUsername }}
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <li> <div class="dropdown-item">个人空间</div> </li>
+            <li> <div class="dropdown-item">修改信息</div> </li>
+            <li> <div @click="logout" class="dropdown-item">注销</div> </li>
+          </ul>
+        </NavbarItem>
+      </template>
+      <template v-else>
+        <form class="d-flex" role="search">
+          <input v-model="username" class="form-control-sm form-control me-2" placeholder="用户名">
+          <input v-model="password" type="password" class="form-control-sm form-control me-2" placeholder="密码">
+          <button @click="handleLogin" class="me-2 btn btn-outline-success btn-sm">Login</button>
+          <Modal ref="registerModalRef" :title="`Register`" :modalID="`Register`" :btnClass="`btn btn-outline-primary btn-sm`"
+            :closeTitle="`关闭`" :submitTitle="`提交`" :submitAction="toRegister">
+            <template v-slot:button>
+              Register
+            </template>
+            <template v-slot:body>
+              <div class="mb-3 row">
+                <label for="username" class="col-sm-3 col-form-label">用户名</label>
+                <div class="col-sm-9">
+                  <input v-model="registerUsername" type="text" class="form-control" id="username">
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label for="password" class="col-sm-3 col-form-label">密码</label>
+                <div class="col-sm-9">
+                  <input v-model="registerPassword" type="password" class="form-control" id="password">
+                </div>
+              </div>
+              <div class="mb-3 row">
+                <label for="confirmedPassword" class="col-sm-3 col-form-label">确认密码</label>
+                <div class="col-sm-9">
+                  <input v-model="registerConfirmedPassword" type="password" class="form-control" id="confirmedPassword">
+                </div>
+              </div>
+            </template>
+          </Modal>
+        </form>
+      </template>
+    </template>
+  </Navbar>
+  <Container>
+    <router-view />
+  </Container>
 </template>
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
+<script setup>
+import Navbar from './components/Navbar.vue';
+import NavbarItem from './components/NavbarItem.vue';
+import Container from './components/Container.vue';
+import USER from '@/store/USER.js';
+import { onMounted, ref } from 'vue';
+import Modal from './components/Modal.vue';
+import API from './script/api.js';
+import alert from './script/alert';
+
+const username = ref(null);
+const password = ref(null);
+
+const registerModalRef = ref(null);
+const registerUsername = ref(null);
+const registerPassword = ref(null);
+const registerConfirmedPassword = ref(null);
+
+const handleLogin = () => {
+  USER().loginByUP(username.value, password.value);
+};
+
+const logout = () => {
+  USER().logout();
+};
+
+const toRegister = () => {
+  const username = registerUsername.value;
+  const password = registerPassword.value;
+  const confirmedPassword = registerConfirmedPassword.value;
+  API({
+    url: '/account/register/',
+    type: 'post',
+    data: {
+      username,
+      password,
+      confirmedPassword
+    },
+    success: resp => {
+      if (resp.result === "success") {
+        alert(`success`, `注册成功！两秒之后自动登录`);
+        registerUsername.value = null;
+        registerPassword.value = null;
+        registerConfirmedPassword.value = null;
+        registerModalRef.value.hide();
+        setTimeout(() => {
+          USER().loginByUP(username, password);
+        }, 2000);
+      } else {
+        alert(`danger`, `注册失败：${resp.result}`, 2000);
+      }
+    }
+  });
+};
+
+onMounted(() => {
+  USER().loginByToken();
+});
+</script>
