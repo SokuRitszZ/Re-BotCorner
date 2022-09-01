@@ -18,7 +18,7 @@
             {{ USER().getUsername }}
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <li> <div class="dropdown-item">个人空间</div> </li>
+            <li> <div @click="gotoSpace" class="dropdown-item">个人空间</div> </li>
             <li> <div class="dropdown-item">修改信息</div> </li>
             <li> <div @click="logout" class="dropdown-item">注销</div> </li>
           </ul>
@@ -68,11 +68,14 @@
 import Navbar from './components/Navbar.vue';
 import NavbarItem from './components/NavbarItem.vue';
 import Container from './components/Container.vue';
-import USER from '@/store/USER.js';
+import USER from './store/USER.js';
 import { onMounted, ref } from 'vue';
 import Modal from './components/Modal.vue';
 import API from './script/api.js';
 import alert from './script/alert';
+import router from './routes';
+import GAME from './store/GAME';
+import LANG from './store/LANG';
 
 const username = ref(null);
 const password = ref(null);
@@ -119,7 +122,13 @@ const toRegister = () => {
   });
 };
 
+const gotoSpace = () => {
+  router.push(`/space/${USER().getUserID}`);
+}
+
 onMounted(() => {
   USER().loginByToken();
+  GAME().init();
+  LANG().init();
 });
 </script>

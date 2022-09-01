@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import alert from './../script/alert';
 import API from './../script/api';
+import router from './../routes/index';
 
 const USER = defineStore(`USER`, {
   state: () => {
@@ -40,7 +41,7 @@ const USER = defineStore(`USER`, {
     setHeadIcon(headIcon) { this.headIcon = headIcon; },
 
     loginByToken() {
-      if (localStorage.getItem(`token`) === `null`) return ;
+      if (localStorage.getItem(`token`) == null) return ;
       this.setToken(localStorage.getItem('token'));
       this.changeIsPulling(true);
       API({
@@ -53,7 +54,6 @@ const USER = defineStore(`USER`, {
           this.setHeadIcon(resp.headIcon);
           this.changeIsPulling(false);
           this.changeIsLogined(true);
-          alert(`success`, `登陆成功`);
         },
         error: resp => {
           this.changeIsPulling(false);
@@ -76,6 +76,7 @@ const USER = defineStore(`USER`, {
             localStorage.setItem(`token`, resp.token);
             this.changeIsPulling(false);
             this.loginByToken();
+            alert(`success`, `登陆成功`);
           } else {
             alert(`danger`, `登录失败：${resp.result}`);
             this.changeIsPulling(false);
@@ -94,6 +95,7 @@ const USER = defineStore(`USER`, {
       this.setToken(null);
       localStorage.setItem(`token`, null);
       alert(`warning`, `注销成功`);
+      router.push({ name: `home` });
     }
   }
 });

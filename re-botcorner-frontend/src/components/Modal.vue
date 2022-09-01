@@ -1,6 +1,6 @@
 <template>
 <!-- Button trigger modal -->
-<button type="button" :class="btnClass" data-bs-toggle="modal" :data-bs-target="`#${modalID}`">
+<button type="button" :class="btnClass" :style="toggleButtonStyle || ''" data-bs-toggle="modal" :data-bs-target="`#${modalID}`">
   <slot name="button"></slot>
 </button>
 
@@ -18,7 +18,7 @@
         <slot name="body"></slot>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ closeTitle }}</button>
+        <button @click="closeAction" type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ closeTitle }}</button>
         <button @click="submitAction" type="button" class="btn btn-primary">{{ submitTitle }}</button>
       </div>
     </div>
@@ -55,8 +55,18 @@ const props = defineProps({
   },
   submitAction: {
     type: Function,
-    required: true
-  }
+    required: false,
+    default: function(){}
+  },
+  closeAction: {
+    type: Function,
+    required: false,
+    default: function(){}
+  },
+  toggleButtonStyle: {
+    type: String,
+    required: false,
+  },
 });
 
 const hide = () => {
