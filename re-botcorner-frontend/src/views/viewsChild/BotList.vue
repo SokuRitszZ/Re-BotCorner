@@ -40,7 +40,7 @@
         <div style="height: 90% ; overflow: auto;">
           <button @click="chooseBot(bots.indexOf(bot))" v-for="bot in bots" class="btn btn-light">
             <span style="float: left">
-              <img src="https://sdfsdf.dev/50x50.jpg,000000,ffffff" alt="">
+              <img :src="`http://localhost:8080/static/lang/lang_${LANG().langs[bot.langId].lang}.png`" alt="" width="50">
             </span>
             <span>
               <strong class="title">{{  bot.title  }}</strong>

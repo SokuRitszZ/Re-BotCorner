@@ -2,7 +2,6 @@
   <CardBody>
     <Row>
       <Col col="col-4">
-      <CardBody height="85vh">
         <div class="card" style="width: 100%; border-radius: 0">
           <img style="border-bottom: 1px solid #ccc" :src="USER().getHeadIcon" class="card-img-top" alt="head_icon">
           <div class="username card-body">
@@ -17,16 +16,13 @@
             
           </CardBody>
         </CardBody>
-      </CardBody>
       </Col>
       <Col col="col-8">
-      <CardBody height="85vh">
         <CardBody height="20vh"></CardBody>
-        <CardBody v-if="userId === USER().getUserID" height="59vh">
-          <BotList :bots="bots">
-          </BotList>
-        </CardBody>
-      </CardBody>
+          <template v-if="userId === USER().getUserID">
+            <BotList :bots="bots">
+            </BotList>
+          </template>
       </Col>
     </Row>
   </CardBody>

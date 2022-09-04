@@ -7,7 +7,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
 public class ReBotcornerApplication {
-
 	public static void main(String[] args) {
 		SpringApplication.run(ReBotcornerApplication.class, args);
 	}

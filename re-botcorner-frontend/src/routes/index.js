@@ -1,6 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Home from '../views/Home.vue';
 import Space from '../views/Space.vue';
+import GameLobby from '../views/GameLobby.vue';
+import NotFound from '../views/NotFound.vue';
+import Snake from '../views/Snake.vue';
+
 import USER from './../store/USER';
 import alert from './../script/alert';
 
@@ -17,6 +21,31 @@ const routes = [
     meta: {
       requireAuth: true
     }
+  },
+  {
+    path: '/game',
+    name: 'game',
+    component: GameLobby,
+  },
+  {
+    path: '/notfound',
+    name: 'notfound',
+    component: NotFound,
+  },
+  {
+    path: '/snake',
+    name: 'snake',
+    component: Snake
+  },
+  {
+    path: '/reversi',
+    name: 'reversi',
+    redirect: '/notfound'
+  },
+  {
+    path: '/hex',
+    name: 'hex',
+    redierct: '/notfound'
   }
 ];
 

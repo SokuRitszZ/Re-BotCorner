@@ -1,11 +1,8 @@
 <template>
   <Navbar>
     <template v-slot:left>
-      <NavbarItem>
-        <router-link class="nav-link" to="#">
-          录像
-        </router-link>
-      </NavbarItem>
+      <NavbarItem> <router-link class="nav-link" to="#"> 录像 </router-link> </NavbarItem>
+      <NavbarItem> <router-link class="nav-link" to="/game"> 游戏 </router-link> </NavbarItem>
     </template>
     <template v-slot:right>
       <template v-if="USER().checkIsPulling">

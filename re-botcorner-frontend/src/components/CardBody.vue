@@ -1,6 +1,6 @@
 <template>
   <div class="card">
-    <div class="card-body" :style="`height: ${height || `90vh`}; ${otherStyle || ''}`">
+    <div class="card-body" :style="`height: ${height || `90vh`}; ${otherStyle || ''}; ${width ? `width: ${width}` : ''}`">
       <slot></slot>
     </div>
   </div>
@@ -13,6 +13,10 @@ const props = defineProps({
     required: false
   },
   otherStyle: {
+    type: String,
+    required: false
+  },
+  width: {
     type: String,
     required: false
   }
