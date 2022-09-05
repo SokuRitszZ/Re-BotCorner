@@ -22,7 +22,7 @@
         </NavbarItem>
       </template>
       <template v-else>
-        <form class="d-flex" role="search">
+        <div class="d-flex">
           <input v-model="username" class="form-control-sm form-control me-2" placeholder="用户名">
           <input v-model="password" type="password" class="form-control-sm form-control me-2" placeholder="密码">
           <button @click="handleLogin" class="me-2 btn btn-outline-success btn-sm">Login</button>
@@ -52,7 +52,7 @@
               </div>
             </template>
           </Modal>
-        </form>
+        </div>
       </template>
     </template>
   </Navbar>

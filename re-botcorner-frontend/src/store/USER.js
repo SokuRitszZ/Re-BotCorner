@@ -76,7 +76,7 @@ const USER = defineStore(`USER`, {
             localStorage.setItem(`token`, resp.token);
             this.changeIsPulling(false);
             this.loginByToken();
-            alert(`success`, `登陆成功`);
+            alert(`success`, `登录成功`);
           } else {
             alert(`danger`, `登录失败：${resp.result}`);
             this.changeIsPulling(false);
