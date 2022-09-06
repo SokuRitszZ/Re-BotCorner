@@ -1,9 +1,12 @@
 package com.soku.rebotcorner.consumer;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.soku.rebotcorner.games.SnakeGame;
+import com.soku.rebotcorner.mapper.RecordMapper;
 import com.soku.rebotcorner.mapper.UserMapper;
+import com.soku.rebotcorner.pojo.Record;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.utils.JwtAuthenticationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +16,7 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +28,7 @@ public class SnakeWebSocketServer {
   private static ConcurrentHashMap<Integer, SnakeWebSocketServer> users = new ConcurrentHashMap<>();
   private static CopyOnWriteArraySet<Integer> matchPool = new CopyOnWriteArraySet();
   private static UserMapper userMapper;
+  private static RecordMapper recordMapper;
   private Session session = null;
   private User user = null;
   private SnakeGame snakeGame;
@@ -32,6 +37,11 @@ public class SnakeWebSocketServer {
   @Autowired
   public void setUserMapper(UserMapper userMapper) {
     SnakeWebSocketServer.userMapper = userMapper;
+  }
+
+  @Autowired
+  public void setRecordMapper(RecordMapper recordMapper) {
+    SnakeWebSocketServer.recordMapper = recordMapper;
   }
 
   @OnOpen
@@ -77,6 +87,8 @@ public class SnakeWebSocketServer {
       matchNotOk();
     } else if ("exitMatching".equals(action)) {
       exitMatching();
+    } else if ("playRecord".equals(action)) {
+      playRecord(json.getInteger("id"));
     }
   }
 
@@ -97,6 +109,9 @@ public class SnakeWebSocketServer {
 
   public void startSingleGaming() {
     snakeGame = new SnakeGame("single", 12, 13, 20, this, this);
+    snakeMatch = new SnakeMatch(this, this);
+    snakeMatch.sockets[0].snakeGame = snakeGame;
+    snakeMatch.sockets[1].snakeGame = snakeGame;
     JSONObject json = new JSONObject();
     json.put("action", "startSingleGaming");
     json.put("map", snakeGame.getG());
@@ -203,7 +218,8 @@ public class SnakeWebSocketServer {
     json.put("userId0", snakeMatch.sockets[0].user.getId());
     json.put("userId1", snakeMatch.sockets[1].user.getId());
     snakeMatch.sockets[0].sendMessage(json.toJSONString());
-    snakeMatch.sockets[1].sendMessage(json.toJSONString());
+    if ("multi".equals(snakeGame.getMode()))
+      snakeMatch.sockets[1].sendMessage(json.toJSONString());
     snakeGame.start();
   }
 
@@ -212,11 +228,54 @@ public class SnakeWebSocketServer {
     json.put("action", "setDirection");
     json.put("id", id);
     snakeMatch.sockets[0].sendMessage(json.toJSONString());
-    snakeMatch.sockets[1].sendMessage(json.toJSONString());
+    if ("multi".equals(snakeGame.getMode()))
+      snakeMatch.sockets[1].sendMessage(json.toJSONString());
+  }
+
+  public void playRecord(Integer id) {
+    Record record = recordMapper.selectById(id);
+    JSONObject json = JSON.parseObject(record.getJson());
+    JSONArray array0 = json.getJSONArray("map");
+    int[][] map = new int[array0.size()][];
+    for (int i = 0; i < array0.size(); ++i) {
+      JSONArray array1 = array0.getJSONArray(i);
+      map[i] = new int[array1.size()];
+      for (int j = 0; j < array1.size(); ++j) {
+        map[i][j] = array1.getInteger(j);
+      }
+    }
+    List<int[]> steps = new ArrayList<>();
+    JSONArray array2 = json.getJSONArray("steps");
+    for (int i = 0; i < array2.size(); ++i) {
+      JSONArray array3 = array2.getJSONArray(i);
+      int[] step = new int[2];
+      for (int j = 0; j < 2; ++j) {
+        step[j] = array3.getInteger(j);
+      }
+      steps.add(step);
+    }
+    if (snakeGame != null) {
+      snakeGame.setOver(true);
+    }
+    snakeGame = new SnakeGame("record", map.length, map[0].length, 0, this, this);
+    snakeGame.setG(map);
+    snakeMatch = new SnakeMatch(this, this);
+    snakeMatch.sockets[0].snakeGame = snakeGame;
+    snakeMatch.sockets[1].snakeGame = snakeGame;
+    JSONObject backJson = new JSONObject();
+    backJson.put("action", "playRecord");
+    backJson.put("map", map);
+    sendMessage(backJson.toJSONString());
+    snakeGame.setSteps(steps);
+    snakeGame.start();
   }
 
   private int getMe() {
     return snakeMatch.sockets[1] == this ? 1 : 0;
+  }
+
+  public User getUser() {
+    return user;
   }
 }
 

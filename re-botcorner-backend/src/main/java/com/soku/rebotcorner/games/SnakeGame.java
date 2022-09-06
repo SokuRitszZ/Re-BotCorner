@@ -2,7 +2,8 @@ package com.soku.rebotcorner.games;
 
 import com.alibaba.fastjson.JSONObject;
 import com.soku.rebotcorner.consumer.SnakeWebSocketServer;
-
+import com.soku.rebotcorner.games.util.RecordDAO;
+import com.soku.rebotcorner.pojo.Record;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -14,6 +15,7 @@ class Pair {
     this.y = y;
   }
 };
+
 public class SnakeGame extends Thread {
   private int rows;
   private int cols;
@@ -30,6 +32,9 @@ public class SnakeGame extends Thread {
   private Deque<Pair> snake0;
   private Deque<Pair> snake1;
   private ReentrantLock lock = new ReentrantLock();
+  private JSONObject recordJson;
+  private List<int[]> steps;
+  private boolean isOver;
 
   public SnakeGame(String mode, int rows, int cols, int innerWallsCount, SnakeWebSocketServer socket0, SnakeWebSocketServer socket1) {
     this.mode = mode;
@@ -43,10 +48,30 @@ public class SnakeGame extends Thread {
     this.snake1 = new LinkedList<>();
     this.snake0.addFirst(new Pair(this.rows - 2, 1));
     this.snake1.addFirst(new Pair(1, this.cols - 2));
+    steps = new ArrayList<>();
+    recordJson = new JSONObject();
+    recordJson.put("userId0", socket0.getUser().getId());
+    recordJson.put("userId1", socket1.getUser().getId());
     createMap();
   }
 
   public int[][] getG() { return g; }
+
+  public void setG(int[][] g) {
+    this.g = g;
+  }
+
+  public void setSteps(List<int[]> steps) {
+    this.steps = steps;
+  }
+
+  public String getMode() {
+    return mode;
+  }
+
+  public void setOver(boolean over) {
+    isOver = over;
+  }
 
   private boolean checkIsValid(int sx, int sy, int tx, int ty) {
     Queue<Pair> q = new LinkedList<>();
@@ -110,6 +135,13 @@ public class SnakeGame extends Thread {
         break;
       }
     }
+    int[][] initG = new int[rows][cols];
+    for (int i = 0; i < rows; ++i) {
+      for (int j = 0; j < cols; ++j) {
+        initG[i][j] = g[i][j];
+      }
+    }
+    recordJson.put("map", initG);
   }
 
   public void setDirection0(Integer direction0) {
@@ -133,6 +165,9 @@ public class SnakeGame extends Thread {
   public void moveSnake() {
     Integer d0 = direction0;
     Integer d1 = direction1;
+    int[] oneStep = new int[]{ d0, d1 };
+    if (!"record".equals(mode))
+      steps.add(oneStep);
     setDirection0(-1);
     setDirection1(-1);
     Pair first0 = snake0.getFirst();
@@ -170,31 +205,55 @@ public class SnakeGame extends Thread {
     json.put("isIncreasing", isIncreasing);
     json.put("status0", status0);
     json.put("status1", status1);
-    if ("single".equals(mode)) {
+    if ("single".equals(mode) || "record".equals(mode)) {
       socket0.sendMessage(json.toJSONString());
-    } else {
+    } else if ("multi".equals(mode)) {
       socket0.sendMessage(json.toJSONString());
       socket1.sendMessage(json.toJSONString());
+    }
+    if ("die".equals(status0) || "die".equals(status1)) {
+      isOver = true;
     }
   }
 
   private boolean checkIsIncreasing() {
-    return step < 10 || step % 3 != 0;
+    return step < 10 || step % 3 == 0;
   }
 
   @Override
   public void run() {
     g[rows - 2][1] = g[1][cols - 2] = 1;
-    while (true) {
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
+    if (!"record".equals(mode)) {
+      while (!isOver) {
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        if (direction0 != -1 && direction1 != -1) {
+          lock.lock();
+          moveSnake();
+          lock.unlock();
+        }
       }
-      if (direction0 != -1 && direction1 != -1) {
-        lock.lock();
+      /** stop */
+      recordJson.put("steps", steps);
+      Date now = new Date();
+      Record record = new Record(null, recordJson.toJSONString(), socket0.getUser().getId(), socket1.getUser().getId(), now, 1);
+      RecordDAO.add(record);
+    } else {
+      while (!isOver && step < steps.size()) {
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+        Integer d0 = steps.get(step)[0];
+        Integer d1 = steps.get(step)[1];
+        if (isOver) break;
+        setDirection0(d0);
+        setDirection1(d1);
         moveSnake();
-        lock.unlock();
       }
     }
   }

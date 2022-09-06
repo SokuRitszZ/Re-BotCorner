@@ -24,6 +24,10 @@ const props = defineProps({
 </script>
 
 <style scoped>
+*::-webkit-scrollbar {
+  display: none;
+}
+
 .card {
   margin-top: 20px;
   border-radius: 0;
@@ -35,6 +39,7 @@ const props = defineProps({
   height: 70vh;
   box-shadow: 0 0 5px #eeeeee;
   transition: 0.2s;
+  overflow: auto;
 }
 
 .card-body:hover {
