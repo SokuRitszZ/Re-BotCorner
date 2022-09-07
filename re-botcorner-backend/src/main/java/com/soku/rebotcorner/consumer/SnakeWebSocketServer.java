@@ -60,6 +60,12 @@ public class SnakeWebSocketServer {
       matchPool.remove(this.user.getId());
       users.remove(this.user.getId());
     }
+    if (snakeGame != null) {
+      if (snakeGame.getResult() == null) {
+        snakeGame.setResult(1 - getMe());
+        snakeGame.setOver(true);
+      }
+    }
   }
 
   @OnMessage
@@ -89,6 +95,8 @@ public class SnakeWebSocketServer {
       exitMatching();
     } else if ("playRecord".equals(action)) {
       playRecord(json.getInteger("id"));
+    } else if ("saveRecord".equals(action)) {
+      snakeGame.saveRecord();
     }
   }
 
@@ -259,6 +267,7 @@ public class SnakeWebSocketServer {
     }
     snakeGame = new SnakeGame("record", map.length, map[0].length, 0, this, this);
     snakeGame.setG(map);
+    snakeGame.setResult(record.getResult());
     snakeMatch = new SnakeMatch(this, this);
     snakeMatch.sockets[0].snakeGame = snakeGame;
     snakeMatch.sockets[1].snakeGame = snakeGame;

@@ -35,6 +35,8 @@ public class SnakeGame extends Thread {
   private JSONObject recordJson;
   private List<int[]> steps;
   private boolean isOver;
+  private boolean hasSaved;
+  private Integer result;
 
   public SnakeGame(String mode, int rows, int cols, int innerWallsCount, SnakeWebSocketServer socket0, SnakeWebSocketServer socket1) {
     this.mode = mode;
@@ -52,6 +54,7 @@ public class SnakeGame extends Thread {
     recordJson = new JSONObject();
     recordJson.put("userId0", socket0.getUser().getId());
     recordJson.put("userId1", socket1.getUser().getId());
+    result = null;
     createMap();
   }
 
@@ -65,9 +68,11 @@ public class SnakeGame extends Thread {
     this.steps = steps;
   }
 
-  public String getMode() {
-    return mode;
-  }
+  public String getMode() { return mode; }
+
+  public Integer getResult() { return result; }
+
+  public void setResult(Integer result) { this.result = result; }
 
   public void setOver(boolean over) {
     isOver = over;
@@ -98,6 +103,7 @@ public class SnakeGame extends Thread {
     }
     return false;
   }
+
   private boolean draw() {
     for (int i = 0; i < this.rows; ++i) {
       for (int j = 0; j < this.cols; ++j) {
@@ -212,12 +218,36 @@ public class SnakeGame extends Thread {
       socket1.sendMessage(json.toJSONString());
     }
     if ("die".equals(status0) || "die".equals(status1)) {
+      if ("die".equals(status0) && !"die".equals(status1)) {
+        result = 1;
+      } else if ("die".equals(status1) && !"die".equals(status0)) {
+        result = 0;
+      } else {
+        result = -1;
+      }
+      json.put("result", getResult());
       isOver = true;
     }
   }
 
   private boolean checkIsIncreasing() {
     return step < 10 || step % 3 == 0;
+  }
+
+  public void saveRecord() {
+    JSONObject json = new JSONObject();
+    json.put("action", "saveRecord");
+    json.put("hasSaved", hasSaved);
+    if (!hasSaved) {
+      hasSaved = true;
+      Date now = new Date();
+      Record record = new Record(null, recordJson.toJSONString(), socket0.getUser().getId(), socket1.getUser().getId(), now, 1, getResult());
+      RecordDAO.add(record);
+    }
+    socket0.sendMessage(json.toJSONString());
+    if ("multi".equals(mode)) {
+      socket1.sendMessage(json.toJSONString());
+    }
   }
 
   @Override
@@ -238,9 +268,6 @@ public class SnakeGame extends Thread {
       }
       /** stop */
       recordJson.put("steps", steps);
-      Date now = new Date();
-      Record record = new Record(null, recordJson.toJSONString(), socket0.getUser().getId(), socket1.getUser().getId(), now, 1);
-      RecordDAO.add(record);
     } else {
       while (!isOver && step < steps.size()) {
         try {
@@ -255,6 +282,21 @@ public class SnakeGame extends Thread {
         setDirection1(d1);
         moveSnake();
       }
+    }
+    if (step == steps.size()) {
+      if ("record".equals(mode)) {
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+      JSONObject resultJson = new JSONObject();
+      resultJson.put("action", "tellResult");
+      resultJson.put("result", result);
+      socket0.sendMessage(resultJson.toJSONString());
+      if ("multi".equals(mode))
+        socket1.sendMessage(resultJson.toJSONString());
     }
   }
 }

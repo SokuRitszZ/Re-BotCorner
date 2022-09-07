@@ -35,7 +35,10 @@ const routes = [
   {
     path: '/snake',
     name: 'snake',
-    component: Snake
+    component: Snake,
+    meta: {
+      requireAuth: true
+    }
   },
   {
     path: '/reversi',

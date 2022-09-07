@@ -141,13 +141,13 @@ export default class Snake extends GameObject {
         x: x0 * L,
         y: y0 * L,
         radius: L * 0.05,
-        color: '#ffffff'
+        color: this.status !== 'die' ? '#ffffff' : '#000000'
       });
       G.circle({
         x: x1 * L,
         y: y1 * L,
         radius: L * 0.05,
-        color: '#ffffff'
+        color: this.status !== 'die' ? '#ffffff' : '#000000'
       });
     };
     

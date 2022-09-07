@@ -14,12 +14,24 @@
         </template>
         <template v-slot:content>
           <template v-if="state === 'toMatch' || state === 'matching' || state === 'matched'">
-            <Row>
-              <Col><button @click="isSingleMode = true" style="width: 100%; border-radius: 0;"
-                class="btn btn-outline-secondary">单人练习</button></Col>
-              <Col><button @click="isSingleMode = false" style="width: 100%; border-radius: 0;"
-                class="btn btn-outline-secondary">寻找对手</button></Col>
-            </Row>
+            <Container>
+              <Row>
+                <Col>
+                <input type="radio" class="btn-check" v-model="isSingleMode" :value="true" id="singleMode"
+                  autocomplete="off" checked>
+                <label @click="chooseSingleMode" style="width: 100%" class="btn btn-outline-secondary" for="singleMode">
+                  单人练习
+                </label>
+                </Col>
+                <Col>
+                <input type="radio" class="btn-check" v-model="isSingleMode" :value=false id="multiMode"
+                  autocomplete="off">
+                <label @click="chooseMultiMode" style="width: 100%" class="btn btn-outline-secondary" for="multiMode">
+                  寻找对手
+                </label>
+                </Col>
+              </Row>
+            </Container>
             <hr>
             <template v-if="isSingleMode">
               <!-- 选择单人模式 -->
@@ -82,7 +94,7 @@
                           <input type="radio" class="btn-check" v-model="choose0" value="0" id="choose00"
                             autocomplete="off" checked>
                           <label class="btn btn-outline-primary" for="choose00">
-                            ↑
+                            <i class="bi bi-chevron-up"></i>
                           </label>
                           </Col>
                           <Col>
@@ -94,19 +106,19 @@
                           <input type="radio" class="btn-check" v-model="choose0" value="3" id="choose03"
                             autocomplete="off">
                           <label class="btn btn-outline-primary" for="choose03">
-                            ←
+                            <i class="bi bi-chevron-left"></i>
                           </label>
                           </Col>
                           <Col>
                           <button class="btn btn-success" @click="sendChoose0">
-                            好
+                            <i class="bi bi-check-square"></i>
                           </button>
                           </Col>
                           <Col>
                           <input type="radio" class="btn-check" v-model="choose0" value="1" id="choose01"
                             autocomplete="off">
                           <label class="btn btn-outline-primary" for="choose01">
-                            →
+                            <i class="bi bi-chevron-right"></i>
                           </label>
                           </Col>
                         </Row>
@@ -118,7 +130,7 @@
                           <input type="radio" class="btn-check" v-model="choose0" value="2" id="choose02"
                             autocomplete="off">
                           <label class="btn btn-outline-primary" for="choose02">
-                            ↓
+                            <i class="bi bi-chevron-down"></i>
                           </label>
                           </Col>
                           <Col>
@@ -127,11 +139,16 @@
                       </Container>
                     </div>
                   </div>
+                  <template v-else>
+                    <h4 style="text-align: center; color: blue">
+                      {{ ok0 ? "已就绪" : "未就绪" }}
+                    </h4>
+                  </template>
                 </template>
                 <!-- 输入情况 -->
                 <template v-else-if="state !== 'gameOver'">
                   <h4 style="text-align: center; color: blue">
-                    {{ ok1 ? "已就绪" : "未就绪" }}
+                    {{ ok0 ? "已就绪" : "未就绪" }}
                   </h4>
                 </template>
                 <!-- 游戏结束 -->
@@ -164,7 +181,7 @@
                           <input type="radio" class="btn-check" v-model="choose1" value="0" id="choose10"
                             autocomplete="off" checked>
                           <label class="btn btn-outline-danger" for="choose10">
-                            ↑
+                            <i class="bi bi-chevron-up"></i>
                           </label>
                           </Col>
                           <Col>
@@ -176,19 +193,19 @@
                           <input type="radio" class="btn-check" v-model="choose1" value="3" id="choose13"
                             autocomplete="off">
                           <label class="btn btn-outline-danger" for="choose13">
-                            ←
+                            <i class="bi bi-chevron-left"></i>
                           </label>
                           </Col>
                           <Col>
                           <button class="btn btn-success" @click="sendChoose1">
-                            好
+                            <i class="bi bi-check-square"></i>
                           </button>
                           </Col>
                           <Col>
                           <input type="radio" class="btn-check" v-model="choose1" value="1" id="choose11"
                             autocomplete="off">
                           <label class="btn btn-outline-danger" for="choose11">
-                            →
+                            <i class="bi bi-chevron-right"></i>
                           </label>
                           </Col>
                         </Row>
@@ -200,7 +217,7 @@
                           <input type="radio" class="btn-check" v-model="choose1" value="2" id="choose12"
                             autocomplete="off">
                           <label class="btn btn-outline-danger" for="choose12">
-                            ↓
+                            <i class="bi bi-chevron-down"></i>
                           </label>
                           </Col>
                           <Col>
@@ -209,6 +226,11 @@
                       </Container>
                     </div>
                   </div>
+                  <template v-else>
+                    <h4 style="text-align: center; color: red">
+                      {{ ok1 ? "已就绪" : "未就绪" }}
+                    </h4>
+                  </template>
                 </template>
                 <!-- 输入情况 -->
                 <template v-else-if="state !== 'gameOver'">
@@ -224,38 +246,26 @@
                 </template>
               </Row>
             </Container>
+            <template v-if="state === 'gameOver'">
+              <template v-if="gameMode !== 'record'">
+                <hr>
+                <button @click="saveRecord" class="btn btn-success">保存录像</button>
+              </template>
+              <hr>
+              <button @click="remake" class="btn btn-secondary">继续</button>
+            </template>
           </template>
         </template>
       </Collapse>
       <hr>
-      <!-- 最近比赛 -->
-      <Collapse button-style="width: 100%; border-radius: 0;" collapse-id="recent-match">
+      <Collapse button-style="width: 100%; border-radius: 0" collapse-id="chatroom">
         <template v-slot:button>
-          最近比赛
+          交流窗口
         </template>
         <template v-slot:content>
-          <button style="border: none; background-color: gray; color: white; font-size: small;"
-            class="btn btn-dark mb-2" v-for="(record, index) in recordList">
-            <Row>
-              <Col><img :src="record.headIcon0" style="width: 100%" /></Col>
-              <Col col="col-6">
-              <div
-                style="display: flex; flex-direction: column; justify-content: center; height: 50%; text-align: left;">
-                {{ record.username0 }}#{{ record.userId0 }}
-              </div>
-              <div
-                style="display: flex; flex-direction: column; justify-content: center; height: 50%; text-align: right;">
-                {{ record.username1 }}#{{ record.userId1 }}
-              </div>
-              </Col>
-              <Col><img :src="record.headIcon1" style="width: 100%" /></Col>
-              <Col>
-              <button @click="playRecord(index)" class="btn btn-light" style="height: 100%; padding: 5px; width: 100%">
-                <i style="font-size: large" class="bi bi-file-earmark-play"></i>
-              </button>
-              </Col>
-            </Row>
-          </button>
+          <h1>
+            交流窗口
+          </h1>
         </template>
       </Collapse>
       </Col>
@@ -263,6 +273,72 @@
       <div ref="parentRef" id="parent">
         <canvas ref="canvasRef" tabindex="0"></canvas>
       </div>
+      <!-- 最近比赛 -->
+      <hr>
+      <Collapse button-style="width: 100%; border-radius: 0;" collapse-id="recent-match" otherStyle="height: 30vh; overflow: auto">
+        <template v-slot:button>
+          最近比赛
+        </template>
+        <template v-slot:content>
+          <div style="border: 1px solid #acacac; font-size: small; padding: 5px"
+            class="mb-2" v-for="(record, index) in recordList">
+            <Container>
+              <Row>
+                <Col col="col-2">
+                  <div style="height: 100%; text-align: center; display: flex; flex-direction: column; justify-content: center">{{ record.createTime }}</div>
+                </Col>
+                <Col col="col-9">
+                  <Container other-style="text-align: center">
+                    <Row>
+                      <Col>
+                        <div :class="`btn ${ record.result == 0 ? 'btn-primary' : 'btn-outline-primary' }`" style="padding: 0;">
+                          <Container>
+                            <Row>
+                              <Col col="col-4">
+                                <img :src="record.headIcon0" style="width: 50px; border-radius: 50%; margin: 5px;">
+                              </Col>
+                              <Col col="col-8">
+                                <div style="font-size: 16px; display: flex; flex-direction: column; justify-content: center;">
+                                  <div style="line-height: 200%; flex-direction: column; justify-content: center;">{{ record.username0 }}</div>
+                                  <div style="color: gray;">#{{ record.userId0 }}</div>
+                                </div>
+                              </Col>
+                            </Row>
+                          </Container>
+                        </div>
+                      </Col>
+                      <Col>
+                        <div :class="`btn ${ record.result == 1 ? 'btn-danger' : 'btn-outline-danger' }`" style="padding: 0;">
+                          <Container>
+                            <Row>
+                              <Col col="col-4">
+                                <img :src="record.headIcon1" style="width: 50px; border-radius: 50%; margin: 5px;">
+                              </Col>
+                              <Col col="col-8">
+                                <div style="font-size: 16px; display: flex; flex-direction: column; justify-content: center;">
+                                  <div style="line-height: 200%; flex-direction: column; justify-content: center;">{{ record.username1 }}</div>
+                                  <div style="color: gray;">#{{ record.userId1 }}</div>
+                                </div>
+                              </Col>
+                            </Row>
+                          </Container>
+                        </div>
+                      </Col>
+                    </Row>
+                  </Container>
+                </Col>
+                <Col col="col-1">
+                  <div style="height: 100%; display: flex; flex-direction: column; justify-content: center">
+                    <button @click="playRecord(index)" class="btn btn-outline-primary" style="width: fit-content; border: none">
+                      <i class="bi bi-play-circle" style="font-size: 20px"></i>
+                    </button>
+                  </div>
+                </Col>
+              </Row>
+            </Container>
+          </div>
+        </template>
+      </Collapse>
       </Col>
     </Row>
   </CardBody>
@@ -308,17 +384,25 @@ const lastStep0 = ref(4);
 const lastStep1 = ref(4);
 
 const initGameState = () => {
-  game.value = new SnakeGame({
-    parent: parentRef.value,
-    context: canvasRef.value.getContext('2d')
-  });
-  state.value = 'playRecording';
+  game.value = null; 
+  checker.value = null;
+  isSingleMode.value = true;
+  state.value = 'toMatch';
+  gameMode.value = '';
   choose0.value = 0;
   choose1.value = 0;
   ok0.value = false;
   ok1.value = false;
   end0.value = '';
   end1.value = '';
+  userId0.value = 0;
+  userId1.value = 0;
+  matchOk0.value = false;
+  matchOk1.value = false;
+  matchingBoard.value = '';
+  opponentHeadIcon.value = '';
+  opponentUsername.value = '';
+  opponentUserId.value = '';
   lastStep0.value = 4;
   lastStep1.value = 4;
 };
@@ -341,6 +425,19 @@ const iAmOk = () => {
 
 const youROk = () => {
   return userId0.value === USER().getUserID && matchOk1.value || userId1.value === USER().getUserID && matchOk0.value;
+};
+
+const chooseSingleMode = () => {
+  if (state.value === "matching") {
+    cancelMatching();
+  } else if (state.value === "matched") {
+    exitMatching();
+  }
+  isSingleMode.value = true;
+};
+
+const chooseMultiMode = () => {
+  isSingleMode.value = false;
 };
 
 const startSingleGaming = () => {
@@ -408,6 +505,16 @@ const exitMatching = () => {
   });
 };
 
+const saveRecord = () => {
+  SOCKET().sendMessage({
+    action: 'saveRecord'
+  });
+};
+
+const remake = () => {
+  initGameState();
+};
+
 const receivedStartSingleGaming = json => {
   const userId = USER().getUserID;
   game.value = new SnakeGame({
@@ -447,12 +554,6 @@ const receivedMoveSnake = json => {
   if (gameMode.value === "record") {
     lastStep0.value = direction0;
     lastStep1.value = direction1;
-  }
-  if (status0 === "die" || status1 === "die") {
-    end0.value = status0 === "die" ? "LOSE" : "WIN";
-    end1.value = status1 === "die" ? "LOSE" : "WIN";
-    state.value = "gameOver";
-    return;
   }
   ok0.value = false;
   ok1.value = false;
@@ -508,6 +609,10 @@ const receivedExitMatching = json => {
 };
 
 const receivedStartMultiGaming = json => {
+  game.value = new SnakeGame({
+    parent: parentRef.value,
+    context: canvasRef.value.getContext('2d')
+  });
   game.value.start({
     map: json.map,
     userId0: json.userId0,
@@ -530,6 +635,10 @@ const receivedSetDirection = json => {
 
 const receivedPlayRecord = json => {
   const userId = USER().getUserID;
+  game.value = new SnakeGame({
+    parent: parentRef.value,
+    context: canvasRef.value.getContext('2d')
+  });
   game.value.start({
     map: json.map,
     userId0: userId,
@@ -542,8 +651,45 @@ const receivedPlayRecord = json => {
   checker.value = game.value.getChecker();
 };
 
+const receivedSaveRecord = json => {
+  if (json.hasSaved) {
+    alert(`warning`, `已保存该录像`);
+  } else {
+    alert(`success`, `保存录像成功`);
+  }
+};
+
+const receivedTellResult = json => {
+  end0.value = json.result === 0 ? "WIN" : json.result === 1 ? "LOSE" : "DRAW";
+  end1.value = json.result === 1 ? "WIN" : json.result === 0 ? "LOSE" : "DRAW";
+  state.value = "gameOver";
+  if (gameMode.value === 'multi') {
+    switch (json.result) {
+      case getMe():
+        alert(`success`, `胜利！Rating +${json.score}`, 5000);
+        break;
+      case 1 - getMe():
+        alert(`danger`, `战败... Rating -${json.score}`, 5000);
+        break;
+      case -1:
+        alert(`warning`, `平局`, 5000);
+        break;
+    }
+  } else {
+    switch (json.result) {
+      case 0:
+        alert(`primary`, `蓝方获胜！`, 5000);
+        break;
+      case 1:
+        alert(`danger`, `红方获胜！`, 5000);
+        break;
+      case -1:
+        alert(`warning`, `平局`, 5000);
+    }
+  }
+};
+
 onMounted(() => {
-  dbg();
   SOCKET().connect({
     game: 'snake',
     onOpen() {
@@ -577,6 +723,10 @@ onMounted(() => {
         receivedSetDirection(json);
       } else if (json.action === "playRecord") {
         receivedPlayRecord(json);
+      } else if (json.action === "saveRecord") {
+        receivedSaveRecord(json);
+      } else if (json.action === "tellResult") {
+        receivedTellResult(json);
       }
     },
     onError(error) {
@@ -587,7 +737,6 @@ onMounted(() => {
     parent: parentRef.value,
     context: canvasRef.value.getContext('2d')
   });
-
   let matchingBoardList = ["匹配中·", "匹配中··", "匹配中···"];
   let i = 0;
   setInterval(() => {
@@ -602,7 +751,7 @@ onMounted(() => {
     },
     needJWT: true,
     success: resp => {
-      recordList.value = resp;
+      recordList.value = resp.reverse();
     }
   });
 });

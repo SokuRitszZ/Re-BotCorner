@@ -4,7 +4,7 @@
     <slot name="button"></slot>
   </button>
   <div class="collapse mb-2" :id="collapseId">
-    <div class="card card-body">
+    <div class="card card-body" :style="otherStyle || ''">
       <slot name="content"></slot>
     </div>
   </div>
@@ -20,15 +20,20 @@ const props = defineProps({
   collapseId: {
     type: String,
     required: true
+  },
+  otherStyle: {
+    type: String,
   }
 });
-
-const state = ref("makingGame");
 
 </script>
 
 <style scoped>
 .card {
   border-radius: 0;
+}
+
+.card-body::-webkit-scrollbar {
+  display: none;
 }
 </style>
