@@ -331,6 +331,10 @@ const changeLang = () => {
   display: none;
 }
 
+* {
+  scrollbar-width: none;
+}
+
 .btn {
   border-radius: 0;
   width: 100%;

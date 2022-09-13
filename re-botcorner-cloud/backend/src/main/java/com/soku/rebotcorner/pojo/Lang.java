@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class Lang {
   private Integer id;
   private String lang;
+  private String suffix;
 }

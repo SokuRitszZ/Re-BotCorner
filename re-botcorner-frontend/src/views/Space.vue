@@ -13,7 +13,6 @@
         </div>
         <CardBody height="45vh">
           <CardBody height="100%">
-            
           </CardBody>
         </CardBody>
       </Col>

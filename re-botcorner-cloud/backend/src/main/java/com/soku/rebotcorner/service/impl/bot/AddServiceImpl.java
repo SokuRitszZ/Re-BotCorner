@@ -39,7 +39,7 @@ public class AddServiceImpl implements AddService {
     if (title == null || title.length() == 0) {
       map.put("result", "名字为空");
       return map;
-    } else if (title.length() > 128) {
+    } else if (title.length() > 8) {
       map.put("result", "名字长度大于8");
       return map;
     } else if (description != null && description.length() > 128) {

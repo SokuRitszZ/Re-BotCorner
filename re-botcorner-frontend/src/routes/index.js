@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHashHistory, createWebHistory } from "vue-router";
 import Home from '../views/Home.vue';
 import Space from '../views/Space.vue';
 import GameLobby from '../views/GameLobby.vue';
@@ -53,7 +53,7 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes
 });
 

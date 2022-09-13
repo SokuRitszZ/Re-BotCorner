@@ -1,6 +1,77 @@
 <template>
   <CardBody>
     <Row>
+      <Col col="col-8">
+      <div ref="parentRef" id="parent">
+        <canvas ref="canvasRef" tabindex="0"></canvas>
+      </div>
+      <!-- 最近比赛 -->
+      <hr>
+      <Collapse button-style="width: 100%; border-radius: 0;" collapse-id="recent-match" otherStyle="height: 30vh; overflow: auto">
+        <template v-slot:button>
+          最近比赛
+        </template>
+        <template v-slot:content>
+          <div style="border: 1px solid #acacac; font-size: small; padding: 5px"
+            class="mb-2" v-for="(record, index) in recordList">
+            <Container>
+              <Row>
+                <Col col="col-2">
+                  <div style="height: 100%; text-align: center; display: flex; flex-direction: column; justify-content: center">{{ record.createTime }}</div>
+                </Col>
+                <Col col="col-9">
+                  <Container other-style="text-align: center">
+                    <Row>
+                      <Col>
+                        <div :class="`btn ${ record.result == 0 ? 'btn-primary' : 'btn-outline-primary' }`" style="padding: 0;">
+                          <Container>
+                            <Row>
+                              <Col col="col-4">
+                                <img :src="record.headIcon0" style="width: 50px; margin: 5px;">
+                              </Col>
+                              <Col col="col-8">
+                                <div style="font-size: 16px; display: flex; flex-direction: column; justify-content: center;">
+                                  <div style="line-height: 200%; flex-direction: column; justify-content: center;">{{ record.username0 }}</div>
+                                  <div style="color: gray;">#{{ record.userId0 }}</div>
+                                </div>
+                              </Col>
+                            </Row>
+                          </Container>
+                        </div>
+                      </Col>
+                      <Col>
+                        <div :class="`btn ${ record.result == 1 ? 'btn-danger' : 'btn-outline-danger' }`" style="padding: 0;">
+                          <Container>
+                            <Row>
+                              <Col col="col-4">
+                                <img :src="record.headIcon1" style="width: 50px; margin: 5px;">
+                              </Col>
+                              <Col col="col-8">
+                                <div style="font-size: 16px; display: flex; flex-direction: column; justify-content: center;">
+                                  <div style="line-height: 200%; flex-direction: column; justify-content: center;">{{ record.username1 }}</div>
+                                  <div style="color: gray;">#{{ record.userId1 }}</div>
+                                </div>
+                              </Col>
+                            </Row>
+                          </Container>
+                        </div>
+                      </Col>
+                    </Row>
+                  </Container>
+                </Col>
+                <Col col="col-1">
+                  <div style="height: 100%; display: flex; flex-direction: column; justify-content: center">
+                    <button @click="playRecord(index)" class="btn btn-outline-primary" style="width: fit-content; border: none">
+                      <i class="bi bi-play-circle" style="font-size: 20px"></i>
+                    </button>
+                  </div>
+                </Col>
+              </Row>
+            </Container>
+          </div>
+        </template>
+      </Collapse>
+      </Col>
       <Col col="col-4">
       <!-- 匹配信息 / 局面信息 -->
       <Collapse button-style="width: 100%; border-radius: 0" collapse-id="info">
@@ -39,6 +110,10 @@
                 class="btn btn-success">游戏开始</button>
             </template>
             <template v-else>
+              <select class="form-select mb-2" v-model="selectedBotId">
+                <option :value="-1" selected>亲自出马</option>
+                <option v-for="bot in myBotList" :value="bot.id">{{ bot.title }}#{{ bot.id }}</option>
+              </select>
               <!-- 选择多人模式 -->
               <template v-if="state === 'toMatch'">
                 <!-- 未开始匹配 -->
@@ -84,12 +159,11 @@
                     </h4>
                   </template>
                   <!-- 单人模式 || 属于自己操作 -->
-                  <div v-else-if="state !== 'gameOver' && (gameMode === 'single' || getMe() === 0)">
+                  <div v-else-if="state !== 'gameOver' && (gameMode === 'single' || getMe() === 0) && selectedBotId === -1">
                     <div class="btn-group" role="group" style="font-family: monospace">
                       <Container>
                         <Row>
-                          <Col>
-                          </Col>
+                          <Col> </Col>
                           <Col>
                           <input type="radio" class="btn-check" v-model="choose0" value="0" id="choose00"
                             autocomplete="off" checked>
@@ -97,8 +171,7 @@
                             <i class="bi bi-chevron-up"></i>
                           </label>
                           </Col>
-                          <Col>
-                          </Col>
+                          <Col> </Col>
                         </Row>
                         <div class="mb-3"></div>
                         <Row>
@@ -124,8 +197,7 @@
                         </Row>
                         <div class="mb-3"></div>
                         <Row>
-                          <Col>
-                          </Col>
+                          <Col> </Col>
                           <Col>
                           <input type="radio" class="btn-check" v-model="choose0" value="2" id="choose02"
                             autocomplete="off">
@@ -133,8 +205,7 @@
                             <i class="bi bi-chevron-down"></i>
                           </label>
                           </Col>
-                          <Col>
-                          </Col>
+                          <Col> </Col>
                         </Row>
                       </Container>
                     </div>
@@ -171,12 +242,11 @@
                     </h4>
                   </template>
                   <!-- 单人模式 || 属于自己操作 -->
-                  <div v-else-if="state !== 'gameOver' && (gameMode === 'single' || getMe() === 1)">
+                  <div v-else-if="state !== 'gameOver' && (gameMode === 'single' || getMe() === 1) && selectedBotId === -1">
                     <div class="btn-group" role="group" style="font-family: monospace">
                       <Container>
                         <Row>
-                          <Col>
-                          </Col>
+                          <Col> </Col>
                           <Col>
                           <input type="radio" class="btn-check" v-model="choose1" value="0" id="choose10"
                             autocomplete="off" checked>
@@ -184,8 +254,7 @@
                             <i class="bi bi-chevron-up"></i>
                           </label>
                           </Col>
-                          <Col>
-                          </Col>
+                          <Col> </Col>
                         </Row>
                         <div class="mb-3"></div>
                         <Row>
@@ -211,8 +280,7 @@
                         </Row>
                         <div class="mb-3"></div>
                         <Row>
-                          <Col>
-                          </Col>
+                          <Col> </Col>
                           <Col>
                           <input type="radio" class="btn-check" v-model="choose1" value="2" id="choose12"
                             autocomplete="off">
@@ -220,8 +288,7 @@
                             <i class="bi bi-chevron-down"></i>
                           </label>
                           </Col>
-                          <Col>
-                          </Col>
+                          <Col> </Col>
                         </Row>
                       </Container>
                     </div>
@@ -269,77 +336,6 @@
         </template>
       </Collapse>
       </Col>
-      <Col col="col-8">
-      <div ref="parentRef" id="parent">
-        <canvas ref="canvasRef" tabindex="0"></canvas>
-      </div>
-      <!-- 最近比赛 -->
-      <hr>
-      <Collapse button-style="width: 100%; border-radius: 0;" collapse-id="recent-match" otherStyle="height: 30vh; overflow: auto">
-        <template v-slot:button>
-          最近比赛
-        </template>
-        <template v-slot:content>
-          <div style="border: 1px solid #acacac; font-size: small; padding: 5px"
-            class="mb-2" v-for="(record, index) in recordList">
-            <Container>
-              <Row>
-                <Col col="col-2">
-                  <div style="height: 100%; text-align: center; display: flex; flex-direction: column; justify-content: center">{{ record.createTime }}</div>
-                </Col>
-                <Col col="col-9">
-                  <Container other-style="text-align: center">
-                    <Row>
-                      <Col>
-                        <div :class="`btn ${ record.result == 0 ? 'btn-primary' : 'btn-outline-primary' }`" style="padding: 0;">
-                          <Container>
-                            <Row>
-                              <Col col="col-4">
-                                <img :src="record.headIcon0" style="width: 50px; border-radius: 50%; margin: 5px;">
-                              </Col>
-                              <Col col="col-8">
-                                <div style="font-size: 16px; display: flex; flex-direction: column; justify-content: center;">
-                                  <div style="line-height: 200%; flex-direction: column; justify-content: center;">{{ record.username0 }}</div>
-                                  <div style="color: gray;">#{{ record.userId0 }}</div>
-                                </div>
-                              </Col>
-                            </Row>
-                          </Container>
-                        </div>
-                      </Col>
-                      <Col>
-                        <div :class="`btn ${ record.result == 1 ? 'btn-danger' : 'btn-outline-danger' }`" style="padding: 0;">
-                          <Container>
-                            <Row>
-                              <Col col="col-4">
-                                <img :src="record.headIcon1" style="width: 50px; border-radius: 50%; margin: 5px;">
-                              </Col>
-                              <Col col="col-8">
-                                <div style="font-size: 16px; display: flex; flex-direction: column; justify-content: center;">
-                                  <div style="line-height: 200%; flex-direction: column; justify-content: center;">{{ record.username1 }}</div>
-                                  <div style="color: gray;">#{{ record.userId1 }}</div>
-                                </div>
-                              </Col>
-                            </Row>
-                          </Container>
-                        </div>
-                      </Col>
-                    </Row>
-                  </Container>
-                </Col>
-                <Col col="col-1">
-                  <div style="height: 100%; display: flex; flex-direction: column; justify-content: center">
-                    <button @click="playRecord(index)" class="btn btn-outline-primary" style="width: fit-content; border: none">
-                      <i class="bi bi-play-circle" style="font-size: 20px"></i>
-                    </button>
-                  </div>
-                </Col>
-              </Row>
-            </Container>
-          </div>
-        </template>
-      </Collapse>
-      </Col>
     </Row>
   </CardBody>
 </template>
@@ -382,6 +378,9 @@ const opponentUserId = ref(0);
 const recordList = ref([]);
 const lastStep0 = ref(4);
 const lastStep1 = ref(4);
+const myBotList = ref([]);
+const selectedBotId = ref(-1);
+const hasClickMatching = ref(false);
 
 const initGameState = () => {
   game.value = null; 
@@ -441,14 +440,18 @@ const chooseMultiMode = () => {
 };
 
 const startSingleGaming = () => {
+  hasClickMatching.value = true;
   SOCKET().sendMessage({
     action: 'startSingleGaming'
   });
 };
 
 const startMatching = () => {
+  if (hasClickMatching.value) return ;
+  hasClickMatching.value = true;
   SOCKET().sendMessage({
-    action: 'startMatching'
+    action: 'startMatching',
+    useBotId: selectedBotId.value
   });
 };
 
@@ -560,6 +563,7 @@ const receivedMoveSnake = json => {
 };
 
 const receivedStartMatching = json => {
+  hasClickMatching.value = false;
   state.value = 'matching';
 };
 
@@ -754,6 +758,21 @@ onMounted(() => {
       recordList.value = resp.reverse();
     }
   });
+  API({
+    url: '/bot/getByGame',
+    type: 'get',
+    data: {
+      gameId: 1
+    },
+    needJWT: true,
+    success: resp => {
+      myBotList.value = resp;
+      myBotList.value.map(bot => {
+        bot.createTime = new Date(bot.createTime);
+        bot.modifyTime = new Date(bot.modifyTime);
+      });
+    }
+  })
 });
 
 onUnmounted(() => {

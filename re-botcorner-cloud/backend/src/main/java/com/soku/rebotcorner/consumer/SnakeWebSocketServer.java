@@ -3,11 +3,13 @@ package com.soku.rebotcorner.consumer;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.soku.rebotcorner.consumer.match.SnakeMatch;
 import com.soku.rebotcorner.games.SnakeGame;
 import com.soku.rebotcorner.mapper.RecordMapper;
 import com.soku.rebotcorner.mapper.UserMapper;
 import com.soku.rebotcorner.pojo.Record;
 import com.soku.rebotcorner.pojo.User;
+import com.soku.rebotcorner.runningbot.SnakeBot;
 import com.soku.rebotcorner.utils.JwtAuthenticationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,10 +22,9 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 @Component
 @ServerEndpoint("/websocket/snake/{token}")  // 注意不要以'/'结尾
@@ -38,6 +39,7 @@ public class SnakeWebSocketServer {
   private User user = null;
   private SnakeGame snakeGame;
   private SnakeMatch snakeMatch;
+  public SnakeBot bot;
 
   @Autowired
   public void setUserMapper(UserMapper userMapper) {
@@ -93,7 +95,7 @@ public class SnakeWebSocketServer {
         setDirection(1);
       }
     } else if ("startMatching".equals(action)) {
-      startMatching();
+      startMatching(json);
     } else if ("cancelMatching".equals(action)) {
       cancelMatching();
     } else if ("matchOk".equals(action)) {
@@ -138,10 +140,13 @@ public class SnakeWebSocketServer {
     snakeGame.start();
   }
 
-  public void startMatching() {
+  public void startMatching(JSONObject getJson) {
     /**
      * 加入匹配池
      */
+    Integer botId = getJson.getInteger("useBotId");
+    if (botId == -1) this.bot = null;
+    else this.bot = new SnakeBot(botId, this);
     MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
     data.add("game", "snake");
     data.add("userId", user.getId().toString());
@@ -183,6 +188,7 @@ public class SnakeWebSocketServer {
    * 取消匹配
    */
   private void cancelMatching() {
+    this.bot = null;
     MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
     data.add("game", "snake");
     data.add("userId", user.getId().toString());
@@ -223,6 +229,7 @@ public class SnakeWebSocketServer {
    * 退出房间，并且将另一位玩家重新放入匹配池
    */
   private void exitMatching() {
+    this.bot = null;
     int me = getMe();
     int you = 1 - me;
     SnakeWebSocketServer youSocket = snakeMatch.sockets[you];
@@ -244,16 +251,27 @@ public class SnakeWebSocketServer {
 
   public void startMultiGaming() {
     snakeGame = new SnakeGame("multi", 12, 13, 20, snakeMatch.sockets[0], snakeMatch.sockets[1]);
-    snakeMatch.sockets[0].snakeGame = snakeGame;
-    snakeMatch.sockets[1].snakeGame = snakeGame;
+    // 向RS发送创建container的信息，并且编译
+    SnakeWebSocketServer socket0 = snakeMatch.sockets[0];
+    SnakeWebSocketServer socket1 = snakeMatch.sockets[1];
+    socket0.snakeGame = snakeGame;
+    socket1.snakeGame = snakeGame;
     JSONObject json = new JSONObject();
     json.put("action", "startMultiGaming");
     json.put("map", snakeGame.getG());
-    json.put("userId0", snakeMatch.sockets[0].user.getId());
-    json.put("userId1", snakeMatch.sockets[1].user.getId());
-    snakeMatch.sockets[0].sendMessage(json.toJSONString());
-    if ("multi".equals(snakeGame.getMode()))
-      snakeMatch.sockets[1].sendMessage(json.toJSONString());
+    json.put("userId0", socket0.user.getId());
+    json.put("userId1", socket1.user.getId());
+    // 创建container
+    if (socket0.bot != null) {
+      socket0.bot.start();
+      socket0.bot.compile();
+    }
+    if (socket1.bot != null) {
+      socket1.bot.start();
+      socket1.bot.compile();
+    }
+    socket0.sendMessage(json.toJSONString());
+    socket1.sendMessage(json.toJSONString());
     snakeGame.start();
   }
 
@@ -314,19 +332,4 @@ public class SnakeWebSocketServer {
   }
 }
 
-class SnakeMatch {
-  public SnakeWebSocketServer[] sockets;
-  public boolean[] isOk;
-
-  SnakeMatch(SnakeWebSocketServer socket0, SnakeWebSocketServer socket1) {
-    sockets = new SnakeWebSocketServer[2];
-    sockets[0] = socket0;
-    sockets[1] = socket1;
-    isOk = new boolean[2];
-    isOk[0] = isOk[1] = false;
-  }
-
-  public boolean allOk() {
-    return isOk[0] && isOk[1];
-  }
-};
+;

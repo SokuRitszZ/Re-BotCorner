@@ -40,7 +40,7 @@ public class UpdateServiceImpl implements UpdateService {
 
     String title = data.get("title");
     String description = data.get("description");
-    String code = data.get("data");
+    String code = data.get("code");
 
     if (title != null && title.length() != 0) {
       if (title.length() > 8) {
@@ -65,7 +65,6 @@ public class UpdateServiceImpl implements UpdateService {
       }
       bot.setCode(code);
     }
-
     bot.setModifyTime(new Date());
 
     botMapper.updateById(bot);

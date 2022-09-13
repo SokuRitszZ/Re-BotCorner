@@ -2,6 +2,7 @@ package com.soku.rebotcorner.games;
 
 import com.alibaba.fastjson.JSONObject;
 import com.soku.rebotcorner.consumer.SnakeWebSocketServer;
+import com.soku.rebotcorner.utils.RT;
 import com.soku.rebotcorner.utils.RecordDAO;
 import com.soku.rebotcorner.pojo.Record;
 import com.soku.rebotcorner.pojo.User;
@@ -234,9 +235,6 @@ public class SnakeGame extends Thread {
       result = -1;
     }
     isOver = true;
-    /**
-     * 结算
-     */
     if ("multi".equals(mode)) {
       User user0 = socket0.getUser();
       User user1 = socket1.getUser();
@@ -274,13 +272,62 @@ public class SnakeGame extends Thread {
     }
   }
 
+  public String parseData() {
+    StringBuilder map = new StringBuilder();
+
+    for (int i = 0; i < this.rows; ++i) {
+      for (int j = 0; j < this.cols; ++j) {
+        map.append(g[i][j]);
+      }
+    }
+
+    StringBuilder data = new StringBuilder();
+    data.append(String.valueOf(rows) + " ");
+    data.append(String.valueOf(cols) + " ");
+    data.append(String.valueOf(step) + " ");
+    data.append(map + " ");
+    data.append(String.valueOf(snake0.size()) + " ");
+    data.append(String.valueOf(snake1.size()) + " ");
+    StringBuilder snake0Str = new StringBuilder();
+    for (Pair pair: snake0) {
+      snake0Str.append(String.valueOf(pair.x) + " ");
+      snake0Str.append(String.valueOf(pair.y) + " ");
+    }
+    data.append(snake0Str);
+    StringBuilder snake1Str = new StringBuilder();
+    for (Pair pair: snake1) {
+      snake1Str.append(String.valueOf(pair.x) + " ");
+      snake1Str.append(String.valueOf(pair.y) + " ");
+    }
+    data.append(snake1Str);
+    return data.toString();
+  }
+
+  public void runBot0() {
+    String data = String.valueOf(0) + " " + parseData();
+    socket0.bot.prepareData(data);
+    JSONObject json = JSONObject.parseObject(socket0.bot.run());
+    String result = json.getString("data");
+    setDirection0(Integer.parseInt(result));
+    socket0.setDirection(0);
+  }
+
+  public void runBot1() {
+    String data = String.valueOf(1) + " " + parseData();
+    socket1.bot.prepareData(data);
+    JSONObject json = JSONObject.parseObject(socket1.bot.run());
+    String result = json.getString("data");
+    setDirection1(Integer.parseInt(result));
+    socket1.setDirection(1);
+  }
+
   @Override
   public void run() {
     g[rows - 2][1] = g[1][cols - 2] = 1;
     if (!"record".equals(mode)) {
       while (!isOver) {
         try {
-          Thread.sleep(1000);
+          Thread.sleep(200);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
@@ -288,6 +335,13 @@ public class SnakeGame extends Thread {
           lock.lock();
           moveSnake();
           lock.unlock();
+        }
+        if (isOver) break;
+        if (direction0 == -1 && socket0.bot != null) {
+          runBot0();
+        }
+        if (direction1 == -1 && socket1.bot != null) {
+          runBot1();
         }
       }
       /** stop */
@@ -306,6 +360,12 @@ public class SnakeGame extends Thread {
         setDirection1(d1);
         moveSnake();
       }
+    }
+    if (socket0.bot != null) {
+      socket0.bot.stop();
+    }
+    if (socket1.bot != null) {
+      socket1.bot.stop();
     }
     if (step == steps.size()) {
       if ("record".equals(mode)) {

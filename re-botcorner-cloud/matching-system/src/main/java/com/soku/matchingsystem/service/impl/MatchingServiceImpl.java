@@ -10,14 +10,12 @@ public class MatchingServiceImpl implements MatchingService {
 
   @Override
   public String addPlayer(Integer userId, Integer rating) {
-    System.out.println(userId.toString() + " " + rating.toString());
     snakePool.addPlayer(userId, rating);
     return "add successfully";
   }
 
   @Override
   public String removePlayer(Integer userId) {
-    System.out.println(userId);
     snakePool.removePlayer(userId);
     return "remove successfully";
   }
