@@ -41,6 +41,8 @@ public class SnakeGame extends Thread {
   private boolean isOver;
   private boolean hasSaved;
   private Integer result;
+  private boolean hasRunBot0 = false;
+  private boolean hasRunBot1 = false;
 
   public SnakeGame(String mode, int rows, int cols, int innerWallsCount, SnakeWebSocketServer socket0, SnakeWebSocketServer socket1) {
     this.mode = mode;
@@ -224,6 +226,8 @@ public class SnakeGame extends Thread {
     if ("die".equals(status0) || "die".equals(status1)) {
       gameOver(status0, status1);
     }
+    hasRunBot0 = false;
+    hasRunBot1 = false;
   }
 
   private void gameOver(String status0, String status1) {
@@ -304,6 +308,7 @@ public class SnakeGame extends Thread {
   }
 
   public void runBot0() {
+    hasRunBot0 = true;
     String data = String.valueOf(0) + " " + parseData();
     socket0.bot.prepareData(data);
     JSONObject json = JSONObject.parseObject(socket0.bot.run());
@@ -313,6 +318,7 @@ public class SnakeGame extends Thread {
   }
 
   public void runBot1() {
+    hasRunBot1 = true;
     String data = String.valueOf(1) + " " + parseData();
     socket1.bot.prepareData(data);
     JSONObject json = JSONObject.parseObject(socket1.bot.run());
@@ -337,11 +343,15 @@ public class SnakeGame extends Thread {
           lock.unlock();
         }
         if (isOver) break;
-        if (direction0 == -1 && socket0.bot != null) {
-          runBot0();
+        if (direction0 == -1 && socket0.bot != null && !hasRunBot0) {
+          new Thread(() -> {
+            runBot0();
+          }).start();
         }
-        if (direction1 == -1 && socket1.bot != null) {
-          runBot1();
+        if (direction1 == -1 && socket1.bot != null && !hasRunBot1) {
+          new Thread(() -> {
+            runBot1();
+          }).start();
         }
       }
       /** stop */

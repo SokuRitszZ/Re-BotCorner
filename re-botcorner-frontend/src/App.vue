@@ -129,3 +129,9 @@ onMounted(() => {
   LANG().init();
 });
 </script>
+
+<style>
+body {
+  background-color: rgb(228, 227, 227);
+}
+</style>

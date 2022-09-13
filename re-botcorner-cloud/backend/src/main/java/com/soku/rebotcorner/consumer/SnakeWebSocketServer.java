@@ -23,8 +23,8 @@ import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @ServerEndpoint("/websocket/snake/{token}")  // 注意不要以'/'结尾
@@ -262,14 +262,23 @@ public class SnakeWebSocketServer {
     json.put("userId0", socket0.user.getId());
     json.put("userId1", socket1.user.getId());
     // 创建container
+    AtomicBoolean compiled0 = new AtomicBoolean(socket0.bot == null);
+    AtomicBoolean compiled1 = new AtomicBoolean(socket1.bot == null);
     if (socket0.bot != null) {
-      socket0.bot.start();
-      socket0.bot.compile();
+      new Thread(() -> {
+        socket0.bot.start();
+        socket0.bot.compile();
+        compiled0.set(true);
+      }).start();
     }
     if (socket1.bot != null) {
-      socket1.bot.start();
-      socket1.bot.compile();
+      new Thread(() -> {
+        socket1.bot.start();
+        socket1.bot.compile();
+        compiled1.set(true);
+      }).start();
     }
+    while (!compiled0.get() || !compiled1.get());
     socket0.sendMessage(json.toJSONString());
     socket1.sendMessage(json.toJSONString());
     snakeGame.start();

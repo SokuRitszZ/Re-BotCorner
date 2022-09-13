@@ -59,7 +59,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   if (to.meta.requireAuth && !USER().checkIsLogined) {
-    USER().loginByToken();
+    USER().loginByToken(true);
     if (USER().checkIsLogined) {
       next();
     } else {
