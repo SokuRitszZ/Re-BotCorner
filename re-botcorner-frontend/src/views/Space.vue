@@ -7,7 +7,7 @@
           <div class="username card-body">
             <h5 class="card-title" style="text-align: center; height: auto">{{ USER().getUsername }}<span style="color: gray; margin-left: 5px">#{{ userId }}</span></h5>
           </div>
-          <button v-if="userId === USER().getUserID" class="btn btn-dark" style="border-radius: 0; color: #eee; height: auto">
+          <button @click="updateInfo" v-if="userId === USER().getUserID" class="btn btn-dark" style="border-radius: 0; color: #eee; height: auto">
             修改信息
           </button>
         </div>
@@ -36,17 +36,15 @@ import Col from '../components/Col.vue';
 import USER from '../store/USER';
 import BotList from './viewsChild/BotList.vue';
 import API from '../script/api';
+import alert from '../script/alert';
 
 const route = useRoute();
 const userId = ref(route.params.userId);
-const shownBots = ref([
-  {
-    id: 1,
-    title: `Bot1`,
-  }
-]);
-
 const bots = ref([]);
+
+const updateInfo = () => {
+  alert(`warning`, `敬请期待`);
+};
 
 onMounted(() => {
   API({

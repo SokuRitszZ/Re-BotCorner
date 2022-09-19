@@ -40,7 +40,7 @@ const USER = defineStore(`USER`, {
 
     setHeadIcon(headIcon) { this.headIcon = headIcon; },
 
-    loginByToken(isAsync) {
+    loginByToken() {
       if (localStorage.getItem(`token`) == null) return ;
       this.setToken(localStorage.getItem('token'));
       this.changeIsPulling(true);
@@ -48,7 +48,7 @@ const USER = defineStore(`USER`, {
         url: `/account/getInfo`,
         type: `get`,
         needJWT: true,
-        async: isAsync || false,
+        async: false,
         success: resp => {
           this.setUserID(resp.id);
           this.setUsername(resp.username);

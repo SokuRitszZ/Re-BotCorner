@@ -12,7 +12,7 @@ public class StartGameController {
   @Autowired
   private StartGameService startGameService;
 
-  @PostMapping("/game/startgame")
+  @PostMapping("/api/game/startgame")
   public String startGame(@RequestParam MultiValueMap<String, String> data) {
     return startGameService.startGame(data.getFirst("game"), Integer.parseInt(data.getFirst("userId0")), Integer.parseInt(data.getFirst("userId1")));
   }

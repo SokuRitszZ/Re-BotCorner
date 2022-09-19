@@ -16,7 +16,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
       .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
       .and()
       .authorizeRequests()
-      .antMatchers("/matching/add/", "/matching/remove/").hasIpAddress("localhost")
+      .antMatchers("/api/matching/add/", "/api/matching/remove/").hasIpAddress("localhost")
       .antMatchers(HttpMethod.OPTIONS).permitAll()
       .anyRequest().authenticated();
   }

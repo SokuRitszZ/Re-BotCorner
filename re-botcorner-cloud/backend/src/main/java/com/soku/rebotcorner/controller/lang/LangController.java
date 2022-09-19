@@ -13,7 +13,7 @@ public class LangController {
   @Autowired
   private LangMapper langMapper;
 
-  @GetMapping("/lang/getAll")
+  @GetMapping("/api/lang/getAll")
   public List<Lang> getAll() {
     return langMapper.selectList(null);
   }

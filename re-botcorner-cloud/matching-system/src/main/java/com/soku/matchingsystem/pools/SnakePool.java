@@ -16,7 +16,7 @@ public class SnakePool extends Thread {
   private static List<Player> players = new ArrayList<>();
   private ReentrantLock lock = new ReentrantLock();
   private static RestTemplate restTemplate;
-  private final static String startGameUrl = "http://localhost:8080/game/startgame/";
+  private final static String startGameUrl = "http://localhost:8080/api/game/startgame/";
 
   @Autowired
   public void setRestTemplate(RestTemplate restTemplate) {

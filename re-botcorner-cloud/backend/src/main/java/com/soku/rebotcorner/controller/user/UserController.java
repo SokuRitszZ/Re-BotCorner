@@ -14,12 +14,12 @@ public class UserController {
   @Autowired
   UserMapper userMapper;
 
-  @GetMapping("/user/all")
+  @GetMapping("/api/user/all")
   public List<User> getAll() {
     return userMapper.selectList(null);
   }
 
-  @GetMapping("/user/{userId}")
+  @GetMapping("/api/user/{userId}")
   public User getUser(@PathVariable int userId) {
     return userMapper.selectById(userId);
   }

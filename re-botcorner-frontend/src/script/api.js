@@ -1,5 +1,6 @@
 import USER from './../store/USER';
 import $ from 'jquery';
+import { api_url } from '../config.json';
 
 const API = ({ url, type, data, async, success, error, needJWT }) => {
   let headers = {};
@@ -8,9 +9,9 @@ const API = ({ url, type, data, async, success, error, needJWT }) => {
       Authorization: `Bearer ${USER().getToken}`
     }
   };
-  if (async === undefined) async = false;
+  if (async === undefined) async = true;
   $.ajax({
-    url: `http://localhost:8080${url}`,
+    url: `http://${api_url}/api${url}`,
     type,
     headers,
     data,

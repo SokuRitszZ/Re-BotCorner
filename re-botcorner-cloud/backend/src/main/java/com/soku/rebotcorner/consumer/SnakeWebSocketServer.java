@@ -8,9 +8,11 @@ import com.soku.rebotcorner.games.SnakeGame;
 import com.soku.rebotcorner.mapper.RecordMapper;
 import com.soku.rebotcorner.mapper.UserMapper;
 import com.soku.rebotcorner.pojo.Record;
+import com.soku.rebotcorner.pojo.SnakeRating;
 import com.soku.rebotcorner.pojo.User;
-import com.soku.rebotcorner.runningbot.SnakeBot;
+import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.utils.JwtAuthenticationUtil;
+import com.soku.rebotcorner.utils.SnakeRatingDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -21,16 +23,19 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
-@ServerEndpoint("/websocket/snake/{token}")  // 注意不要以'/'结尾
+@ServerEndpoint("/api/websocket/snake/{token}")  // 注意不要以'/'结尾
 public class SnakeWebSocketServer {
-  private final static String addUrl = "http://localhost:8081/matching/add/";
-  private final static String removeUrl = "http://localhost:8081/matching/remove/";
+  private final static String addUrl = "http://localhost:8081/api/matching/add/";
+  private final static String removeUrl = "http://localhost:8081/api/matching/remove/";
   private static ConcurrentHashMap<Integer, SnakeWebSocketServer> users = new ConcurrentHashMap<>();
   private static UserMapper userMapper;
   private static RecordMapper recordMapper;
@@ -39,7 +44,8 @@ public class SnakeWebSocketServer {
   private User user = null;
   private SnakeGame snakeGame;
   private SnakeMatch snakeMatch;
-  public SnakeBot bot;
+  public RunningBot bot;
+  public boolean hasClosed = false;
 
   @Autowired
   public void setUserMapper(UserMapper userMapper) {
@@ -63,11 +69,21 @@ public class SnakeWebSocketServer {
     Integer userId = JwtAuthenticationUtil.getUserId(token);
     this.user = userMapper.selectById(userId);
     users.put(userId, this);
+    // 检查是否有rating
+    SnakeRating snakeRating = SnakeRatingDAO.selectById(userId);
+    if (snakeRating == null) {
+      SnakeRatingDAO.add(new SnakeRating(userId, 1500));
+    }
   }
 
   @OnClose
   public void onClose() {
+    hasClosed = true;
     System.out.println("disconnected.");
+    MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
+    data.add("game", "snake");
+    data.add("userId", user.getId().toString());
+    restTemplate.postForObject(removeUrl, data, String.class);
     if (this.user != null) {
       users.remove(this.user.getId());
     }
@@ -75,8 +91,18 @@ public class SnakeWebSocketServer {
       if (snakeGame.getResult() == null) {
         snakeGame.setResult(1 - getMe());
         snakeGame.setOver(true);
+        int me = getMe();
+        if (me == 0) {
+          snakeGame.setLastStatus0("die");
+          snakeGame.setLastStatus1("idle");
+          snakeGame.setReason0("exit game early");
+        } else {
+          snakeGame.setLastStatus1("die");
+          snakeGame.setLastStatus0("idle");
+          snakeGame.setReason1("exit game early");
+        }
       }
-    }
+    } else if (snakeMatch != null) exitMatching();
   }
 
   @OnMessage
@@ -108,6 +134,8 @@ public class SnakeWebSocketServer {
       playRecord(json.getInteger("id"));
     } else if ("saveRecord".equals(action)) {
       snakeGame.saveRecord();
+    } else if ("sendTalk".equals(action)) {
+      sendTalk(json.getString("content"));
     }
   }
 
@@ -117,6 +145,7 @@ public class SnakeWebSocketServer {
   }
 
   public void sendMessage(String message) {
+    if (hasClosed) return ;
     synchronized (this.session) {
       try {
         this.session.getBasicRemote().sendText(message);
@@ -146,11 +175,11 @@ public class SnakeWebSocketServer {
      */
     Integer botId = getJson.getInteger("useBotId");
     if (botId == -1) this.bot = null;
-    else this.bot = new SnakeBot(botId, this);
+    else this.bot = new RunningBot(botId, this);
     MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
     data.add("game", "snake");
     data.add("userId", user.getId().toString());
-    data.add("rating", user.getRating().toString());
+    data.add("rating", SnakeRatingDAO.selectById(user.getId()).getRating().toString());
     restTemplate.postForObject(addUrl, data, String.class);
     JSONObject json = new JSONObject();
     json.put("action", "startMatching");
@@ -332,6 +361,28 @@ public class SnakeWebSocketServer {
     snakeGame.start();
   }
 
+  private void sendTalk(String content) {
+    JSONObject json = new JSONObject();
+    json.put("action", "sendTalk");
+    if (content.length() > 64) {
+      json.put("result", "字数超过64");
+      sendMessage(json.toJSONString());
+    } else {
+      json.put("result", "ok");
+      json.put("userId", this.user.getId());
+      json.put("username", this.user.getUsername());
+      json.put("content", content);
+      Date time = new Date();
+      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+      json.put("time", sdf.format(time));
+      sendMessage(json.toJSONString());
+      if (snakeMatch != null) {
+        int you = 1 - getMe();
+        snakeMatch.sockets[you].sendMessage(json.toJSONString());
+      }
+    }
+  }
+
   private int getMe() {
     return snakeMatch.sockets[1] == this ? 1 : 0;
   }
@@ -340,5 +391,3 @@ public class SnakeWebSocketServer {
     return user;
   }
 }
-
-;

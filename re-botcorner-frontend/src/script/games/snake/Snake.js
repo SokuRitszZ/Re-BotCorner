@@ -54,6 +54,10 @@ export default class Snake extends GameObject {
     }
   }
 
+  setStatus(status) {
+    this.status = status;
+  }
+
   onStart() { } 
 
   update() { 

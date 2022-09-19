@@ -18,6 +18,7 @@
         <slot name="body"></slot>
       </div>
       <div class="modal-footer">
+        <slot name="footer"></slot>
         <button @click="closeAction" type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ closeTitle }}</button>
         <button @click="submitAction" type="button" class="btn btn-primary">{{ submitTitle }}</button>
       </div>

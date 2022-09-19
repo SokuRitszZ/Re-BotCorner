@@ -13,7 +13,7 @@ public class DeleteController {
   @Autowired
   private DeleteService deleteService;
 
-  @DeleteMapping("/bot/delete")
+  @DeleteMapping("/api/bot/delete")
   public Map<String, String> deleteBot(@RequestParam Map<String, String> data) {
     return deleteService.deleteBot(data);
   }

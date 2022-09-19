@@ -13,4 +13,8 @@ public class UserDAO {
   public static void updateById(User user) {
     userMapper.updateById(user);
   };
+
+  public static User selectById(Integer id) {
+    return userMapper.selectById(id);
+  }
 }

@@ -15,7 +15,7 @@ public class GetListByGameIdController {
   @Autowired
   private GetListByGameId getListByGameId;
 
-  @GetMapping("/record/getListByGameId")
+  @GetMapping("/api/record/getListByGameId")
   public List<Map<String, String>> get(@RequestParam Map<String, String> data) {
     return getListByGameId.get(data);
   }

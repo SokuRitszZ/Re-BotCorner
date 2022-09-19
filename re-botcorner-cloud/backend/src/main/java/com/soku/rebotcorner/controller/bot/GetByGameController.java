@@ -15,7 +15,7 @@ public class GetByGameController {
   @Autowired
   private GetByGameService getByGameService;
 
-  @GetMapping("/bot/getByGame")
+  @GetMapping("/api/bot/getByGame")
   List<Bot> getByGame(@RequestParam Map<String, String> data) {
     return getByGameService.getByGame(data);
   }

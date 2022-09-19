@@ -8,4 +8,8 @@ export default class Checker {
   moveSnake({ id, direction, status, isIncreasing }) {
     this.snakes[id].nextStep({ isIncreasing, d: direction, status });
   }
+
+  setStatus(id, status) {
+    this.snakes[id].setStatus(status);
+  }
 };

@@ -13,7 +13,7 @@ public class GameController {
   @Autowired
   private GameMapper gameMapper;
 
-  @GetMapping("/game/getAll")
+  @GetMapping("/api/game/getAll")
   public List<Game> getAll() {
     return gameMapper.selectList(null);
   }

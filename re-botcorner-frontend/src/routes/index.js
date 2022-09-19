@@ -1,9 +1,12 @@
 import { createRouter, createWebHashHistory, createWebHistory } from "vue-router";
+
 import Home from '../views/Home.vue';
 import Space from '../views/Space.vue';
 import GameLobby from '../views/GameLobby.vue';
 import NotFound from '../views/NotFound.vue';
 import Snake from '../views/Snake.vue';
+import Reversi from '../views/Reversi.vue';
+import Rating from '../views/Rating.vue';
 
 import USER from './../store/USER';
 import alert from './../script/alert';
@@ -28,6 +31,11 @@ const routes = [
     component: GameLobby,
   },
   {
+    path: '/rating',
+    name: 'rating',
+    component: Rating
+  },
+  {
     path: '/notfound',
     name: 'notfound',
     component: NotFound,
@@ -43,7 +51,10 @@ const routes = [
   {
     path: '/reversi',
     name: 'reversi',
-    redirect: '/notfound'
+    component: Reversi,
+    meta: {
+      requireAuth: true
+    }
   },
   {
     path: '/hex',

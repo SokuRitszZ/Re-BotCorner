@@ -1,10 +1,7 @@
 package com.soku.rebotcorner.config;
 
-import com.soku.rebotcorner.mapper.BotMapper;
-import com.soku.rebotcorner.mapper.LangMapper;
-import com.soku.rebotcorner.mapper.UserMapper;
+import com.soku.rebotcorner.mapper.*;
 import com.soku.rebotcorner.utils.*;
-import com.soku.rebotcorner.mapper.RecordMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,11 +17,19 @@ public class WebSocketConfig {
   }
 
   @Autowired
-  public void setWebSocketBean(RecordMapper recordMapper, UserMapper userMapper, BotMapper botMapper, RestTemplate restTemplate, LangMapper langMapper){
+  public void setWebSocketBean(
+    RecordMapper recordMapper,
+    UserMapper userMapper,
+    BotMapper botMapper,
+    RestTemplate restTemplate,
+    LangMapper langMapper,
+    SnakeRatingMapper snakeRatingMapper
+  ) {
     RecordDAO.recordMapper = recordMapper;
     UserDAO.userMapper = userMapper;
     BotDAO.botMapper = botMapper;
     RT.restTemplate = restTemplate;
     LangDAO.langMapper = langMapper;
+    SnakeRatingDAO.snakeRatingMapper = snakeRatingMapper;
   }
 }

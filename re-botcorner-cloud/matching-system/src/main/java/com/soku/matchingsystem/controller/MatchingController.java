@@ -12,14 +12,14 @@ public class MatchingController {
   @Autowired
   private MatchingService matchingService;
 
-  @PostMapping("/matching/add")
+  @PostMapping("/api/matching/add")
   public String addPlayer(@RequestParam MultiValueMap<String, String> data) {
     Integer userId = Integer.parseInt(data.getFirst("userId"));
     Integer rating = Integer.parseInt(data.getFirst("rating"));
     return matchingService.addPlayer(userId, rating);
   }
 
-  @PostMapping("/matching/remove")
+  @PostMapping("/api/matching/remove")
   public String removePlayer(@RequestParam MultiValueMap<String, String> data) {
     Integer userId = Integer.parseInt(data.getFirst("userId"));
     return matchingService.removePlayer(userId);

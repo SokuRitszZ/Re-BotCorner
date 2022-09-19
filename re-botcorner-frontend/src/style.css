@@ -6,6 +6,7 @@
   display: flex;
   margin: 4vh auto 0;
   justify-content: center;
+  font-family: monospace;
 
   animation-name: alertIn;
   animation-duration: 0.5s;

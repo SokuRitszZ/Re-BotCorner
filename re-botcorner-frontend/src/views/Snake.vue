@@ -5,70 +5,56 @@
       <div ref="parentRef" id="parent">
         <canvas ref="canvasRef" tabindex="0"></canvas>
       </div>
-      <!-- 最近比赛 -->
       <hr>
+      <!-- 最近比赛 -->
       <Collapse button-style="width: 100%; border-radius: 0;" collapse-id="recent-match" otherStyle="height: 30vh; overflow: auto">
         <template v-slot:button>
           最近比赛
         </template>
         <template v-slot:content>
-          <div style="border: 1px solid #acacac; font-size: small; padding: 5px"
-            class="mb-2" v-for="(record, index) in recordList">
-            <Container>
-              <Row>
-                <Col col="col-2">
-                  <div style="height: 100%; text-align: center; display: flex; flex-direction: column; justify-content: center">{{ record.createTime }}</div>
-                </Col>
-                <Col col="col-9">
-                  <Container other-style="text-align: center">
-                    <Row>
-                      <Col>
-                        <div :class="`btn ${ record.result == 0 ? 'btn-primary' : 'btn-outline-primary' }`" style="padding: 0;">
-                          <Container>
-                            <Row>
-                              <Col col="col-4">
-                                <img :src="record.headIcon0" style="width: 50px; margin: 5px;">
-                              </Col>
-                              <Col col="col-8">
-                                <div style="font-size: 16px; display: flex; flex-direction: column; justify-content: center;">
-                                  <div style="line-height: 200%; flex-direction: column; justify-content: center;">{{ record.username0 }}</div>
-                                  <div style="color: gray;">#{{ record.userId0 }}</div>
-                                </div>
-                              </Col>
-                            </Row>
-                          </Container>
-                        </div>
-                      </Col>
-                      <Col>
-                        <div :class="`btn ${ record.result == 1 ? 'btn-danger' : 'btn-outline-danger' }`" style="padding: 0;">
-                          <Container>
-                            <Row>
-                              <Col col="col-4">
-                                <img :src="record.headIcon1" style="width: 50px; margin: 5px;">
-                              </Col>
-                              <Col col="col-8">
-                                <div style="font-size: 16px; display: flex; flex-direction: column; justify-content: center;">
-                                  <div style="line-height: 200%; flex-direction: column; justify-content: center;">{{ record.username1 }}</div>
-                                  <div style="color: gray;">#{{ record.userId1 }}</div>
-                                </div>
-                              </Col>
-                            </Row>
-                          </Container>
-                        </div>
-                      </Col>
-                    </Row>
-                  </Container>
-                </Col>
-                <Col col="col-1">
-                  <div style="height: 100%; display: flex; flex-direction: column; justify-content: center">
-                    <button @click="playRecord(index)" class="btn btn-outline-primary" style="width: fit-content; border: none">
+          <div style="height: 600px; width: 100%; overflow: hidden">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <td>时间</td>
+                  <td>蓝方</td>
+                  <td>红方</td>
+                  <td>胜者</td>
+                  <td>回放</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(record, index) in recordList">
+                  <td>{{ record.createTime }}</td>
+                  <td> <span><img :src="record.headIcon0" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid blue" alt=""></span><span>{{ record.username0 }}#{{ record.userId0 }}</span> </td>
+                  <td> <span><img :src="record.headIcon1" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid red" alt=""></span><span>{{ record.username1 }}#{{ record.userId1 }}</span></td>
+                  <td :style="{ color: record.result == -1 ? 'black' : record.result == 0 ? 'blue' : 'red', lineHeight: '45px' }">{{ record.result == -1 ? "平局" : record.result == 0 ? "蓝方" : "红方" }}</td>
+                  <td>
+                    <button @click="playRecord(index)" class="btn btn-primary" style="width: fit-content;">
                       <i class="bi bi-play-circle" style="font-size: 20px"></i>
                     </button>
-                  </div>
-                </Col>
-              </Row>
-            </Container>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
+          <nav>
+            <ul class="pagination justify-content-center">
+              <li class="page-item">
+                <button @click="lastPage" class="page-link">
+                  <span>&laquo;</span>
+                </button>
+              </li>
+              <li :class="`page-item ${pagePtr === idx ? 'active' : ''}`" v-for="(item, idx) in Math.ceil(allRecordList.length / 4)">
+                <button @click="turnRecordPage(idx)" class="page-link">{{ item }}</button>
+              </li>
+              <li class="page-item">
+                <button @click="nextPage" class="page-link">
+                  <span>&raquo;</span>
+                </button>
+              </li>
+            </ul>
+          </nav>
         </template>
       </Collapse>
       </Col>
@@ -110,7 +96,7 @@
                 class="btn btn-success">游戏开始</button>
             </template>
             <template v-else>
-              <select class="form-select mb-2" v-model="selectedBotId">
+              <select class="form-select mb-2" v-model="selectedBotId" :disabled="state !== 'toMatch'">
                 <option :value="-1" selected>亲自出马</option>
                 <option v-for="bot in myBotList" :value="bot.id">{{ bot.title }}#{{ bot.id }}</option>
               </select>
@@ -138,10 +124,14 @@
                   <div style="text-align: center; color: gray;">#{{ opponentUserId }}</div>
                   </Col>
                   <Col col="col-8">
-                  <button v-if="!iAmOk()" @click="matchOk" class="btn btn-success mb-3" style="width: 100%">确认</button>
-                  <button v-else @click="matchNotOk" class="btn btn-secondary mb-3" style="width: 100%">取消确认</button>
-                  <button @click="exitMatching" class="btn btn-danger mb-1" style="width: 100%">取消匹配</button>
-                  <div v-if="youROk()" style="color: green; text-align: center; font-size: 10px">对手已准备就绪</div>
+                    <button v-if="!iAmOk()" @click="matchOk" class="btn btn-success mb-3" style="width: 100%">确认</button>
+                    <button v-else @click="matchNotOk" class="btn btn-secondary mb-3" style="width: 100%" :disabled="allOk()">取消确认</button>
+                    <button @click="exitMatching" class="btn btn-danger mb-1" style="width: 100%" :disabled="allOk()">取消匹配</button>
+                    <div v-if="youROk()" style="color: green; text-align: center; font-size: 10px">对手已准备就绪</div>
+                    <div v-if="allOk()" style="width: 100%; text-align: center;">
+                      <span class="spinner-border spinner-border-sm text-warning" role="status" aria-hidden="true"></span>
+                      <span class="text-warning" style="font-size: small">等待Bot编译完成...</span>
+                    </div>
                   </Col>
                 </Row>
               </template>
@@ -210,22 +200,23 @@
                       </Container>
                     </div>
                   </div>
+                  <!-- 对手 -->
                   <template v-else>
                     <h4 style="text-align: center; color: blue">
-                      {{ ok0 ? "已就绪" : "未就绪" }}
+                      <span v-if="getMe() === 0 && gameMode === 'multi'">·</span> <span> {{ ok0 ? "已就绪" : "未就绪" }} </span>
                     </h4>
                   </template>
                 </template>
                 <!-- 输入情况 -->
                 <template v-else-if="state !== 'gameOver'">
                   <h4 style="text-align: center; color: blue">
-                    {{ ok0 ? "已就绪" : "未就绪" }}
+                    <span v-if="getMe() === 0 && gameMode === 'multi'">·</span> <span>{{ ok0 ? "已就绪" : "未就绪" }}</span>
                   </h4>
                 </template>
                 <!-- 游戏结束 -->
                 <template v-else>
                   <h4 style="text-align: center; color: blue">
-                    {{ end0 }}
+                    <span v-if="getMe() === 0 && gameMode === 'multi'">·</span> <span> {{ end0 }} </span>
                   </h4>
                 </template>
               </Row>
@@ -295,20 +286,20 @@
                   </div>
                   <template v-else>
                     <h4 style="text-align: center; color: red">
-                      {{ ok1 ? "已就绪" : "未就绪" }}
+                      <span v-if="getMe() === 1 && gameMode === 'multi'">·</span> <span> {{ ok1 ? "已就绪" : "未就绪" }} </span>
                     </h4>
                   </template>
                 </template>
                 <!-- 输入情况 -->
                 <template v-else-if="state !== 'gameOver'">
                   <h4 style="text-align: center; color: red">
-                    {{ ok1 ? "已就绪" : "未就绪" }}
+                    <span v-if="getMe() === 1 && gameMode === 'multi'">·</span> <span>{{ ok1 ? "已就绪" : "未就绪" }}</span>
                   </h4>
                 </template>
                 <!-- 游戏结束 -->
                 <template v-else>
                   <h4 style="text-align: center; color: red">
-                    {{ end1 }}
+                    <span v-if="getMe() === 1 && gameMode === 'multi'">·</span> <span>{{ end1 }}</span>
                   </h4>
                 </template>
               </Row>
@@ -325,14 +316,99 @@
         </template>
       </Collapse>
       <hr>
+      <!-- 聊天窗口 -->
       <Collapse button-style="width: 100%; border-radius: 0" collapse-id="chatroom">
         <template v-slot:button>
           交流窗口
         </template>
         <template v-slot:content>
-          <h1>
-            交流窗口
-          </h1>
+          <div ref="chatroomRef" style="border: 1px solid #ccc; width: 100%; height: 600px; padding: 10px; box-sizing: border-box; overflow: auto">
+            <div :id="`msg-${message.id}`" v-for="(message, index) in messages" class="mt-2">
+              <div v-if="isShownTime(index)" style="margin: auto; background-color: rgba(3, 3, 3, 0.2); text-align: center">
+                {{ message.time }}
+              </div>
+              <div>{{ message.username }}
+                <span style="color: #aaa">
+                  #{{ message.userId }}
+                </span>
+              </div>
+              <div
+                style="
+                  border: 1px solid #ccc;
+                  padding: 10px;
+                  border-radius: 0 10px 10px 10px;"
+                class="message-content"
+              >{{ message.content }}</div>
+            </div>
+          </div>
+          <div id="chatroom-input" class="mt-2" style="width: 100%; height: 50px;">
+            <div style="display: inline-block; height: 100%; width: 80%;">
+              <input placeholder="单条消息不超过64个字" @keyup.enter="sendTalk" v-model="toSendTalk" type="text" class="form-control" style="width: 95%; height: 95%; border-radius: 0;">
+            </div>
+            <div style="display: inline-block; height: 100%; width: 20%;">
+              <button @click="sendTalk" class="btn btn-primary" style="height: 100%; width: 100%">发送</button>
+            </div>
+          </div>
+        </template>
+      </Collapse>
+      <hr>
+      <!-- 游戏介绍 -->
+      <Collapse button-style="width: 100%; border-radius: 0" collapse-id="shoukai">
+        <template v-slot:button>
+          游戏介绍
+        </template>
+        <template v-slot:content>
+          <h1>盘蛇</h1>
+          <hr>
+          <p>玩家可以操控蛇向上、向右、向下、向左移动。双方都做好决策之后才能移动。</p>
+          <p>如果撞到蛇身或者墙壁，蛇将死亡，则战败。如果同时死亡，则判为平局。</p>
+          <p>蛇在10步之前每走一步增长一次、第11步开始每走三步增长一次。</p>
+          <Modal 
+            ref="botTemplateModalRef"
+            title="Bot模板"
+            modalID="bot-template"
+            btnClass="btn btn-primary"
+            closeTitle="关闭"
+            submitTitle="好了"
+            :submitAction="botTemplateModalHide"
+            toggle-button-style="border-radius: 0"
+          >
+            <template v-slot:button>
+              Bot代码模板
+            </template>
+            <template v-slot:body>
+              <select @change="changeTemplateLang" class="form-control" v-model="selectedTemplateLang">
+                <option value="-1" selected>选择语言</option>
+                <option v-for="lang in LANG().list" :value="lang.id">
+                  {{ lang.id }}.{{ lang.lang }}
+                </option>
+              </select>
+              <hr>
+              <h2>参数说明</h2>
+              <code>方向：0为上，1为右，2为下，3为左</code>
+              <br>
+              <code>id: 你当前是什么颜色的蛇：0为蓝色，1为红色</code>
+              <br>
+              <code>rows: 地图的高度</code>
+              <br>
+              <code>cols: 地图的宽度</code>
+              <br>
+              <code>step: 当前是第几步（从0开始算起）</code>
+              <br>
+              <code>g: 地图描述，为1时表示被占领的地方</code>
+              <br>
+              <code>len: 两条蛇的长度</code>
+              <br>
+              <code>snake: 蛇身每节所在的位置</code>
+              <br>
+              <hr>
+              <MonacoEditor 
+                ref="botTemplateEditorRef"
+                height="500px"
+                editor-id="bot-template"
+              />
+            </template>
+          </Modal>
         </template>
       </Collapse>
       </Col>
@@ -345,16 +421,24 @@ import CardBody from '../components/CardBody.vue';
 import Row from '../components/Row.vue';
 import Col from '../components/Col.vue';
 import Collapse from '../components/Collapse.vue';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import SOCKET from '../store/SOCKET';
 import SnakeGame from '../script/games/snake/SnakeGame';
 import Container from '../components/Container.vue';
 import USER from '../store/USER';
 import alert from '../script/alert';
 import API from '../script/api';
+import randomId from '../script/randomid';
+import Modal from '../components/Modal.vue';
+import MonacoEditor from '../components/MonacoEditor.vue';
+import LANG from '../store/LANG';
+import snakeDemo from '../templateBotCode/snakeDemo';
 
 const parentRef = ref(null);
 const canvasRef = ref(null);
+const chatroomRef = ref(null);
+const botTemplateModalRef = ref(null);
+const botTemplateEditorRef = ref(null);
 
 const game = ref(null);
 const checker = ref(null);
@@ -372,15 +456,24 @@ const userId1 = ref(0);
 const matchOk0 = ref(false);
 const matchOk1 = ref(false);
 const matchingBoard = ref('');
+const opponentUserId = ref(0);
 const opponentHeadIcon = ref('');
 const opponentUsername = ref('');
-const opponentUserId = ref(0);
+
+const pagePtr = ref(1);
+const allRecordList = ref([]);
 const recordList = ref([]);
+
 const lastStep0 = ref(4);
 const lastStep1 = ref(4);
 const myBotList = ref([]);
 const selectedBotId = ref(-1);
 const hasClickMatching = ref(false);
+const toSendTalk = ref('');
+
+const messages = ref([]);
+
+const selectedTemplateLang = ref(-1);
 
 const initGameState = () => {
   game.value = null; 
@@ -406,10 +499,44 @@ const initGameState = () => {
   lastStep1.value = 4;
 };
 
+const botTemplateModalHide = () => {
+  botTemplateModalRef.value.hide();
+};
+
+const changeTemplateLang = () => {
+  const langId = selectedTemplateLang.value;
+  const lang = LANG().langs[langId].lang;
+  botTemplateEditorRef.value.setLang(lang);
+  botTemplateEditorRef.value.setContent(snakeDemo(langId));
+};
+
 const dbg = () => {
   setInterval(() => {
     console.log(state.value, gameMode.value);
   }, 100);
+};
+
+const isShownTime = index => {
+  const msgs = messages.value;
+  if (index === 0 || msgs[index].time !== msgs[index - 1].time) return true; 
+  return false;
+};
+
+const turnRecordPage = idx => {
+  let lst = recordList.value = [];
+  const n = allRecordList.value.length;
+  for (let i = idx * 4; i < Math.min((idx + 1) * 4, n); ++i) {
+    lst.push(allRecordList.value[i]);
+  }
+  pagePtr.value = idx;
+};
+
+const lastPage = () => {
+  turnRecordPage(Math.max(0, pagePtr.value - 1));
+};
+
+const nextPage = () => {
+  turnRecordPage(Math.min(Math.ceil(allRecordList.value.length / 4) - 1, pagePtr.value + 1));
 };
 
 const getMe = () => {
@@ -426,6 +553,10 @@ const youROk = () => {
   return userId0.value === USER().getUserID && matchOk1.value || userId1.value === USER().getUserID && matchOk0.value;
 };
 
+const allOk = () => {
+  return iAmOk() && youROk();
+}
+
 const chooseSingleMode = () => {
   if (state.value === "matching") {
     cancelMatching();
@@ -441,6 +572,7 @@ const chooseMultiMode = () => {
 
 const startSingleGaming = () => {
   hasClickMatching.value = true;
+  selectedBotId.value = -1;
   SOCKET().sendMessage({
     action: 'startSingleGaming'
   });
@@ -497,6 +629,7 @@ const matchOk = () => {
 };
 
 const matchNotOk = () => {
+  if (allOk()) return ;
   SOCKET().sendMessage({
     action: 'matchNotOk'
   });
@@ -516,6 +649,15 @@ const saveRecord = () => {
 
 const remake = () => {
   initGameState();
+};
+
+const sendTalk = () => {
+  if (toSendTalk.value.length === 0) return ;
+  SOCKET().sendMessage({
+    action: 'sendTalk',
+    content: toSendTalk.value
+  });
+  toSendTalk.value = '';
 };
 
 const receivedStartSingleGaming = json => {
@@ -660,23 +802,51 @@ const receivedSaveRecord = json => {
     alert(`warning`, `已保存该录像`);
   } else {
     alert(`success`, `保存录像成功`);
+    allRecordList.value.unshift({
+      id: json.id,
+      createTime: json.createTime,
+      userId0: json.userId0,
+      userId1: json.userId1,
+      username0: json.username0,
+      username1: json.username1,
+      headIcon0: json.headIcon0,
+      headIcon1: json.headIcon1,
+      result: json.result
+    });
   }
 };
 
 const receivedTellResult = json => {
   end0.value = json.result === 0 ? "WIN" : json.result === 1 ? "LOSE" : "DRAW";
   end1.value = json.result === 1 ? "WIN" : json.result === 0 ? "LOSE" : "DRAW";
+  switch (json.result) {
+    case 0:
+      checker.value.setStatus(1, 'die');
+      checker.value.setStatus(0, 'idle');
+      break;
+    case 1:
+      checker.value.setStatus(0, 'die');
+      checker.value.setStatus(1, 'idle');
+      break;
+    case -1:
+      checker.value.setStatus(0, 'die');
+      checker.value.setStatus(1, 'die');
+      break;
+  }
   state.value = "gameOver";
+  let reason0 = json.reason0;
+  let reason1 = json.reason1;
+  let reason = (reason0 || '') + (reason0 != null && reason1 != null ? '\n' : '') + (reason1 || '');
   if (gameMode.value === 'multi') {
     switch (json.result) {
       case getMe():
-        alert(`success`, `胜利！Rating +${json.score}`, 5000);
+        alert(`success`, `胜利！Rating +${json.score}\n战败原因: \n${reason}`, 5000);
         break;
       case 1 - getMe():
-        alert(`danger`, `战败... Rating -${json.score}`, 5000);
+        alert(`danger`, `战败... Rating -${json.score}\n战败原因: \n${reason}`, 5000);
         break;
       case -1:
-        alert(`warning`, `平局`, 5000);
+        alert(`warning`, `平局 原因: \n${reason}`, 5000);
         break;
     }
   } else {
@@ -690,6 +860,29 @@ const receivedTellResult = json => {
       case -1:
         alert(`warning`, `平局`, 5000);
     }
+  }
+  selectedBotId.value = -1;
+};
+
+const receivedSendTalk = async json => {
+  if (json.result === "ok") {
+    let message = {
+      id: randomId(),
+      userId: json.userId,
+      username: json.username,
+      content: json.content,
+      time: json.time
+    };
+    messages.value.push(message);
+    await nextTick();
+    chatroomRef.value.scrollTop = chatroomRef.value.scrollHeight;
+    let messageDiv = document.querySelector(`#msg-${message.id}>.message-content`);
+    messageDiv.classList.add("new-talk");
+    setTimeout(() => {
+      messageDiv.classList.remove("new-talk");
+    }, 500);
+  } else {
+    alert('danger', json.result);
   }
 };
 
@@ -731,6 +924,8 @@ onMounted(() => {
         receivedSaveRecord(json);
       } else if (json.action === "tellResult") {
         receivedTellResult(json);
+      } else if (json.action === "sendTalk") {
+        receivedSendTalk(json);
       }
     },
     onError(error) {
@@ -755,7 +950,8 @@ onMounted(() => {
     },
     needJWT: true,
     success: resp => {
-      recordList.value = resp.reverse();
+      allRecordList.value = resp.reverse();
+      turnRecordPage(0);
     }
   });
   API({
@@ -793,5 +989,22 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.new-talk {
+  animation-name: newTalk;
+  animation-duration: 1s;
+}
+
+@keyframes newTalk {
+  from {
+    background-color: lightgreen;
+    color: white;
+  }
+  
+  to {
+    background-color: none;
+    color: black;
+  }
 }
 </style>

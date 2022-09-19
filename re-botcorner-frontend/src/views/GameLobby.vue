@@ -29,7 +29,6 @@ import Col from '../components/Col.vue';
 import CardBody from '../components/CardBody.vue';
 import GAME from '../store/GAME';
 import router from '../routes';
-
 </script>
 
 <style scoped>

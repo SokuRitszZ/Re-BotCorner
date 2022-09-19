@@ -13,7 +13,7 @@ public class GetAllController {
   @Autowired
   private GetAllService getAllService;
 
-  @GetMapping("/bot/getAll")
+  @GetMapping("/api/bot/getAll")
   public List<Bot> getAll() {
     return getAllService.getAll();
   }

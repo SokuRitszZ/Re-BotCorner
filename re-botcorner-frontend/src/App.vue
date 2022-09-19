@@ -1,8 +1,12 @@
 <template>
   <Navbar>
     <template v-slot:left>
-      <NavbarItem> <router-link class="nav-link" to="#"> 录像 </router-link> </NavbarItem>
-      <NavbarItem> <router-link class="nav-link" to="/game"> 游戏 </router-link> </NavbarItem>
+      <NavbarItem> 
+        <router-link class="nav-link" to="/game"> 游戏 </router-link>
+      </NavbarItem>
+      <NavbarItem> 
+        <router-link class="nav-link" to="/rating"> 排行榜 </router-link>
+      </NavbarItem>
     </template>
     <template v-slot:right>
       <template v-if="USER().checkIsPulling">
@@ -16,7 +20,6 @@
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
             <li> <div @click="gotoSpace" class="dropdown-item">个人空间</div> </li>
-            <li> <div class="dropdown-item">修改信息</div> </li>
             <li> <div @click="logout" class="dropdown-item">注销</div> </li>
           </ul>
         </NavbarItem>

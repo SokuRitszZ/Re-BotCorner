@@ -2,14 +2,19 @@ package com.soku.rebotcorner.games;
 
 import com.alibaba.fastjson.JSONObject;
 import com.soku.rebotcorner.consumer.SnakeWebSocketServer;
+import com.soku.rebotcorner.pojo.SnakeRating;
 import com.soku.rebotcorner.utils.RT;
 import com.soku.rebotcorner.utils.RecordDAO;
 import com.soku.rebotcorner.pojo.Record;
 import com.soku.rebotcorner.pojo.User;
+import com.soku.rebotcorner.utils.SnakeRatingDAO;
 import com.soku.rebotcorner.utils.UserDAO;
 
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
 
 class Pair {
   int x;
@@ -43,6 +48,27 @@ public class SnakeGame extends Thread {
   private Integer result;
   private boolean hasRunBot0 = false;
   private boolean hasRunBot1 = false;
+
+  public void setLastStatus0(String lastStatus0) {
+    this.lastStatus0 = lastStatus0;
+  }
+
+  public void setLastStatus1(String lastStatus1) {
+    this.lastStatus1 = lastStatus1;
+  }
+
+  public void setReason0(String reason0) {
+    this.reason0 = reason0;
+  }
+
+  public void setReason1(String reason1) {
+    this.reason1 = reason1;
+  }
+
+  private String lastStatus0;
+  private String lastStatus1;
+  private String reason0;
+  private String reason1;
 
   public SnakeGame(String mode, int rows, int cols, int innerWallsCount, SnakeWebSocketServer socket0, SnakeWebSocketServer socket1) {
     this.mode = mode;
@@ -82,6 +108,13 @@ public class SnakeGame extends Thread {
 
   public void setOver(boolean over) {
     isOver = over;
+  }
+
+  public void broadcast(String message) {
+    if (socket0 != null) socket0.sendMessage(message);
+    if (socket1 != null && socket0 != socket1) {
+      socket1.sendMessage(message);
+    }
   }
 
   private boolean checkIsValid(int sx, int sy, int tx, int ty) {
@@ -184,8 +217,8 @@ public class SnakeGame extends Thread {
     setDirection1(-1);
     Pair first0 = snake0.getFirst();
     Pair first1 = snake1.getFirst();
-    ++step;
     boolean isIncreasing = checkIsIncreasing();
+    ++step;
     if (!isIncreasing) {
       Pair last0 = snake0.getLast();
       Pair last1 = snake1.getLast();
@@ -206,10 +239,14 @@ public class SnakeGame extends Thread {
     snake1.addFirst(newFirst1);
     if (g[nx0][ny0] == 2) {
       status0 = "die";
+      reason0 = "HIT";
     }
     if (g[nx1][ny1] == 2) {
       status1 = "die";
+      reason1 = "HIT";
     }
+    setLastStatus0(status0);
+    setLastStatus1(status1);
     JSONObject json = new JSONObject();
     json.put("action", "moveSnake");
     json.put("direction0", d0);
@@ -217,47 +254,50 @@ public class SnakeGame extends Thread {
     json.put("isIncreasing", isIncreasing);
     json.put("status0", status0);
     json.put("status1", status1);
-    if ("single".equals(mode) || "record".equals(mode)) {
-      socket0.sendMessage(json.toJSONString());
-    } else if ("multi".equals(mode)) {
-      socket0.sendMessage(json.toJSONString());
-      socket1.sendMessage(json.toJSONString());
-    }
-    if ("die".equals(status0) || "die".equals(status1)) {
-      gameOver(status0, status1);
-    }
+    broadcast(json.toJSONString());
+    // 结算
     hasRunBot0 = false;
     hasRunBot1 = false;
   }
 
-  private void gameOver(String status0, String status1) {
-    if ("die".equals(status0) && !"die".equals(status1)) {
+  private void gameOver() {
+    if ("die".equals(lastStatus0) && !"die".equals(lastStatus1)) {
       result = 1;
-    } else if ("die".equals(status1) && !"die".equals(status0)) {
+    } else if ("die".equals(lastStatus1) && !"die".equals(lastStatus0)) {
       result = 0;
     } else {
       result = -1;
     }
     isOver = true;
     if ("multi".equals(mode)) {
+      SnakeRating snakeRating0 = SnakeRatingDAO.selectById(socket0.getUser().getId());
+      SnakeRating snakeRating1 = SnakeRatingDAO.selectById(socket1.getUser().getId());
       User user0 = socket0.getUser();
       User user1 = socket1.getUser();
       if (result == 0) {
-        user0.setRating(user0.getRating() + steps.size() / 2);
-        user1.setRating(user1.getRating() - steps.size() / 2);
+        snakeRating0.setRating(snakeRating0.getRating() + steps.size() / 2);
+        snakeRating1.setRating(snakeRating1.getRating() - steps.size() / 2);
       } else if (result == 1) {
-        user0.setRating(user0.getRating() - steps.size() / 2);
-        user1.setRating(user1.getRating() + steps.size() / 2);
+        snakeRating0.setRating(snakeRating0.getRating() - steps.size() / 2);
+        snakeRating1.setRating(snakeRating1.getRating() + steps.size() / 2);
       }
       if (result != -1) {
-        UserDAO.updateById(user0);
-        UserDAO.updateById(user1);
+        SnakeRatingDAO.updateById(snakeRating0);
+        SnakeRatingDAO.updateById(snakeRating1);
       }
     }
   }
 
   private boolean checkIsIncreasing() {
-    return step < 10 || step % 3 == 0;
+    return step < 10 || (step - 9) % 3 == 0;
+  }
+
+  private void checkIsOver() {
+    if ("die".equals(lastStatus0) || "die".equals(lastStatus1)) {
+      gameOver();
+    } else if (lastStatus0 != null && lastStatus1 != null) {
+      lastStatus0 = lastStatus1 = null;
+    }
   }
 
   public void saveRecord() {
@@ -269,11 +309,30 @@ public class SnakeGame extends Thread {
       Date now = new Date();
       Record record = new Record(null, recordJson.toJSONString(), socket0.getUser().getId(), socket1.getUser().getId(), now, 1, getResult());
       RecordDAO.add(record);
+      json.put("id", record.getId());
+      json.put("json", record.getJson());
+      String timeFMT = "yyyy-MM-dd HH:mm:ss";
+      SimpleDateFormat sdf = new SimpleDateFormat(timeFMT);
+      json.put("createTime", sdf.format(record.getCreateTime()));
+
+      Integer userId0 = record.getUserId0();
+      Integer userId1 = record.getUserId1();
+      User user0 = UserDAO.selectById(userId0);
+      User user1 = UserDAO.selectById(userId1);
+      String username0 = user0.getUsername();
+      String username1 = user1.getUsername();
+      String headIcon0 = user0.getHeadIcon();
+      String headIcon1 = user1.getHeadIcon();
+      Integer result = record.getResult();
+      json.put("userId0", userId0.toString());
+      json.put("userId1", userId1.toString());
+      json.put("username0", username0);
+      json.put("username1", username1);
+      json.put("headIcon0", headIcon0);
+      json.put("headIcon1", headIcon1);
+      json.put("result", result.toString());
     }
-    socket0.sendMessage(json.toJSONString());
-    if ("multi".equals(mode)) {
-      socket1.sendMessage(json.toJSONString());
-    }
+    broadcast(json.toJSONString());
   }
 
   public String parseData() {
@@ -309,28 +368,59 @@ public class SnakeGame extends Thread {
 
   public void runBot0() {
     hasRunBot0 = true;
-    String data = String.valueOf(0) + " " + parseData();
-    socket0.bot.prepareData(data);
-    JSONObject json = JSONObject.parseObject(socket0.bot.run());
-    String result = json.getString("data");
-    setDirection0(Integer.parseInt(result));
-    socket0.setDirection(0);
+    new Thread(() -> {
+      String data = String.valueOf(0) + " " + parseData();
+      socket0.bot.prepareData(data);
+      JSONObject json = JSONObject.parseObject(socket0.bot.run());
+      String result = json.getString("data");
+      try {
+        if (result == null || result.length() == 0) throw new RuntimeException("运行超时");
+        Pattern pattern = Pattern.compile("^[-\\+]?\\d*$");
+        if (!pattern.matcher(result).matches()) {
+          throw new RuntimeException(String.format("非法输出: %s", result));
+        }
+        int d = Integer.parseInt(result);
+        if (d < 0 || d > 3) throw new RuntimeException(String.format("非法输出: %d", d));
+        setDirection0(d);
+        socket0.setDirection(1);
+      } catch (Exception e) {
+        // 输出不合法，终止游戏
+        reason0 = e.getMessage();
+        lastStatus0 = "die";
+      }
+    }).start();
   }
 
   public void runBot1() {
     hasRunBot1 = true;
-    String data = String.valueOf(1) + " " + parseData();
-    socket1.bot.prepareData(data);
-    JSONObject json = JSONObject.parseObject(socket1.bot.run());
-    String result = json.getString("data");
-    setDirection1(Integer.parseInt(result));
-    socket1.setDirection(1);
+    new Thread(() -> {
+      String data = String.valueOf(1) + " " + parseData();
+      socket1.bot.prepareData(data);
+      JSONObject json = JSONObject.parseObject(socket1.bot.run());
+      String result = json.getString("data");
+      try {
+        if (result == null || result.length() == 0) throw new RuntimeException("运行超时");
+        Pattern pattern = Pattern.compile("^[-\\+]?\\d*$");
+        if (!pattern.matcher(result).matches()) {
+          throw new RuntimeException(String.format("非法输出: %s", result));
+        }
+        int d = Integer.parseInt(result);
+        if (d < 0 || d > 3) throw new RuntimeException(String.format("非法输出: %d", d));
+        setDirection1(d);
+        socket1.setDirection(1);
+      } catch (Exception e) {
+        // 输出不合法，终止游戏
+        reason1 = e.getMessage();
+        lastStatus1 = "die";
+      }
+    }).start();
   }
 
   @Override
   public void run() {
     g[rows - 2][1] = g[1][cols - 2] = 1;
     if (!"record".equals(mode)) {
+      // 非录像模式
       while (!isOver) {
         try {
           Thread.sleep(200);
@@ -342,22 +432,21 @@ public class SnakeGame extends Thread {
           moveSnake();
           lock.unlock();
         }
+        checkIsOver();
         if (isOver) break;
         if (direction0 == -1 && socket0.bot != null && !hasRunBot0) {
-          new Thread(() -> {
-            runBot0();
-          }).start();
+          runBot0();
         }
         if (direction1 == -1 && socket1.bot != null && !hasRunBot1) {
-          new Thread(() -> {
-            runBot1();
-          }).start();
+          runBot1();
         }
       }
       /** stop */
       recordJson.put("steps", steps);
+      recordJson.put("reason0", reason0);
+      recordJson.put("reason1", reason1);
     } else {
-      while (!isOver && step < steps.size()) {
+      while (step < steps.size()) {
         try {
           Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -369,14 +458,19 @@ public class SnakeGame extends Thread {
         setDirection0(d0);
         setDirection1(d1);
         moveSnake();
+        checkIsOver();
       }
     }
+
+    // 关闭机器人
     if (socket0.bot != null) {
       socket0.bot.stop();
     }
     if (socket1.bot != null) {
       socket1.bot.stop();
     }
+
+    // 发送结果
     if (step == steps.size()) {
       if ("record".equals(mode)) {
         try {
@@ -388,12 +482,12 @@ public class SnakeGame extends Thread {
       JSONObject resultJson = new JSONObject();
       resultJson.put("action", "tellResult");
       resultJson.put("result", result);
+      resultJson.put("reason0", reason0);
+      resultJson.put("reason1", reason1);
       if ("multi".equals(mode) && result != -1) {
         resultJson.put("score", steps.size() / 2);
       }
-      socket0.sendMessage(resultJson.toJSONString());
-      if ("multi".equals(mode))
-        socket1.sendMessage(resultJson.toJSONString());
+      broadcast(resultJson.toJSONString());
     }
   }
 }

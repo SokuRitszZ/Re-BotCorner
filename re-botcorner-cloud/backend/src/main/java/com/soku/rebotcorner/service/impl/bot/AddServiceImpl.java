@@ -1,12 +1,13 @@
 package com.soku.rebotcorner.service.impl.bot;
 
+import com.alibaba.fastjson.JSONObject;
 import com.soku.rebotcorner.mapper.BotMapper;
 import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.pojo.User;
+import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.service.bot.AddService;
 import com.soku.rebotcorner.utils.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.metadata.OracleTableMetaDataProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -58,13 +59,23 @@ public class AddServiceImpl implements AddService {
       map.put("result", "没有指定语言");
       return map;
     }
-
     if (description == null || description.length() == 0) {
       description = "这个人很懒，什么都没有留下。";
     }
 
     Date now = new Date();
     Bot bot = new Bot(null, user.getId(), title, description, code, 1500, gameId, langId, now, now, false);
+    // 检测代码可否编译
+    RunningBot runningBot = new RunningBot();
+    runningBot.setBot(bot);
+    runningBot.start();
+    JSONObject json = JSONObject.parseObject(runningBot.compile());
+    if (!"ok".equals(json.getString("result"))) {
+      map.put("result", json.getString("result"));
+      runningBot.stop();
+      return map;
+    }
+    runningBot.stop();
     botMapper.insert(bot);
 
     map.put("result", "success");

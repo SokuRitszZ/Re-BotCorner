@@ -13,7 +13,7 @@ public class RegisterController {
   @Autowired
   private RegisterService registerService;
 
-  @PostMapping("/account/register/")
+  @PostMapping("/api/account/register/")
   public Map<String, String> register(@RequestParam Map<String, String> map) {
     String username = map.get("username");
     String password = map.get("password");

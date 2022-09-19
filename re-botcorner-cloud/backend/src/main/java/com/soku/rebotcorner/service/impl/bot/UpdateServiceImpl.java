@@ -1,8 +1,10 @@
 package com.soku.rebotcorner.service.impl.bot;
 
+import com.alibaba.fastjson.JSONObject;
 import com.soku.rebotcorner.mapper.BotMapper;
 import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.pojo.User;
+import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.service.bot.UpdateService;
 import com.soku.rebotcorner.utils.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +66,16 @@ public class UpdateServiceImpl implements UpdateService {
         return map;
       }
       bot.setCode(code);
+      RunningBot runningBot = new RunningBot();
+      runningBot.setBot(bot);
+      runningBot.start();
+      JSONObject json = JSONObject.parseObject(runningBot.compile());
+      runningBot.stop();
+      String result = json.getString("result");
+      if (!"ok".equals(result)) {
+        map.put("result", result);
+        return map;
+      }
     }
     bot.setModifyTime(new Date());
 

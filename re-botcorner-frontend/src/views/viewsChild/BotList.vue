@@ -35,17 +35,21 @@
             <label for="newbot-code" class="form-label">代码</label>
             <MonacoEditor ref="addBotEditorRef" height="30vh" editorId="addBotEditor" />
           </template>
+          <template v-slot:footer>
+            <div v-if="addBotLoading" class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </template>
         </Modal>
         <hr>
         <div style="height: 90% ; overflow: auto;">
-          <button @click="chooseBot(bots.indexOf(bot))" v-for="bot in bots" class="btn btn-light">
+          <button @click="chooseBot(bots.indexOf(bot))" v-for="bot in bots" class="btn btn-light mb-2" style="border: 1px solid #ccc">
             <span style="float: left">
               <img :src="`http://localhost:8080/static/lang/lang_${LANG().langs[bot.langId].lang}.png`" alt="" width="50">
             </span>
             <span>
               <strong class="title">{{  bot.title  }}</strong>
               <span class="id" style="color: gray">#{{  bot.id  }}</span>
-              <div><i>{{  GAME().games[bot.gameId].title  }}</i> - {{  bot.rating  }}</div>
             </span>
           </button>
         </div>
@@ -95,6 +99,11 @@
             <template v-slot:body>
               <MonacoEditor ref="modifyBotEditorRef" :height="`50vh`" editorId="modifyBotEditor" />
             </template>
+            <template v-slot:footer>
+              <div v-if="updateCodeLoading" class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </template>
           </Modal>
         </template>
       </CardBody>
@@ -129,6 +138,8 @@ const addBotTitle = ref(null);
 const addBotLang = ref(-1);
 const addBotGame = ref(-1);
 const addBotDescription = ref(null);
+const updateCodeLoading = ref(false);
+const addBotLoading = ref(false);
 
 const addBotModalRef = ref(null);
 const addBotEditorRef = ref(null);
@@ -137,11 +148,12 @@ const modifyBotEditorRef = ref(null);
 
 const bkupTitle = ref(null);
 const bkupDescription = ref(null);
-const bkupCode = ref(null);
 
 /** 增 */
 
 const addBot = () => {
+  if (addBotLoading.value) return ;
+  addBotLoading.value = true;
   const title = addBotTitle.value;
   const langId = addBotLang.value;
   const gameId = addBotGame.value;
@@ -180,8 +192,9 @@ const addBot = () => {
         addBotDescription.value = null;
         addBotEditorRef.value.setContent('');
       } else {
-        alert(`danger`, `添加失败：${resp.result}`, 3000);
+        alert(`danger`, `添加失败：${resp.result}`, 10000);
       }
+      addBotLoading.value = false;
     }
   });
 };
@@ -280,11 +293,13 @@ const recoverCode = () => {
 };
 
 const updateCode = () => {
+  if (updateCodeLoading.value) return ;
   const newCode = modifyBotEditorRef.value.getContent();
   if (newCode === props.bots[ptr.value].code) {
     modifyModalRef.value.hide();
     return ;
   }
+  updateCodeLoading.value = true;
   API({
     url: '/bot/update',
     type: 'post',
@@ -298,9 +313,11 @@ const updateCode = () => {
         props.bots[ptr.value].code = newCode;
         props.bots[ptr.value].modifyTime = new Date(resp.modifyTime);
         alert(`success`, `修改成功`);
+        updateCodeLoading.value = false;
         modifyModalRef.value.hide();
       } else {
-        alert(`danger`, `修改失败：${resp.value}`, 3000);
+        updateCodeLoading.value = false;
+        alert(`danger`, `修改失败：\n${resp.result}`, 3000);
       }
     }
   });
