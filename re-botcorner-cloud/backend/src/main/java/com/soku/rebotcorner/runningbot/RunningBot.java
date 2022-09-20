@@ -20,7 +20,6 @@ public class RunningBot {
   private final static String stopUrl = String.format("%s/runbot/stop/", URL);
 
   private static ConcurrentHashMap<UUID, RunningBot> bots = new ConcurrentHashMap<>();
-  private SnakeWebSocketServer socket;
   private Bot bot;
   private UUID uuid;
 
@@ -28,15 +27,18 @@ public class RunningBot {
     this.uuid = UUID.randomUUID();
   }
 
-  public RunningBot(Integer id, SnakeWebSocketServer socket) {
+  public RunningBot(Integer id) {
     this.uuid = UUID.randomUUID();
-    this.bot = BotDAO.getById(id);
-    this.socket = socket;
+    this.bot = BotDAO.selectById(id);
     bots.put(uuid, this);
   }
 
   public UUID getUuid() {
     return this.uuid;
+  }
+
+  public Bot getBot() {
+    return bot;
   }
 
   public void setBot(Bot bot) {

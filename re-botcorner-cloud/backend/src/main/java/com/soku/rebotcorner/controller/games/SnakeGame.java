@@ -1,18 +1,18 @@
-package com.soku.rebotcorner.games;
+package com.soku.rebotcorner.controller.games;
 
 import com.alibaba.fastjson.JSONObject;
 import com.soku.rebotcorner.consumer.SnakeWebSocketServer;
 import com.soku.rebotcorner.pojo.SnakeRating;
-import com.soku.rebotcorner.utils.RT;
+import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.utils.RecordDAO;
 import com.soku.rebotcorner.pojo.Record;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.utils.SnakeRatingDAO;
 import com.soku.rebotcorner.utils.UserDAO;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
@@ -46,6 +46,8 @@ public class SnakeGame extends Thread {
   private boolean isOver;
   private boolean hasSaved;
   private Integer result;
+  private RunningBot bot0;
+  private RunningBot bot1;
   private boolean hasRunBot0 = false;
   private boolean hasRunBot1 = false;
 
@@ -70,7 +72,7 @@ public class SnakeGame extends Thread {
   private String reason0;
   private String reason1;
 
-  public SnakeGame(String mode, int rows, int cols, int innerWallsCount, SnakeWebSocketServer socket0, SnakeWebSocketServer socket1) {
+  public SnakeGame(String mode, int rows, int cols, int innerWallsCount, SnakeWebSocketServer socket0, SnakeWebSocketServer socket1, RunningBot bot0, RunningBot bot1) {
     this.mode = mode;
     this.rows = rows;
     this.cols = cols;
@@ -78,6 +80,8 @@ public class SnakeGame extends Thread {
     this.g = new int[rows][cols];
     this.socket0 = socket0;
     this.socket1 = socket1;
+    this.bot0 = bot0;
+    this.bot1 = bot1;
     this.snake0 = new LinkedList<>();
     this.snake1 = new LinkedList<>();
     this.snake0.addFirst(new Pair(this.rows - 2, 1));
@@ -87,6 +91,23 @@ public class SnakeGame extends Thread {
     recordJson.put("userId0", socket0.getUser().getId());
     recordJson.put("userId1", socket1.getUser().getId());
     result = null;
+    AtomicBoolean compiled0 = new AtomicBoolean(bot0 == null);
+    AtomicBoolean compiled1 = new AtomicBoolean(bot1 == null);
+    if (bot0 != null) {
+      new Thread(() -> {
+        bot0.start();
+        bot0.compile();
+        compiled0.set(true);
+      }).start();
+    }
+    if (bot1 != null) {
+      new Thread(() -> {
+        bot1.start();
+        bot1.compile();
+        compiled1.set(true);
+      }).start();
+    }
+    while (!compiled0.get() || !compiled1.get());
     createMap();
   }
 
@@ -260,10 +281,10 @@ public class SnakeGame extends Thread {
     hasRunBot1 = false;
   }
 
-  private void gameOver() {
-    if ("die".equals(lastStatus0) && !"die".equals(lastStatus1)) {
+  public void gameOver(String status0, String status1) {
+    if ("die".equals(status0) && !"die".equals(status1)) {
       result = 1;
-    } else if ("die".equals(lastStatus1) && !"die".equals(lastStatus0)) {
+    } else if ("die".equals(status1) && !"die".equals(status0)) {
       result = 0;
     } else {
       result = -1;
@@ -286,6 +307,8 @@ public class SnakeGame extends Thread {
         SnakeRatingDAO.updateById(snakeRating1);
       }
     }
+    if (bot0 != null) bot0.stop();
+    if (bot1 != null) bot1.stop();
   }
 
   private boolean checkIsIncreasing() {
@@ -294,7 +317,7 @@ public class SnakeGame extends Thread {
 
   private void checkIsOver() {
     if ("die".equals(lastStatus0) || "die".equals(lastStatus1)) {
-      gameOver();
+      gameOver(lastStatus0, lastStatus1);
     } else if (lastStatus0 != null && lastStatus1 != null) {
       lastStatus0 = lastStatus1 = null;
     }
@@ -306,24 +329,38 @@ public class SnakeGame extends Thread {
     json.put("hasSaved", hasSaved);
     if (!hasSaved) {
       hasSaved = true;
-      Date now = new Date();
-      Record record = new Record(null, recordJson.toJSONString(), socket0.getUser().getId(), socket1.getUser().getId(), now, 1, getResult());
-      RecordDAO.add(record);
-      json.put("id", record.getId());
-      json.put("json", record.getJson());
+      Integer id = null;
+      String jsonString = recordJson.toJSONString();
+      Integer userId0 = socket0.getUser().getId();
+      Integer userId1 = socket1.getUser().getId();
+      Date createTime = new Date();
+      Integer gameId = 1;
+      Integer result = this.result;
+
+      json.put("id", id);
+      json.put("json", jsonString);
       String timeFMT = "yyyy-MM-dd HH:mm:ss";
       SimpleDateFormat sdf = new SimpleDateFormat(timeFMT);
-      json.put("createTime", sdf.format(record.getCreateTime()));
+      json.put("createTime", sdf.format(createTime));
 
-      Integer userId0 = record.getUserId0();
-      Integer userId1 = record.getUserId1();
+      if (bot0 != null) {
+        userId0 = bot0.getBot().getUserId();
+      }
+      if (bot1 != null) {
+        userId1 = bot1.getBot().getUserId();
+      }
       User user0 = UserDAO.selectById(userId0);
       User user1 = UserDAO.selectById(userId1);
       String username0 = user0.getUsername();
       String username1 = user1.getUsername();
+      if (bot0 != null) {
+        username0 += "[" + bot0.getBot().getTitle() + "]";
+      }
+      if (bot1 != null) {
+        username1 += "[" + bot1.getBot().getTitle() + "]";
+      }
       String headIcon0 = user0.getHeadIcon();
       String headIcon1 = user1.getHeadIcon();
-      Integer result = record.getResult();
       json.put("userId0", userId0.toString());
       json.put("userId1", userId1.toString());
       json.put("username0", username0);
@@ -331,6 +368,21 @@ public class SnakeGame extends Thread {
       json.put("headIcon0", headIcon0);
       json.put("headIcon1", headIcon1);
       json.put("result", result.toString());
+      Record newRecord;
+      RecordDAO.add(newRecord = new Record(
+        id,
+        jsonString,
+        userId0,
+        userId1,
+        username0,
+        username1,
+        headIcon0,
+        headIcon1,
+        createTime,
+        gameId,
+        result
+      ));
+      json.put("id", newRecord.getId());
     }
     broadcast(json.toJSONString());
   }
@@ -370,8 +422,8 @@ public class SnakeGame extends Thread {
     hasRunBot0 = true;
     new Thread(() -> {
       String data = String.valueOf(0) + " " + parseData();
-      socket0.bot.prepareData(data);
-      JSONObject json = JSONObject.parseObject(socket0.bot.run());
+      bot0.prepareData(data);
+      JSONObject json = JSONObject.parseObject(bot0.run());
       String result = json.getString("data");
       try {
         if (result == null || result.length() == 0) throw new RuntimeException("运行超时");
@@ -382,7 +434,7 @@ public class SnakeGame extends Thread {
         int d = Integer.parseInt(result);
         if (d < 0 || d > 3) throw new RuntimeException(String.format("非法输出: %d", d));
         setDirection0(d);
-        socket0.setDirection(1);
+        socket0.setDirection(0);
       } catch (Exception e) {
         // 输出不合法，终止游戏
         reason0 = e.getMessage();
@@ -395,8 +447,8 @@ public class SnakeGame extends Thread {
     hasRunBot1 = true;
     new Thread(() -> {
       String data = String.valueOf(1) + " " + parseData();
-      socket1.bot.prepareData(data);
-      JSONObject json = JSONObject.parseObject(socket1.bot.run());
+      bot1.prepareData(data);
+      JSONObject json = JSONObject.parseObject(bot1.run());
       String result = json.getString("data");
       try {
         if (result == null || result.length() == 0) throw new RuntimeException("运行超时");
@@ -434,10 +486,10 @@ public class SnakeGame extends Thread {
         }
         checkIsOver();
         if (isOver) break;
-        if (direction0 == -1 && socket0.bot != null && !hasRunBot0) {
+        if (direction0 == -1 && bot0 != null && !hasRunBot0) {
           runBot0();
         }
-        if (direction1 == -1 && socket1.bot != null && !hasRunBot1) {
+        if (direction1 == -1 && bot1 != null && !hasRunBot1) {
           runBot1();
         }
       }

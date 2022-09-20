@@ -26,8 +26,8 @@
               <tbody>
                 <tr v-for="(record, index) in recordList">
                   <td>{{ record.createTime }}</td>
-                  <td> <span><img :src="record.headIcon0" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid blue" alt=""></span><span>{{ record.username0 }}#{{ record.userId0 }}</span> </td>
-                  <td> <span><img :src="record.headIcon1" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid red" alt=""></span><span>{{ record.username1 }}#{{ record.userId1 }}</span></td>
+                  <td> <span><img :src="record.headIcon0" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid blue" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.username0 }}</div> </td>
+                  <td> <span><img :src="record.headIcon1" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid red" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.username1 }}</div></td>
                   <td :style="{ color: record.result == -1 ? 'black' : record.result == 0 ? 'blue' : 'red', lineHeight: '45px' }">{{ record.result == -1 ? "平局" : record.result == 0 ? "蓝方" : "红方" }}</td>
                   <td>
                     <button @click="playRecord(index)" class="btn btn-primary" style="width: fit-content;">
@@ -70,6 +70,7 @@
           </template>
         </template>
         <template v-slot:content>
+          <!-- 游戏尚未开始 -->
           <template v-if="state === 'toMatch' || state === 'matching' || state === 'matched'">
             <Container>
               <Row>
@@ -92,8 +93,14 @@
             <hr>
             <template v-if="isSingleMode">
               <!-- 选择单人模式 -->
+              <input v-model="singleBotId[0]" type="number" class="form-control mb-2" placeholder="选择蓝方的BotID（不填则为亲自出马）" :disabled="hasStartSingleGaming">
+              <input v-model="singleBotId[1]" type="number" class="form-control mb-2" placeholder="选择红方的BotID（不填则为亲自出马）" :disabled="hasStartSingleGaming">
               <button @click="startSingleGaming" style="width: 100%; border-radius: 0;"
-                class="btn btn-success">游戏开始</button>
+                class="btn btn-success" :disabled="hasStartSingleGaming">游戏开始</button>
+              <div v-if="hasStartSingleGaming" style="width: 100%; text-align: center;">
+                <span class="spinner-border spinner-border-sm text-warning" role="status" aria-hidden="true"></span>
+                <span class="text-warning" style="font-size: small">等待Bot编译完成...</span>
+              </div>
             </template>
             <template v-else>
               <select class="form-select mb-2" v-model="selectedBotId" :disabled="state !== 'toMatch'">
@@ -141,15 +148,16 @@
             <Container>
               <Row>
                 <!-- 0号输入口 -->
+                <!-- 游戏还没结束并且还没准备好输出 -->
                 <template v-if="state !== 'gameOver' && !ok0">
-                  <!-- 录像播放 -->
-                  <template v-if="state !== 'gameOver' && gameMode === 'record'">
+                  <!-- 播放录像的时候 显示决策 -->
+                  <template v-if="gameMode === 'record'">
                     <h4 style="text-align: center; color: blue">
                       {{ ["↑", "→", " ↓", "←", "开始"][lastStep0] }}
                     </h4>
                   </template>
-                  <!-- 单人模式 || 属于自己操作 -->
-                  <div v-else-if="state !== 'gameOver' && (gameMode === 'single' || getMe() === 0) && selectedBotId === -1">
+                  <!-- 不选择机器人 且 单人模式/多人模式下是自己的时候 显示键盘 -->
+                  <div v-else-if="gameMode === 'single' && singleBotId[0] === 0 || gameMode === 'multi' && getMe() === 0 && selectedBotId === -1">
                     <div class="btn-group" role="group" style="font-family: monospace">
                       <Container>
                         <Row>
@@ -200,14 +208,15 @@
                       </Container>
                     </div>
                   </div>
-                  <!-- 对手 -->
+                  <!-- 选择了机器人之后 || 不是自己的时候 显示是否已经就绪 -->
                   <template v-else>
                     <h4 style="text-align: center; color: blue">
+                      <!-- 是自己的时候标记自己是哪一方的 -->
                       <span v-if="getMe() === 0 && gameMode === 'multi'">·</span> <span> {{ ok0 ? "已就绪" : "未就绪" }} </span>
                     </h4>
                   </template>
                 </template>
-                <!-- 输入情况 -->
+                <!-- 游戏还没结束 但输出已经准备好了 -->
                 <template v-else-if="state !== 'gameOver'">
                   <h4 style="text-align: center; color: blue">
                     <span v-if="getMe() === 0 && gameMode === 'multi'">·</span> <span>{{ ok0 ? "已就绪" : "未就绪" }}</span>
@@ -225,15 +234,16 @@
             <Container>
               <Row>
                 <!-- 1号输入口 -->
+                <!-- 游戏还没结束并且还没准备好输出 -->
                 <template v-if="state !== 'gameOver' && !ok1">
-                  <!-- 录像播放 -->
-                  <template v-if="state !== 'gameOver' && gameMode === 'record'">
+                  <!-- 播放录像的时候 显示决策 -->
+                  <template v-if="gameMode === 'record'">
                     <h4 style="text-align: center; color: red">
                       {{ ["↑", "→", " ↓", "←", "开始"][lastStep1] }}
                     </h4>
                   </template>
-                  <!-- 单人模式 || 属于自己操作 -->
-                  <div v-else-if="state !== 'gameOver' && (gameMode === 'single' || getMe() === 1) && selectedBotId === -1">
+                  <!-- 不选择机器人 且 单人模式/多人模式下是自己的时候 显示键盘 -->
+                  <div v-else-if="gameMode === 'single' && singleBotId[1] === 0 || gameMode === 'multi' && getMe() === 1 && selectedBotId === -1">
                     <div class="btn-group" role="group" style="font-family: monospace">
                       <Container>
                         <Row>
@@ -284,13 +294,15 @@
                       </Container>
                     </div>
                   </div>
+                  <!-- 选择了机器人 || 不是自己的时候 显示是否已经就绪 -->
                   <template v-else>
                     <h4 style="text-align: center; color: red">
+                      <!-- 是自己的时候标记自己是哪一方的 -->
                       <span v-if="getMe() === 1 && gameMode === 'multi'">·</span> <span> {{ ok1 ? "已就绪" : "未就绪" }} </span>
                     </h4>
                   </template>
                 </template>
-                <!-- 输入情况 -->
+                <!-- 游戏还没结束 但输出已经准备好了 -->
                 <template v-else-if="state !== 'gameOver'">
                   <h4 style="text-align: center; color: red">
                     <span v-if="getMe() === 1 && gameMode === 'multi'">·</span> <span>{{ ok1 ? "已就绪" : "未就绪" }}</span>
@@ -440,6 +452,9 @@ const chatroomRef = ref(null);
 const botTemplateModalRef = ref(null);
 const botTemplateEditorRef = ref(null);
 
+const singleBotId = ref([ null, null ]);
+const hasStartSingleGaming = ref(false);
+
 const game = ref(null);
 const checker = ref(null);
 const isSingleMode = ref(true);
@@ -555,7 +570,7 @@ const youROk = () => {
 
 const allOk = () => {
   return iAmOk() && youROk();
-}
+};
 
 const chooseSingleMode = () => {
   if (state.value === "matching") {
@@ -571,10 +586,22 @@ const chooseMultiMode = () => {
 };
 
 const startSingleGaming = () => {
+  hasStartSingleGaming.value = true;
   hasClickMatching.value = true;
   selectedBotId.value = -1;
+  let singleBotId0 = 0;
+  let singleBotId1 = 0;
+  if (singleBotId.value[0] !== undefined || singleBotId.value[0] !== null) {
+    singleBotId0 = Math.max(singleBotId.value[0], 0);
+  }
+  if (singleBotId.value[1] !== undefined || singleBotId.value[1] !== null) {
+    singleBotId1 = Math.max(singleBotId.value[1], 0);
+  }
+  singleBotId.value = [ singleBotId0, singleBotId1 ];
   SOCKET().sendMessage({
-    action: 'startSingleGaming'
+    action: 'startSingleGaming', 
+    singleBotId0,
+    singleBotId1 
   });
 };
 
@@ -661,6 +688,13 @@ const sendTalk = () => {
 };
 
 const receivedStartSingleGaming = json => {
+  hasStartSingleGaming.value = false;
+  if (json.result !== "ok") {
+    alert(`danger`, json.result, 1000);
+    return ;
+  }
+  singleBotId.value = [ json.singleBotId0, json.singleBotId1 ];
+  console.log(singleBotId.value);
   const userId = USER().getUserID;
   game.value = new SnakeGame({
     parent: parentRef.value,
@@ -813,6 +847,7 @@ const receivedSaveRecord = json => {
       headIcon1: json.headIcon1,
       result: json.result
     });
+    turnRecordPage(pagePtr.value);
   }
 };
 

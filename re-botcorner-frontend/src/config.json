@@ -1,3 +1,6 @@
 {
-  "api_url": "103.52.153.224:8080"
+  "api_url": [
+    "localhost:8080",
+    "app2092.acapp.acwing.com.cn"
+  ]
 }

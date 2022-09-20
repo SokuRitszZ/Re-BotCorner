@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build & scp -r dist root-andrew:/home/andrew/",
     "preview": "vite preview"
   },
   "dependencies": {

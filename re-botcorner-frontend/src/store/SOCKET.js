@@ -10,7 +10,7 @@ const SOCKET = defineStore('SOCKET', {
   },
   actions: {
     connect({ game, onOpen, onClose, onMessage, onError }) {
-      const URL = `ws://${api_url}/api/websocket/${game}`;
+      const URL = `ws://${api_url[0]}/websocket/${game}`;
       const token = USER().getToken;
       this.socket = new WebSocket(`${URL}/${token}`);
       this.socket.onopen = onOpen;

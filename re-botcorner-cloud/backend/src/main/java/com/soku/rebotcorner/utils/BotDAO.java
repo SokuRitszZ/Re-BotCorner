@@ -10,7 +10,7 @@ public class BotDAO {
   @Autowired
   public static BotMapper botMapper;
 
-  public static Bot getById(Integer id) {
+  public static Bot selectById(Integer id) {
     return botMapper.selectById(id);
   }
 }

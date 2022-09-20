@@ -4,13 +4,14 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.soku.rebotcorner.consumer.match.SnakeMatch;
-import com.soku.rebotcorner.games.SnakeGame;
+import com.soku.rebotcorner.controller.games.SnakeGame;
 import com.soku.rebotcorner.mapper.RecordMapper;
 import com.soku.rebotcorner.mapper.UserMapper;
 import com.soku.rebotcorner.pojo.Record;
 import com.soku.rebotcorner.pojo.SnakeRating;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.runningbot.RunningBot;
+import com.soku.rebotcorner.utils.BotDAO;
 import com.soku.rebotcorner.utils.JwtAuthenticationUtil;
 import com.soku.rebotcorner.utils.SnakeRatingDAO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,16 +24,14 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
-import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
-@ServerEndpoint("/api/websocket/snake/{token}")  // 注意不要以'/'结尾
+@ServerEndpoint("/websocket/snake/{token}")  // 注意不要以'/'结尾
 public class SnakeWebSocketServer {
   private final static String addUrl = "http://localhost:8081/api/matching/add/";
   private final static String removeUrl = "http://localhost:8081/api/matching/remove/";
@@ -93,12 +92,10 @@ public class SnakeWebSocketServer {
         snakeGame.setOver(true);
         int me = getMe();
         if (me == 0) {
-          snakeGame.setLastStatus0("die");
-          snakeGame.setLastStatus1("idle");
+          snakeGame.gameOver("die", "idle");
           snakeGame.setReason0("exit game early");
         } else {
-          snakeGame.setLastStatus1("die");
-          snakeGame.setLastStatus0("idle");
+          snakeGame.gameOver("idle", "die");
           snakeGame.setReason1("exit game early");
         }
       }
@@ -111,7 +108,7 @@ public class SnakeWebSocketServer {
     String action = json.getString("action");
     System.out.println("received message." + action);
     if ("startSingleGaming".equals(action)) {
-      startSingleGaming();
+      startSingleGaming(json.getInteger("singleBotId0"), json.getInteger("singleBotId1"));
     } else if ("moveSnake".equals(action)) {
       if (json.getInteger("id") == 0) {
         snakeGame.setDirection0(json.getInteger("direction"));
@@ -155,16 +152,41 @@ public class SnakeWebSocketServer {
     }
   }
 
-  public void startSingleGaming() {
-    snakeGame = new SnakeGame("single", 12, 13, 20, this, this);
+  public void startSingleGaming(Integer botId0, Integer botId1) {
+    JSONObject json = new JSONObject();
+    json.put("action", "startSingleGaming");
+    System.out.println("" + botId0 + " " + botId1);
+    RunningBot bot0 = null;
+    RunningBot bot1 = null;
+    if (botId0 > 0) {
+      if (BotDAO.selectById(botId0) == null) {
+        json.put("result", "不存在蓝方所选的Bot");
+      } else {
+        bot0 = new RunningBot(botId0);
+      }
+    }
+    if (botId1 > 0) {
+      if (BotDAO.selectById(botId1) == null) {
+        json.put("result", "不存在红方所选的Bot");
+      } else {
+        bot1 = new RunningBot(botId1);
+      }
+    }
+    if (json.getString("result") != null) {
+      sendMessage(json.toJSONString());
+      return ;
+    }
+
+    snakeGame = new SnakeGame("single", 12, 13, 20, this, this, bot0, bot1);
     snakeMatch = new SnakeMatch(this, this);
     snakeMatch.sockets[0].snakeGame = snakeGame;
     snakeMatch.sockets[1].snakeGame = snakeGame;
-    JSONObject json = new JSONObject();
-    json.put("action", "startSingleGaming");
+    json.put("result", "ok");
     json.put("map", snakeGame.getG());
     json.put("userId0", user.getId());
     json.put("userId1", user.getId());
+    json.put("singleBotId0", botId0);
+    json.put("singleBotId1", botId1);
     sendMessage(json.toJSONString());
     snakeGame.start();
   }
@@ -175,7 +197,7 @@ public class SnakeWebSocketServer {
      */
     Integer botId = getJson.getInteger("useBotId");
     if (botId == -1) this.bot = null;
-    else this.bot = new RunningBot(botId, this);
+    else this.bot = new RunningBot(botId);
     MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
     data.add("game", "snake");
     data.add("userId", user.getId().toString());
@@ -279,10 +301,10 @@ public class SnakeWebSocketServer {
   }
 
   public void startMultiGaming() {
-    snakeGame = new SnakeGame("multi", 12, 13, 20, snakeMatch.sockets[0], snakeMatch.sockets[1]);
     // 向RS发送创建container的信息，并且编译
     SnakeWebSocketServer socket0 = snakeMatch.sockets[0];
     SnakeWebSocketServer socket1 = snakeMatch.sockets[1];
+    snakeGame = new SnakeGame("multi", 12, 13, 20, socket0, socket1, socket0.bot, socket1.bot);
     socket0.snakeGame = snakeGame;
     socket1.snakeGame = snakeGame;
     JSONObject json = new JSONObject();
@@ -290,24 +312,6 @@ public class SnakeWebSocketServer {
     json.put("map", snakeGame.getG());
     json.put("userId0", socket0.user.getId());
     json.put("userId1", socket1.user.getId());
-    // 创建container
-    AtomicBoolean compiled0 = new AtomicBoolean(socket0.bot == null);
-    AtomicBoolean compiled1 = new AtomicBoolean(socket1.bot == null);
-    if (socket0.bot != null) {
-      new Thread(() -> {
-        socket0.bot.start();
-        socket0.bot.compile();
-        compiled0.set(true);
-      }).start();
-    }
-    if (socket1.bot != null) {
-      new Thread(() -> {
-        socket1.bot.start();
-        socket1.bot.compile();
-        compiled1.set(true);
-      }).start();
-    }
-    while (!compiled0.get() || !compiled1.get());
     socket0.sendMessage(json.toJSONString());
     socket1.sendMessage(json.toJSONString());
     snakeGame.start();
@@ -347,7 +351,7 @@ public class SnakeWebSocketServer {
     if (snakeGame != null) {
       snakeGame.setOver(true);
     }
-    snakeGame = new SnakeGame("record", map.length, map[0].length, 0, this, this);
+    snakeGame = new SnakeGame("record", map.length, map[0].length, 0, this, this, null, null);
     snakeGame.setG(map);
     snakeGame.setResult(record.getResult());
     snakeMatch = new SnakeMatch(this, this);
