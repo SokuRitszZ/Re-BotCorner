@@ -1,6 +1,10 @@
 {
   "api_url": [
-    "localhost:8080",
-    "app2092.acapp.acwing.com.cn"
+    "http://localhost:8080",
+    "https://app2092.acapp.acwing.com.cn"
+  ],
+  "ws_url": [
+    "ws://localhost:8080",
+    "wss://app2092.acapp.acwing.com.cn"
   ]
 }

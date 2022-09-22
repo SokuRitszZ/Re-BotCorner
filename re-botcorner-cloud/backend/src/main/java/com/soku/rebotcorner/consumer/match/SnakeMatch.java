@@ -5,7 +5,6 @@ import com.soku.rebotcorner.consumer.SnakeWebSocketServer;
 public class SnakeMatch {
   public SnakeWebSocketServer[] sockets;
   public boolean[] isOk;
-  public Integer id;
 
   public SnakeMatch(SnakeWebSocketServer socket0, SnakeWebSocketServer socket1) {
     sockets = new SnakeWebSocketServer[2];

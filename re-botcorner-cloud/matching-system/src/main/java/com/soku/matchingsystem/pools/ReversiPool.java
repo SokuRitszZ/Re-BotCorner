@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
-public class SnakePool extends Thread implements MatchPool {
+public class ReversiPool extends Thread implements MatchPool {
   private static List<Player> players = new ArrayList<>();
   private ReentrantLock lock = new ReentrantLock();
   private static RestTemplate restTemplate;
@@ -20,7 +20,7 @@ public class SnakePool extends Thread implements MatchPool {
 
   @Autowired
   public void setRestTemplate(RestTemplate restTemplate) {
-    SnakePool.restTemplate = restTemplate;
+    ReversiPool.restTemplate = restTemplate;
   }
 
   public void addPlayer(Integer userId, Integer rating) {
@@ -87,19 +87,21 @@ public class SnakePool extends Thread implements MatchPool {
 
   private void sendResult(Player a, Player b) {
     MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
-    data.add("game", "snake");
+    data.add("game", "reversi");
     data.add("userId0", a.getUserId().toString());
     data.add("userId1", b.getUserId().toString());
     restTemplate.postForObject(startGameUrl, data, String.class);
   }
+
   public void display() {
-    System.out.print("Snake Pool: [ ");
+    System.out.print("Reversi Pool: [ ");
     for (Player player: players) {
       System.out.print(player.getUserId() + " ");
     }
     System.out.print("]");
     System.out.println();
   }
+
   @Override
   public void run() {
     while (true) {

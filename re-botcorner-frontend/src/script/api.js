@@ -11,7 +11,7 @@ const API = ({ url, type, data, async, success, error, needJWT }) => {
   };
   if (async === undefined) async = true;
   $.ajax({
-    url: `http://${api_url[0]}/api${url}`,
+    url: `${api_url[0]}/api${url}`,
     type,
     headers,
     data,

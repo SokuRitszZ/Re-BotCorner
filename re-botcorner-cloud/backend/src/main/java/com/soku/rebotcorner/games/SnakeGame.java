@@ -1,4 +1,4 @@
-package com.soku.rebotcorner.controller.games;
+package com.soku.rebotcorner.games;
 
 import com.alibaba.fastjson.JSONObject;
 import com.soku.rebotcorner.consumer.SnakeWebSocketServer;
@@ -16,14 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
-class Pair {
-  int x;
-  int y;
-  Pair(int x, int y) {
-    this.x = x;
-    this.y = y;
-  }
-};
+;
 
 public class SnakeGame extends Thread {
   private int rows;

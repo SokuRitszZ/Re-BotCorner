@@ -1,6 +1,5 @@
 package com.soku.rebotcorner.runningbot;
 
-import com.soku.rebotcorner.consumer.SnakeWebSocketServer;
 import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.utils.BotDAO;
 import com.soku.rebotcorner.utils.LangDAO;

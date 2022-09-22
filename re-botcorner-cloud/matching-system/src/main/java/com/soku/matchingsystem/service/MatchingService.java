@@ -1,6 +1,6 @@
 package com.soku.matchingsystem.service;
 
 public interface MatchingService {
-  String addPlayer(Integer userId, Integer rating);
-  String removePlayer(Integer userId);
+  String addPlayer(String game, Integer userId, Integer rating);
+  String removePlayer(String game, Integer userId);
 }

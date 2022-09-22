@@ -1026,20 +1026,4 @@ onUnmounted(() => {
   align-items: center;
 }
 
-.new-talk {
-  animation-name: newTalk;
-  animation-duration: 1s;
-}
-
-@keyframes newTalk {
-  from {
-    background-color: lightgreen;
-    color: white;
-  }
-  
-  to {
-    background-color: none;
-    color: black;
-  }
-}
 </style>

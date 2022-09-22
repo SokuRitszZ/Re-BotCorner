@@ -13,4 +13,8 @@ public class RecordDAO {
   public static void add(Record record) {
     recordMapper.insert(record);
   }
+
+  public static Record selectById(Integer id) {
+    return recordMapper.selectById(id);
+  }
 }

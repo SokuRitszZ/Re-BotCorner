@@ -3,10 +3,12 @@ package com.soku.rebotcorner.consumer;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.consumer.match.SnakeMatch;
-import com.soku.rebotcorner.controller.games.SnakeGame;
+import com.soku.rebotcorner.games.SnakeGame;
 import com.soku.rebotcorner.mapper.RecordMapper;
 import com.soku.rebotcorner.mapper.UserMapper;
+import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.pojo.Record;
 import com.soku.rebotcorner.pojo.SnakeRating;
 import com.soku.rebotcorner.pojo.User;
@@ -155,18 +157,17 @@ public class SnakeWebSocketServer {
   public void startSingleGaming(Integer botId0, Integer botId1) {
     JSONObject json = new JSONObject();
     json.put("action", "startSingleGaming");
-    System.out.println("" + botId0 + " " + botId1);
     RunningBot bot0 = null;
     RunningBot bot1 = null;
     if (botId0 > 0) {
-      if (BotDAO.selectById(botId0) == null) {
+      if (BotDAO.selectOne(new QueryWrapper<Bot>().eq("id", botId0).eq("game_id", 1)) == null) {
         json.put("result", "不存在蓝方所选的Bot");
       } else {
         bot0 = new RunningBot(botId0);
       }
     }
     if (botId1 > 0) {
-      if (BotDAO.selectById(botId1) == null) {
+      if (BotDAO.selectOne(new QueryWrapper<Bot>().eq("id", botId0).eq("game_id", 1)) == null) {
         json.put("result", "不存在红方所选的Bot");
       } else {
         bot1 = new RunningBot(botId1);

@@ -135,8 +135,6 @@ onMounted(() => {
 
 <style>
 body {
-  width: 1920px;
-  height: 1080px;
   background-color: rgb(228, 227, 227);
 }
 </style>

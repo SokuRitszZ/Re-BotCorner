@@ -20,4 +20,16 @@ export default class G {
     context.arc(y, x, radius, 0, Math.PI * 2);
     context.fill();
   }
+
+  static segment({ x0, y0, x1, y1, width, color }) {
+    const context = G.getContext();
+    // const context = document.createElement('canvas').getContext('2d');
+    context.lineWidth = width;
+    context.strokeStyle = color;
+    context.beginPath();
+    context.moveTo(y0, x0);
+    context.lineTo(y1, x1);
+    context.closePath();
+    context.stroke();
+  }
 };
