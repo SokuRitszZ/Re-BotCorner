@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import API from './../script/api';
+import { getAllGameApi } from './../script/api';
 
 const GAME = defineStore('GAME', {
   state: () => {
@@ -10,17 +10,11 @@ const GAME = defineStore('GAME', {
   },
   actions: {
     init() {
-      API({
-        url: '/game/getAll',
-        type: 'get',
-        needJWT: false,
-        success: resp => {
-          for (let i = 0; i < resp.length; ++i) {
-            const game = resp[i];
-            this.list.push(game);
-            this.games[game.id] = game;
-          }
-        },
+      getAllGameApi().then(gameList => {
+        this.list = gameList;
+        gameList.map(game => {
+          this.games[game.id] = game;
+        });
       });
     }
   }

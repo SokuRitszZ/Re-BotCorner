@@ -373,7 +373,7 @@ import SnakeGame from '../script/games/snake/SnakeGame';
 import Container from '../components/Container.vue';
 import USER from '../store/USER';
 import alert from '../script/alert';
-import API from '../script/api';
+import { getRecordListApi, getBotApi } from '../script/api';
 import randomId from '../script/randomid';
 import SnakeInfo from './viewsChild/SnakeInfo.vue';
 import Window from '../components/Window.vue';
@@ -860,33 +860,17 @@ onMounted(() => {
     i = (i + 1) % 3;
     matchingBoard.value = matchingBoardList[i];
   }, 1000);
-  API({
-    url: '/record/getListByGameId',
-    type: 'get',
-    data: {
-      gameId: 1
-    },
-    needJWT: true,
-    success: resp => {
-      allRecordList.value = resp.reverse();
-      turnRecordPage(0);
-    }
+  getRecordListApi(1).then(list => {
+    allRecordList.value = list.reverse();
+    turnRecordPage(0);
   });
-  API({
-    url: '/bot/getByGame',
-    type: 'get',
-    data: {
-      gameId: 1
-    },
-    needJWT: true,
-    success: resp => {
-      myBotList.value = resp;
-      myBotList.value.map(bot => {
-        bot.createTime = new Date(bot.createTime);
-        bot.modifyTime = new Date(bot.modifyTime);
-      });
-    }
-  })
+  getBotApi(1).then(list => {
+    myBotList.value = list;
+    myBotList.value.map(bot => {
+      bot.createTime = new Date(bot.createTime);
+      bot.modifyTime = new Date(bot.modifyTime);
+    });
+  });
 });
 
 onUnmounted(() => {

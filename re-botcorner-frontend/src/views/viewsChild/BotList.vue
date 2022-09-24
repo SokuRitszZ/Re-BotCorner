@@ -123,7 +123,7 @@ import timeFormat from '../../script/timeFormat.js';
 import GAME from '../../store/GAME.js';
 import LANG from '../../store/LANG.js';
 import MonacoEditor from '../../components/MonacoEditor.vue';
-import API from '../../script/api';
+import { addBotApi, deleteBotApi, updateBotApi } from '../../script/api';
 import alert from '../../script/alert';
 
 const props = defineProps({
@@ -159,43 +159,32 @@ const addBot = () => {
   const gameId = addBotGame.value;
   const description = addBotDescription.value;
   const code = addBotEditorRef.value.getContent();
-  API({
-    url: '/bot/add',
-    type: 'post',
-    needJWT: true,
-    data: {
-      title,
-      langId,
-      gameId,
-      description,
-      code
-    },
-    success: resp => {
-      if (resp.result === 'success') {
-        alert(`success`, `添加成功`);
-        props.bots.push({
-          title,
-          langId,
-          gameId,
-          description: resp.description,
-          code,
-          rating: resp.rating,
-          userId: parseInt(resp.userId),
-          id: parseInt(resp.id),
-          createTime: new Date(resp.createTime),
-          modifyTime: new Date(resp.modifyTime)
-        });
-        addBotModalRef.value.hide();
-        addBotTitle.value = null;
-        addBotLang.value = null;
-        addBotGame.value = null;
-        addBotDescription.value = null;
-        addBotEditorRef.value.setContent('');
-      } else {
-        alert(`danger`, `添加失败：${resp.result}`, 10000);
-      }
-      addBotLoading.value = false;
+  addBotApi(title, langId, gameId, description, code)
+  .then(resp => {
+    if (resp.result === 'success') {
+      alert(`success`, `添加成功`);
+      props.bots.push({
+        title,
+        langId,
+        gameId,
+        description: resp.description,
+        code,
+        rating: resp.rating,
+        userId: parseInt(resp.userId),
+        id: parseInt(resp.id),
+        createTime: new Date(resp.createTime),
+        modifyTime: new Date(resp.modifyTime)
+      });
+      addBotModalRef.value.hide();
+      addBotTitle.value = null;
+      addBotLang.value = null;
+      addBotGame.value = null;
+      addBotDescription.value = null;
+      addBotEditorRef.value.setContent('');
+    } else {
+      alert(`danger`, `添加失败：${resp.result}`, 10000);
     }
+    addBotLoading.value = false;
   });
 };
 
@@ -210,22 +199,15 @@ const notToDelete = () => {
 }
 
 const readyToDelete = () => {
-  API({
-    url: '/bot/delete',
-    type: 'delete',
-    needJWT: true,
-    data: {
-      id: props.bots[ptr.value].id
-    },
-    success: resp => {
-      if (resp.result === "success") {
-        alert(`success`, `删除成功`);
-        props.bots.splice(ptr.value, 1);
-        ptr.value = -1;
-        isToDelete.value = false;
-      } else {
-        alert(`danger`, `删除失败：${resp.result}`, 3000);
-      }
+  deleteBotApi(props.bots[ptr.value].id)
+  .then(resp => {
+    if (resp.result === "success") {
+      alert(`success`, `删除成功`);
+      props.bots.splice(ptr.value, 1);
+      ptr.value = -1;
+      isToDelete.value = false;
+    } else {
+      alert(`danger`, `删除失败：${resp.result}`, 3000);
     }
   });
 }
@@ -239,23 +221,15 @@ const backupTitle = () => {
 const updateTitle = () => {
   const newTitle = props.bots[ptr.value].title;
   if (newTitle === bkupTitle.value) return ;
-  API({
-    url: '/bot/update',
-    type: 'post',
-    needJWT: true,
-    data: {
-      id: props.bots[ptr.value].id,
-      title: newTitle
-    },
-    success: resp => {
-      if (resp.result === "success") {
-        props.bots[ptr.value].title = newTitle;
-        props.bots[ptr.value].modifyTime = new Date(resp.modifyTime);
-        alert(`success`, `修改成功`);
-      } else {
-        props.bots[ptr.value].title = bkupTitle.value;
-        alert(`danger`, `修改失败：${resp.result}`, 3000);
-      }
+  updateBotApi(props.bot[ptr.value].id, { title: newTitle})
+  .then(resp => {
+    if (resp.result === "success") {
+      props.bots[ptr.value].title = newTitle;
+      props.bots[ptr.value].modifyTime = new Date(resp.modifyTime);
+      alert(`success`, `修改成功`);
+    } else {
+      props.bots[ptr.value].title = bkupTitle.value;
+      alert(`danger`, `修改失败：${resp.result}`, 3000);
     }
   });
 };
@@ -267,23 +241,15 @@ const backupDescription = () => {
 const updateDescription = () => {
   const newDescription = props.bots[ptr.value].description;
   if (newDescription === bkupDescription.value) return ;
-  API({
-    url: '/bot/update',
-    type: 'post',
-    needJWT: true,
-    data: {
-      id: props.bots[ptr.value].id,
-      description: newDescription
-    },
-    success: resp => {
-      if (resp.result === "success") {
-        props.bots[ptr.value].description = newDescription;
-        props.bots[ptr.value].modifyTime = new Date(resp.modifyTime);
-        alert(`success`, `修改成功`);
-      } else {
-        props.bots[ptr.value].description = bkupDescription.value;
-        alert(`danger`, `修改失败：${resp.result}`, 3000);
-      }
+  updateBotApi(props.bot[ptr.value].id, { description: newDescription })
+  .then(resp => {
+    if (resp.result === "success") {
+      props.bots[ptr.value].description = newDescription;
+      props.bots[ptr.value].modifyTime = new Date(resp.modifyTime);
+      alert(`success`, `修改成功`);
+    } else {
+      props.bots[ptr.value].description = bkupDescription.value;
+      alert(`danger`, `修改失败：${resp.result}`, 3000);
     }
   });
 };
@@ -300,25 +266,17 @@ const updateCode = () => {
     return ;
   }
   updateCodeLoading.value = true;
-  API({
-    url: '/bot/update',
-    type: 'post',
-    needJWT: true,
-    data: {
-      id: props.bots[ptr.value].id,
-      code: newCode
-    },
-    success: resp => {
-      if (resp.result === "success") {
-        props.bots[ptr.value].code = newCode;
-        props.bots[ptr.value].modifyTime = new Date(resp.modifyTime);
-        alert(`success`, `修改成功`);
-        updateCodeLoading.value = false;
-        modifyModalRef.value.hide();
-      } else {
-        updateCodeLoading.value = false;
-        alert(`danger`, `修改失败：\n${resp.result}`, 3000);
-      }
+  updateBotApi(props.bot[ptr.value].id, { code: newCode })
+  .then(resp => {
+    if (resp.result === "success") {
+      props.bots[ptr.value].code = newCode;
+      props.bots[ptr.value].modifyTime = new Date(resp.modifyTime);
+      alert(`success`, `修改成功`);
+      updateCodeLoading.value = false;
+      modifyModalRef.value.hide();
+    } else {
+      updateCodeLoading.value = false;
+      alert(`danger`, `修改失败：\n${resp.result}`, 3000);
     }
   });
 };

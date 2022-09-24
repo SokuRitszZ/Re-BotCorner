@@ -247,7 +247,7 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import SOCKET from '../store/SOCKET';
 import ReversiGame from '../script/games/reversi/ReversiGame'
 import alert from '../script/alert';
-import API from '../script/api';
+import { getBotApi, getRecordListApi } from '../script/api';
 import timeFormat from '../script/timeFormat';
 import ReversiInfo from './viewsChild/ReversiInfo.vue';
 import Window from '../components/Window.vue';
@@ -624,34 +624,19 @@ onMounted(() => {
   });
 
   // 获取录像
-  API({
-    url: `/record/getListByGameId`,
-    type: 'get',
-    data: {
-      gameId: 2
-    },
-    needJWT: true,
-    success: resp => {
-      allRecordList.value = resp.reverse();
-      turnRecordPage(0);
-    }
-  });
-
+  getRecordListApi(2)
+  .then(list => {
+    allRecordList.value = resp.reverse();
+    turnRecordPage(0);
+  })
   // 获取机器人
-  API({
-    url: '/bot/getByGame',
-    type: 'get',
-    data: {
-      gameId: 2
-    },
-    needJWT: true,
-    success: resp => {
-      myBotList.value = resp;
-      myBotList.value.map(bot => {
-        bot.createTime = new Date(bot.createTime);
-        bot.modifyTime = new Date(bot.modifyTime);
-      });
-    }
+  getBotApi(2)
+  .then(list => {
+    myBotList.value = list;
+    myBotList.value.map(bot => {
+      bot.createTime = new Date(bot.createTime);
+      bot.modifyTime = new Date(bot.modifyTime);
+    });
   });
 });
 

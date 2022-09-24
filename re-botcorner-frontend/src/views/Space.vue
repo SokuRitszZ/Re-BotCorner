@@ -35,7 +35,7 @@ import Row from '../components/Row.vue';
 import Col from '../components/Col.vue';
 import USER from '../store/USER';
 import BotList from './viewsChild/BotList.vue';
-import API from '../script/api';
+import { getAllBotApi } from '../script/api';
 import alert from '../script/alert';
 
 const route = useRoute();
@@ -47,18 +47,14 @@ const updateInfo = () => {
 };
 
 onMounted(() => {
-  API({
-    url: '/bot/getAll',
-    type: 'get',
-    needJWT: true,
-    success: resp => {
-      bots.value = resp;
-      bots.value.map(bot => {
-        bot.createTime = new Date(bot.createTime);
-        bot.modifyTime = new Date(bot.modifyTime);
-      });
-    }
-  })
+  getAllBotApi()
+  .then(botList => {
+    bots.value = botList; 
+    bots.value.map(bot => {
+      bot.createTime = new Date(bot.createTime);
+      bot.modifyTime = new Date(bot.modifyTime);
+    });
+  });
 });
 
 </script>

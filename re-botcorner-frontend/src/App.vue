@@ -71,7 +71,7 @@ import Container from './components/Container.vue';
 import USER from './store/USER.js';
 import { onMounted, ref } from 'vue';
 import Modal from './components/Modal.vue';
-import API from './script/api.js';
+import { registerApi } from './script/api.js';
 import alert from './script/alert';
 import router from './routes';
 import GAME from './store/GAME';
@@ -97,27 +97,18 @@ const toRegister = () => {
   const username = registerUsername.value;
   const password = registerPassword.value;
   const confirmedPassword = registerConfirmedPassword.value;
-  API({
-    url: '/account/register/',
-    type: 'post',
-    data: {
-      username,
-      password,
-      confirmedPassword
-    },
-    success: resp => {
-      if (resp.result === "success") {
-        alert(`success`, `注册成功！两秒之后自动登录`);
-        registerUsername.value = null;
-        registerPassword.value = null;
-        registerConfirmedPassword.value = null;
-        registerModalRef.value.hide();
-        setTimeout(() => {
-          USER().loginByUP(username, password);
-        }, 2000);
-      } else {
-        alert(`danger`, `注册失败：${resp.result}`, 2000);
-      }
+  registerApi(username, password, confirmedPassword).then(resp => {
+    if (resp.result === "success") {
+      alert(`success`, `注册成功！两秒之后自动登录`);
+      registerUsername.value = null;
+      registerPassword.value = null;
+      registerConfirmedPassword.value = null;
+      registerModalRef.value.hide();
+      setTimeout(() => {
+        USER().loginByUP(username, password);
+      }, 2000);
+    } else {
+      alert(`danger`, `注册失败：${resp.result}`, 2000);
     }
   });
 };

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import alert from './../script/alert';
-import API from './../script/api';
+import { getInfoApi, loginApi } from './../script/api';
 import router from './../routes/index';
 
 const USER = defineStore(`USER`, {
@@ -44,51 +44,39 @@ const USER = defineStore(`USER`, {
       if (localStorage.getItem(`token`) == null) return ;
       this.setToken(localStorage.getItem('token'));
       this.changeIsPulling(true);
-      API({
-        url: `/account/getInfo`,
-        type: `get`,
-        needJWT: true,
-        async: false,
-        success: resp => {
-          this.setUserID(resp.id);
-          this.setUsername(resp.username);
-          this.setHeadIcon(resp.headIcon);
-          this.changeIsPulling(false);
-          this.changeIsLogined(true);
-        },
-        error: resp => {
-          this.changeIsPulling(false);
-          console.log(resp);
-        }
+      getInfoApi()
+      .then(info => {
+        this.setUserID(info.id);
+        this.setUsername(info.username);
+        this.setHeadIcon(info.headIcon);
+        this.changeIsPulling(false);
+        this.changeIsLogined(true);
+      })
+      .catch(err => {
+        this.changeIsPulling(false);
+        console.log(err);
       });
     },
     
     loginByUP(username, password) {
       this.changeIsPulling(true);
-      API({
-        url: '/account/token/',
-        type: 'post',
-        data: {
-          username,
-          password,
-        },
-        success: resp => {
-          if (resp.result === "success") {
-            localStorage.setItem(`token`, resp.token);
-            this.changeIsPulling(false);
-            this.loginByToken();
-            alert(`success`, `登录成功`);
-          } else {
-            alert(`danger`, `登录失败：${resp.result}`);
-            this.changeIsPulling(false);
-          }
-        },
-        error: resp => {
-          console.log(resp);
+      loginApi(username, password)
+      .then(resp => {
+        if (resp.result === "success") {
+          localStorage.setItem(`token`, resp.token);
           this.changeIsPulling(false);
-          alert(`danger`, `登录失败：用户名或密码错误`);
+          this.loginByToken();
+          alert(`success`, `登录成功`);
+        } else {
+          alert(`danger`, `登录失败：${resp.result}`);
+          this.changeIsPulling(false);
         }
       })
+      .catch(err => {
+        console.log(err);
+        this.changeIsPulling(false);
+        alert(`danger`, `登录失败：用户名或密码错误`);
+      });
     },
 
     logout() {

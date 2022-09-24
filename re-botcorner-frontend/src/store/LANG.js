@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import API from './../script/api';
+import { getAllLangApi } from './../script/api';
 
 const LANG = defineStore('LANG', {
   state: () => {
@@ -10,16 +10,11 @@ const LANG = defineStore('LANG', {
   },
   actions: {
     init() {
-      API({
-        url: `/lang/getAll`,
-        type: 'get',
-        success: resp => {
-          for (let i = 0; i < resp.length; ++i) {
-            const lang = resp[i];
-            this.list.push(lang);
-            this.langs[lang.id] = lang;
-          }
-        }
+      getAllLangApi().then(langList => {
+        this.list = langList;
+        langList.map(lang => {
+          this.langs[lang.id] = lang;
+        });
       });
     }
   }

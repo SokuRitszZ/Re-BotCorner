@@ -45,7 +45,7 @@ import Col from '../components/Col.vue';
 import Container from '../components/Container.vue';
 import GAME from '../store/GAME';
 import { ref } from 'vue';
-import API from '../script/api';
+import { getRatingApi } from '../script/api';
 
 const selectedGame = ref('');
 const hasSelectedGame = ref({});
@@ -54,17 +54,13 @@ const shownList = ref([]);
 const selectGame = game => {
   selectedGame.value = game;
   if (hasSelectedGame.value[game] === undefined) {
-    API({
-      url: `/getrating/${game}`,
-      type: 'get',
-      async: false,
-      success: resp => {
-        hasSelectedGame.value[game] = resp;
-        hasSelectedGame.value[game].sort((a, b) => {
-          return b.rating - a.rating;
-        });
-      }
-    });
+    getRatingApi(game)
+    .then(list => {
+      hasSelectedGame.value[game] = list;
+      hasSelectedGame.value[game].sort((a, b) => {
+        return b.rating - a.rating;
+      });
+    })
   }
   shownList.value = hasSelectedGame.value[game];
 };
