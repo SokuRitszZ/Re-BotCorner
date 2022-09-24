@@ -105,7 +105,7 @@ public class SnakeWebSocketServer {
   }
 
   @OnMessage
-  public void onMessage(String message, Session session) {
+  public void onMessage(String message, Session session) throws InterruptedException {
     JSONObject json = JSONObject.parseObject(message);
     String action = json.getString("action");
     System.out.println("received message." + action);
@@ -154,7 +154,7 @@ public class SnakeWebSocketServer {
     }
   }
 
-  public void startSingleGaming(Integer botId0, Integer botId1) {
+  public void startSingleGaming(Integer botId0, Integer botId1) throws InterruptedException {
     JSONObject json = new JSONObject();
     json.put("action", "startSingleGaming");
     RunningBot bot0 = null;
@@ -177,7 +177,6 @@ public class SnakeWebSocketServer {
       sendMessage(json.toJSONString());
       return ;
     }
-
     snakeGame = new SnakeGame("single", 12, 13, 20, this, this, bot0, bot1);
     snakeMatch = new SnakeMatch(this, this);
     snakeMatch.sockets[0].snakeGame = snakeGame;
@@ -250,7 +249,7 @@ public class SnakeWebSocketServer {
     sendMessage(json.toJSONString());
   }
 
-  private void matchOk() {
+  private void matchOk() throws InterruptedException {
     int me = getMe();
     int you = 1 - me;
     SnakeWebSocketServer youSocket = snakeMatch.sockets[you];
@@ -302,7 +301,7 @@ public class SnakeWebSocketServer {
     youSocket.sendMessage(json.toJSONString());
   }
 
-  public void startMultiGaming() {
+  public void startMultiGaming() throws InterruptedException {
     // 向RS发送创建container的信息，并且编译
     SnakeWebSocketServer socket0 = snakeMatch.sockets[0];
     SnakeWebSocketServer socket1 = snakeMatch.sockets[1];
@@ -328,7 +327,7 @@ public class SnakeWebSocketServer {
       snakeMatch.sockets[1].sendMessage(json.toJSONString());
   }
 
-  public void playRecord(Integer id) {
+  public void playRecord(Integer id) throws InterruptedException {
     Record record = recordMapper.selectById(id);
     JSONObject json = JSON.parseObject(record.getJson());
     JSONArray array0 = json.getJSONArray("map");

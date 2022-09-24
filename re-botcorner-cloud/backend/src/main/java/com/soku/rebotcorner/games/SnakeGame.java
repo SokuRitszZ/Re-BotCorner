@@ -65,7 +65,27 @@ public class SnakeGame extends Thread {
   private String reason0;
   private String reason1;
 
-  public SnakeGame(String mode, int rows, int cols, int innerWallsCount, SnakeWebSocketServer socket0, SnakeWebSocketServer socket1, RunningBot bot0, RunningBot bot1) {
+  public void compileBots() {
+    AtomicBoolean compiled0 = new AtomicBoolean(bot0 == null);
+    AtomicBoolean compiled1 = new AtomicBoolean(bot1 == null);
+    if (bot0 != null) {
+      new Thread(() -> {
+        bot0.start();
+        bot0.compile();
+        compiled0.set(true);
+      }).start();
+    }
+    if (bot1 != null) {
+      new Thread(() -> {
+        bot1.start();
+        bot1.compile();
+        compiled1.set(true);
+      }).start();
+    }
+    while (!compiled0.get() || !compiled1.get());
+  }
+
+  public SnakeGame(String mode, int rows, int cols, int innerWallsCount, SnakeWebSocketServer socket0, SnakeWebSocketServer socket1, RunningBot bot0, RunningBot bot1) throws InterruptedException {
     this.mode = mode;
     this.rows = rows;
     this.cols = cols;
@@ -84,23 +104,6 @@ public class SnakeGame extends Thread {
     recordJson.put("userId0", socket0.getUser().getId());
     recordJson.put("userId1", socket1.getUser().getId());
     result = null;
-    AtomicBoolean compiled0 = new AtomicBoolean(bot0 == null);
-    AtomicBoolean compiled1 = new AtomicBoolean(bot1 == null);
-    if (bot0 != null) {
-      new Thread(() -> {
-        bot0.start();
-        bot0.compile();
-        compiled0.set(true);
-      }).start();
-    }
-    if (bot1 != null) {
-      new Thread(() -> {
-        bot1.start();
-        bot1.compile();
-        compiled1.set(true);
-      }).start();
-    }
-    while (!compiled0.get() || !compiled1.get());
     createMap();
   }
 

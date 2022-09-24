@@ -34,7 +34,6 @@ export default class ReversiGame {
     if (!this.hasAddListener) {
       this.hasAddListener = true;
       const context = this.context;
-      // const context = document.createElement('canvas').getContext('2d');
       context.canvas.addEventListener('click', e => {
         if (this.mode !== 'record') {
           const pos = this.checker.getPosition(e.clientX, e.clientY);

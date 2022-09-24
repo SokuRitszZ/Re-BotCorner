@@ -34,7 +34,17 @@
                     <td>{{ record.createTime }}</td>
                     <td> <span><img :src="record.headIcon0" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid black" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.username0 }}</div> </td>
                     <td> <span><img :src="record.headIcon1" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid white" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.username1 }}</div></td>
-                    <td :style="{ color: record.result == -1 ? 'black' : record.result == 0 ? 'black' : 'white', lineHeight: '45px' }">{{ record.result == -1 ? "平局" : record.result == 0 ? "黑子" : "白子" }}</td>
+                    <td :style="{ color: record.result == -1 ? 'black' : record.result == 0 ? 'black' : 'white', lineHeight: '45px' }">
+                      <!-- {{ record.result == -1 ? "平局" : record.result == 0 ? "黑子" : "白子" }} -->
+                      <div v-if="record.result == -1 || record.result == 0" class="black-chess" style="box-shadow: 0 0 10px black; border-radius: 50%; display: inline-block; position: relative; width: 20px; height: 20px; margin: auto">
+                        <div style="position: absolute; z-index: 1; border-radius: 50%; background-color: black; width: 20px; height: 20px" />
+                        <div style="position: absolute; transform: translateY(1px); border-radius: 50%; background-color: white; width: 20px; height: 20px" />
+                      </div>
+                      <div v-if="record.result == -1 || record.result == 1" class="white-chess" style="box-shadow: 0 0 10px black; border-radius: 50%; display: inline-block; position: relative; width: 20px; height: 20px; margin: auto">
+                        <div style="position: absolute; z-index: 1; border-radius: 50%; background-color: white; width: 20px; height: 20px" />
+                        <div style="position: absolute; transform: translateY(1px); border-radius: 50%; background-color: black; width: 20px; height: 20px" />
+                      </div>
+                    </td>
                     <td>
                       <button @click="playRecord(index)" class="btn btn-primary" style="width: fit-content; padding: 0; width: 45px; height: 45px; border-radius: 0;">
                         <i class="bi bi-play-circle" style="font-size: 20px"></i>
@@ -65,7 +75,10 @@
         </Collapse>
       </Col>
       <Col col="col-4" v-if="!hasLinkWebSocket">
-        <button :disabled="hasClickedInitSocket" @click="initSocket" class="btn btn-primary" style="border-radius: 0; width: 100%">连接WebSocket</button>
+        <button :disabled="hasClickedInitSocket" @click="initSocket" class="btn btn-primary" style="border-radius: 0; width: 100%">
+          <span v-if="hasClickedInitSocket" class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
+          连接WebSocket
+        </button>
       </Col>
       <!-- 小版面 -->
       <Col col="col-4" v-if="hasLinkWebSocket">
@@ -172,16 +185,12 @@
                 </div>
                 <h3 style="text-align: center">当前回合为</h3>
                 <div v-if="gameTurn === '黑子'" class="black-chess" style="width: 50px; height: 50px; margin: auto">
-                  <div
-                    style="position: absolute; z-index: 1; border-radius: 50%; background-color: black; width: 50px; height: 50px" />
-                  <div
-                    style="position: absolute; transform: translateY(2.5px); border-radius: 50%; background-color: white; width: 50px; height: 50px" />
+                  <div style="position: absolute; z-index: 1; border-radius: 50%; background-color: black; width: 50px; height: 50px" />
+                  <div style="position: absolute; transform: translateY(2.5px); border-radius: 50%; background-color: white; width: 50px; height: 50px" />
                 </div>
-                <div v-if="gameTurn === '白子'" class="black-chess" style="width: 50px; height: 50px; margin: auto">
-                  <div
-                    style="position: absolute; z-index: 1; border-radius: 50%; background-color: white; width: 50px; height: 50px" />
-                  <div
-                    style="position: absolute; transform: translateY(2.5px); border-radius: 50%; background-color: black; width: 50px; height: 50px" />
+                <div v-if="gameTurn === '白子'" class="white-chess" style="width: 50px; height: 50px; margin: auto">
+                  <div style="position: absolute; z-index: 1; border-radius: 50%; background-color: white; width: 50px; height: 50px" />
+                  <div style="position: absolute; transform: translateY(2.5px); border-radius: 50%; background-color: black; width: 50px; height: 50px" />
                 </div>
               </div>
             </template>
@@ -426,166 +435,125 @@ const putChessCallback = (r, c) => {
 
 const websocketRoute = json => {
   console.log(json.action);
-  switch (json.action) {
-    case "startSingleGaming":
-      startSingleGaming(json); break;
-    case "putChess":
-      putChess(json); break;
-    case "pass":
-      pass(json); break;
-    case "gameOver":
-      gameOver(json); break;
-    case "saveRecord":
-      saveRecord(json); break;
-    case "playRecord":
-      playRecord(json); break;
-    case "startMatching":
-      startMatching(json); break;
-    case "cancelMatching":
-      cancelMatching(json); break;
-    case "successMatching":
-      successMatching(json); break;
-    case "switchMatchOk":
-      switchMatchOk(json); break;
-    case "switchMatchNot":
-      switchMatchNot(json); break;
-    case "exitMatching":
-      exitMatching(json); break;
-    case "startMultiGaming":
-      startMultiGaming(json); break;
-    case "sendTalk":
-      sendTalk(json); break;
-  }
-
-  function startSingleGaming(json) {
-    if (json.result != 'ok') {
-      alert(`danger`, json.result);
-    } else {
-      initGame('single', json.rows, json.cols, json.stringifiedChess);
-    }
-    isWaiting.value = false;
-  }
-
-  function putChess(json) {
-    if (json.result === 'ok') {
-      checker.value.putChess(json.r, json.c, json.id);
-      gameTurn.value = json.id == 1 ? '黑子' : '白子';
-    } else {
-      alert(`danger`, `非法操作`);
-    }
-  }
-
-  function pass(json) {
-    alert(`warning`, `${json.passTo == 1 ? '黑子' : '白子'}跳过`);
-    gameTurn.value = json.passTo == 0 ? '黑子' : '白子';
-  }
-
-  function gameOver(json) {
-    alert(
-      json.result == 0 ? `dark` : `light`, 
-      (json.result == 0 ? `黑子获胜` : `白子获胜`) + `\n战败原因: ${json.reason}`,
-      3000
-    );
-    state.value = 'gameOver';
-  }
-
-  function saveRecord(json) {
-    if (json.saveResult === 'ok') {
-      alert(`success`, `保存录像成功`);
-      allRecordList.value.unshift({
-        id: json.id,
-        createTime: json.createTime,
-        userId0: json.userId0,
-        userId1: json.userId1,
-        username0: json.username0,
-        username1: json.username1,
-        headIcon0: json.headIcon0,
-        headIcon1: json.headIcon1,
-        result: json.result
-      });
-      turnRecordPage(pagePtr.value);
-    } else {
-      alert(`warning`, `已保存该录像`);
-    }
-  }
-
-  function playRecord(json) {
-    initGame('record', json.rows, json.cols, json.stringifiedChess);
-  }
-
-  function startMatching(json) {
-    state.value = "matching";
-  }
-
-  function cancelMatching(json) {
-    state.value = 'toMatch';
-  }
-
-  function successMatching(json) {
-    state.value = "matched";
-    opponentId.value = json.id;
-    opponentUserId.value = json.userId;
-    opponentUsername.value = json.username;
-    opponentHeadIcon.value = json.headIcon;
-    alert(`success`, `匹配成功`, 1000);
-    const message = {
-      id: randomId(), 
-      username: json.username,
-      userId: json.userId,
-      time: timeFormat(new Date(), `yyyy-MM-dd HH:mm`)
-    };
-    chatroomRef.value.addTalk(`enter`, message);
-  }
-
-  function switchMatchOk(json) {
-    const id = json.id;
-    if (id === myId()) iOk.value = true;
-    else uOk.value = true;
-  }
-
-  function switchMatchNot(json) {
-    const id = json.id;
-    if (id === myId()) iOk.value = false;
-    else uOk.value = false;
-  }
-
-  function exitMatching(json) {
-    const id = json.id;
-    state.value = 'toMatch';
-    if (id != myId()) {
-      alert(`warning`, `对方退出了房间`);
+  const wsRoutes = {
+    startSingleGaming(json) {
+      if (json.result != 'ok') {
+        alert(`danger`, json.result);
+      } else {
+        initGame('single', json.rows, json.cols, json.stringifiedChess);
+      }
+      isWaiting.value = false;
+    },
+    putChess(json) {
+      if (json.result === 'ok') {
+        checker.value.putChess(json.r, json.c, json.id);
+        gameTurn.value = json.id == 1 ? '黑子' : '白子';
+      } else {
+        alert(`danger`, `非法操作`);
+      }
+    },
+    pass(json) {
+      alert(`warning`, `${json.passTo == 1 ? '黑子' : '白子'}跳过`);
+      gameTurn.value = json.passTo == 0 ? '黑子' : '白子';
+    },
+    gameOver(json) {
+      alert(
+        json.result == 0 ? `dark` : `light`,
+        (json.result == 0 ? `黑子获胜` : `白子获胜`) + `\n战败原因: ${json.reason}`,
+        3000
+      );
+      state.value = 'gameOver';
+    },
+    saveRecord(json) {
+      if (json.saveResult === 'ok') {
+        alert(`success`, `保存录像成功`);
+        allRecordList.value.unshift({
+          id: json.id,
+          createTime: json.createTime,
+          userId0: json.userId0,
+          userId1: json.userId1,
+          username0: json.username0,
+          username1: json.username1,
+          headIcon0: json.headIcon0,
+          headIcon1: json.headIcon1,
+          result: json.result
+        });
+        turnRecordPage(pagePtr.value);
+      } else {
+        alert(`warning`, `已保存该录像`);
+      }
+    },
+    playRecord(json) {
+      initGame('record', json.rows, json.cols, json.stringifiedChess);
+    },
+    startMatching(json) {
+      state.value = "matching";
+    },
+    cancelMatching(json) {
+      state.value = 'toMatch';
+    },
+    successMatching(json) {
+      state.value = "matched";
+      opponentId.value = json.id;
+      opponentUserId.value = json.userId;
+      opponentUsername.value = json.username;
+      opponentHeadIcon.value = json.headIcon;
+      alert(`success`, `匹配成功`, 1000);
       const message = {
         id: randomId(),
-        username: opponentUsername.value,
-        userId: opponentUserId.value,
+        username: json.username,
+        userId: json.userId,
         time: timeFormat(new Date(), `yyyy-MM-dd HH:mm`)
       };
-      chatroomRef.value.addTalk(`exit`, message);
+      chatroomRef.value.addTalk(`enter`, message);
+    },
+    switchMatchOk(json) {
+      const id = json.id;
+      if (id === myId()) iOk.value = true;
+      else uOk.value = true;
+    },
+    switchMatchNot(json) {
+      const id = json.id;
+      if (id === myId()) iOk.value = false;
+      else uOk.value = false;
+    },
+    exitMatching(json) {
+      const id = json.id;
+      state.value = 'toMatch';
+      if (id != myId()) {
+        alert(`warning`, `对方退出了房间`);
+        const message = {
+          id: randomId(),
+          username: opponentUsername.value,
+          userId: opponentUserId.value,
+          time: timeFormat(new Date(), `yyyy-MM-dd HH:mm`)
+        };
+        chatroomRef.value.addTalk(`exit`, message);
+      }
+      opponentId.value = -1;
+      opponentUserId.value = 0;
+      opponentUsername.value = '';
+      opponentHeadIcon.value = '';
+    },
+    startMultiGaming(json) {
+      initGame('multi', json.rows, json.cols, json.stringifiedChess);
+    },
+    sendTalk(json) {
+      if (json.result === "ok") {
+        let message = {
+          id: randomId(),
+          userId: json.userId,
+          username: json.username,
+          content: json.content,
+          time: json.time
+        };
+        chatroomRef.value.addTalk(`msg`, message);
+      } else {
+        alert('danger', json.result);
+      }
     }
-    opponentId.value = -1;
-    opponentUserId.value = 0;
-    opponentUsername.value = '';
-    opponentHeadIcon.value = '';
-  }
-
-  function startMultiGaming(json) {
-    initGame('multi', json.rows, json.cols, json.stringifiedChess);
-  }
-
-  function sendTalk(json) {
-    if (json.result === "ok") {
-      let message = {
-        id: randomId(),
-        userId: json.userId,
-        username: json.username,
-        content: json.content,
-        time: json.time
-      };
-      chatroomRef.value.addTalk(`msg`, message);
-    } else {
-      alert('danger', json.result);
-    }
-  }
+  };
+  wsRoutes[json.action](json);
 };
 
 const initGame = (mode, rows, cols, stringifiedChess) => {
@@ -634,6 +602,8 @@ const initSocket = () => {
 
   const onError = error => {
     console.log(error);
+    alert(`danger`, `无法连接到Websocket`);
+    hasClickedInitSocket.value = false;
   };
   
   SOCKET().connect({

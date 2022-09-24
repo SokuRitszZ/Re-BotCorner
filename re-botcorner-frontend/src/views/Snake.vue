@@ -20,7 +20,9 @@
                   <td>蓝方</td>
                   <td>红方</td>
                   <td>胜者</td>
-                  <td>回放</td>
+                  <td>
+                    <button class="btn btn-secondary" style="padding: 0; width: 25px; line-height: 25px; border-radius: 5px;"><i class="bi bi-arrow-repeat"></i></button>
+                  </td>
                 </tr>
               </thead>
               <tbody>
@@ -58,7 +60,13 @@
         </template>
       </Collapse>
       </Col>
-      <Col col="col-4">
+      <Col col="col-4" v-if="!hasLinkWebSocket">
+        <button :disabled="hasClickedInitSocket" @click="initSocket" class="btn btn-primary" style="border-radius: 0; width: 100%;">
+          <span v-if="hasClickedInitSocket" class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
+          连接WebSocket
+        </button>
+      </Col>
+      <Col col="col-4" v-if="hasLinkWebSocket">
       <!-- 匹配信息 / 局面信息 -->
       <Collapse button-style="width: 100%; border-radius: 0" collapse-id="info">
         <template v-slot:button>
@@ -359,7 +367,7 @@ import CardBody from '../components/CardBody.vue';
 import Row from '../components/Row.vue';
 import Col from '../components/Col.vue';
 import Collapse from '../components/Collapse.vue';
-import { nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import SOCKET from '../store/SOCKET';
 import SnakeGame from '../script/games/snake/SnakeGame';
 import Container from '../components/Container.vue';
@@ -367,8 +375,6 @@ import USER from '../store/USER';
 import alert from '../script/alert';
 import API from '../script/api';
 import randomId from '../script/randomid';
-import LANG from '../store/LANG';
-import snakeDemo from '../templateBotCode/snakeDemo';
 import SnakeInfo from './viewsChild/SnakeInfo.vue';
 import Window from '../components/Window.vue';
 import ChatRoom from '../components/ChatRoom.vue';
@@ -597,7 +603,6 @@ const isRight = message => {
   return message.userId == USER().getUserID;
 };
 
-
 const hasClickedInitSocket = ref(false);
 const hasLinkWebSocket = ref(false);
 
@@ -614,10 +619,12 @@ const initSocket = () => {
     hasLinkWebSocket.value = false;
   };
   const onMessage = message => {
-    websocketRoute(JSON.parse(message));
+    websocketRoute(JSON.parse(message.data));
   };
   const onError = error => {
     console.log(error);
+    alert(`danger`, `无法连接到Websocket`);
+    hasClickedInitSocket.value = false;
   };
   SOCKET().connect({
     game: `snake`,
@@ -628,32 +635,33 @@ const initSocket = () => {
   });
 };
 
+const initGame = (mode, map, _userId0, _userId1) => {
+  game.value = new SnakeGame({
+    parent: parentRef.value,
+    context: canvasRef.value.getContext('2d')
+  });
+  game.value.start({
+    map,
+  });
+  userId0.value = _userId0;
+  userId1.value = _userId1;
+  state.value = "waitingInput";
+  gameMode.value = mode;
+  checker.value = game.value.getChecker();
+};
+
 const websocketRoute = json => {
   console.log(json.action);
   const wsRoutes = {
     startSingleGaming(json) {
       hasStartSingleGaming.value = false;
-      if (json.result !== "ok") {
-        alert(`danger`, json.result, 1000);
-        return;
+      if (json.result != 'ok') {
+        alert(`danger`, json.result);
+      } else {
+        singleBotId.value = [json.singleBotId0, json.singleBotId1];
+        const userId = USER().getUserID;
+        initGame(`single`, json.map, userId, userId);
       }
-      singleBotId.value = [json.singleBotId0, json.singleBotId1];
-      console.log(singleBotId.value);
-      const userId = USER().getUserID;
-      game.value = new SnakeGame({
-        parent: parentRef.value,
-        context: canvasRef.value.getContext('2d')
-      });
-      game.value.start({
-        map: json.map,
-        userId0: userId,
-        userId1: userId
-      });
-      userId0.value = userId;
-      userId1.value = userId;
-      state.value = "waitingInput";
-      gameMode.value = "single";
-      checker.value = game.value.getChecker();
     },
     moveSnake(json) {
       const direction0 = json.direction0;
@@ -739,19 +747,8 @@ const websocketRoute = json => {
       matchOk0.value = matchOk1.value = false;
     },
     startMultiGaming(json) {
-      game.value = new SnakeGame({
-        parent: parentRef.value,
-        context: canvasRef.value.getContext('2d')
-      });
-      game.value.start({
-        map: json.map,
-        userId0: json.userId0,
-        userId1: json.userId1
-      });
-      userId0.value = json.userId0;
-      userId1.value = json.userId1;
+      initGame(`multi`, json.map, json.userId0, json.userId1);
       state.value = "waitingInput";
-      gameMode.value = "multi";
       checker.value = game.value.getChecker();
     },
     setDirection(json) {
@@ -763,20 +760,8 @@ const websocketRoute = json => {
     },
     playRecord(json) {
       const userId = USER().getUserID;
-      game.value = new SnakeGame({
-        parent: parentRef.value,
-        context: canvasRef.value.getContext('2d')
-      });
-      game.value.start({
-        map: json.map,
-        userId0: userId,
-        userId1: userId
-      });
-      userId0.value = userId;
-      userId1.value = userId;
+      initGame(`record`, json.map, userId, userId);
       state.value = "playingRecord";
-      gameMode.value = "record";
-      checker.value = game.value.getChecker();
     },
     saveRecord(json) {
       if (json.hasSaved) {
@@ -860,7 +845,7 @@ const websocketRoute = json => {
       }
     },
   };
-  wsRoutes[json.action];
+  wsRoutes[json.action](json);
 };
 
 onMounted(() => {
