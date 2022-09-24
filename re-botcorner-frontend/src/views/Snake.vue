@@ -12,7 +12,7 @@
           最近比赛
         </template>
         <template v-slot:content>
-          <div style="height: 600px; width: 100%; overflow: hidden">
+          <div style="height: 600px; width: 100%; overflow: auto">
             <table class="table table-striped">
               <thead>
                 <tr>
@@ -329,40 +329,16 @@
       </Collapse>
       <hr>
       <!-- 聊天窗口 -->
-      <Collapse button-style="width: 100%; border-radius: 0" collapse-id="chatroom">
-        <template v-slot:button>
-          交流窗口
+      <Window button-style="width: 100%; border-radius: 0" title="聊天窗口">
+        <template v-slot:body>
+          <ChatRoom 
+            ref="chatroomRef"
+            :sendTalk="sendTalk"
+            :isLeft="isLeft"
+            :isRight="isRight"
+          />
         </template>
-        <template v-slot:content>
-          <div ref="chatroomRef" style="border: 1px solid #ccc; width: 100%; height: 600px; padding: 10px; box-sizing: border-box; overflow: auto">
-            <div :id="`msg-${message.id}`" v-for="(message, index) in messages" class="mt-2">
-              <div v-if="isShownTime(index)" style="margin: auto; background-color: rgba(3, 3, 3, 0.2); text-align: center">
-                {{ message.time }}
-              </div>
-              <div>{{ message.username }}
-                <span style="color: #aaa">
-                  #{{ message.userId }}
-                </span>
-              </div>
-              <div
-                style="
-                  border: 1px solid #ccc;
-                  padding: 10px;
-                  border-radius: 0 10px 10px 10px;"
-                class="message-content"
-              >{{ message.content }}</div>
-            </div>
-          </div>
-          <div id="chatroom-input" class="mt-2" style="width: 100%; height: 50px;">
-            <div style="display: inline-block; height: 100%; width: 80%;">
-              <input placeholder="单条消息不超过64个字" @keyup.enter="sendTalk" v-model="toSendTalk" type="text" class="form-control" style="width: 95%; height: 95%; border-radius: 0;">
-            </div>
-            <div style="display: inline-block; height: 100%; width: 20%;">
-              <button @click="sendTalk" class="btn btn-primary" style="height: 100%; width: 100%">发送</button>
-            </div>
-          </div>
-        </template>
-      </Collapse>
+      </Window>
       <hr>
       <!-- 游戏介绍 -->
       <Collapse button-style="width: 100%; border-radius: 0" collapse-id="shoukai">
@@ -370,57 +346,7 @@
           游戏介绍
         </template>
         <template v-slot:content>
-          <h1>盘蛇</h1>
-          <hr>
-          <p>玩家可以操控蛇向上、向右、向下、向左移动。双方都做好决策之后才能移动。</p>
-          <p>如果撞到蛇身或者墙壁，蛇将死亡，则战败。如果同时死亡，则判为平局。</p>
-          <p>蛇在10步之前每走一步增长一次、第11步开始每走三步增长一次。</p>
-          <Modal 
-            ref="botTemplateModalRef"
-            title="Bot模板"
-            modalID="bot-template"
-            btnClass="btn btn-primary"
-            closeTitle="关闭"
-            submitTitle="好了"
-            :submitAction="botTemplateModalHide"
-            toggle-button-style="border-radius: 0"
-          >
-            <template v-slot:button>
-              Bot代码模板
-            </template>
-            <template v-slot:body>
-              <select @change="changeTemplateLang" class="form-control" v-model="selectedTemplateLang">
-                <option value="-1" selected>选择语言</option>
-                <option v-for="lang in LANG().list" :value="lang.id">
-                  {{ lang.id }}.{{ lang.lang }}
-                </option>
-              </select>
-              <hr>
-              <h2>参数说明</h2>
-              <code>方向：0为上，1为右，2为下，3为左</code>
-              <br>
-              <code>id: 你当前是什么颜色的蛇：0为蓝色，1为红色</code>
-              <br>
-              <code>rows: 地图的高度</code>
-              <br>
-              <code>cols: 地图的宽度</code>
-              <br>
-              <code>step: 当前是第几步（从0开始算起）</code>
-              <br>
-              <code>g: 地图描述，为1时表示被占领的地方</code>
-              <br>
-              <code>len: 两条蛇的长度</code>
-              <br>
-              <code>snake: 蛇身每节所在的位置</code>
-              <br>
-              <hr>
-              <MonacoEditor 
-                ref="botTemplateEditorRef"
-                height="500px"
-                editor-id="bot-template"
-              />
-            </template>
-          </Modal>
+          <SnakeInfo />
         </template>
       </Collapse>
       </Col>
@@ -441,16 +367,16 @@ import USER from '../store/USER';
 import alert from '../script/alert';
 import API from '../script/api';
 import randomId from '../script/randomid';
-import Modal from '../components/Modal.vue';
-import MonacoEditor from '../components/MonacoEditor.vue';
 import LANG from '../store/LANG';
 import snakeDemo from '../templateBotCode/snakeDemo';
+import SnakeInfo from './viewsChild/SnakeInfo.vue';
+import Window from '../components/Window.vue';
+import ChatRoom from '../components/ChatRoom.vue';
+import timeFormat from '../script/timeFormat';
 
 const parentRef = ref(null);
 const canvasRef = ref(null);
 const chatroomRef = ref(null);
-const botTemplateModalRef = ref(null);
-const botTemplateEditorRef = ref(null);
 
 const singleBotId = ref([ null, null ]);
 const hasStartSingleGaming = ref(false);
@@ -484,11 +410,6 @@ const lastStep1 = ref(4);
 const myBotList = ref([]);
 const selectedBotId = ref(-1);
 const hasClickMatching = ref(false);
-const toSendTalk = ref('');
-
-const messages = ref([]);
-
-const selectedTemplateLang = ref(-1);
 
 const initGameState = () => {
   game.value = null; 
@@ -514,27 +435,10 @@ const initGameState = () => {
   lastStep1.value = 4;
 };
 
-const botTemplateModalHide = () => {
-  botTemplateModalRef.value.hide();
-};
-
-const changeTemplateLang = () => {
-  const langId = selectedTemplateLang.value;
-  const lang = LANG().langs[langId].lang;
-  botTemplateEditorRef.value.setLang(lang);
-  botTemplateEditorRef.value.setContent(snakeDemo(langId));
-};
-
 const dbg = () => {
   setInterval(() => {
     console.log(state.value, gameMode.value);
   }, 100);
-};
-
-const isShownTime = index => {
-  const msgs = messages.value;
-  if (index === 0 || msgs[index].time !== msgs[index - 1].time) return true; 
-  return false;
 };
 
 const turnRecordPage = idx => {
@@ -678,295 +582,289 @@ const remake = () => {
   initGameState();
 };
 
-const sendTalk = () => {
-  if (toSendTalk.value.length === 0) return ;
+const sendTalk = content => {
   SOCKET().sendMessage({
     action: 'sendTalk',
-    content: toSendTalk.value
+    content
   });
-  toSendTalk.value = '';
 };
 
-const receivedStartSingleGaming = json => {
-  hasStartSingleGaming.value = false;
-  if (json.result !== "ok") {
-    alert(`danger`, json.result, 1000);
-    return ;
-  }
-  singleBotId.value = [ json.singleBotId0, json.singleBotId1 ];
-  console.log(singleBotId.value);
-  const userId = USER().getUserID;
-  game.value = new SnakeGame({
-    parent: parentRef.value,
-    context: canvasRef.value.getContext('2d')
+const isLeft = message => {
+  return message.userId != USER().getUserID;
+};
+
+const isRight = message => {
+  return message.userId == USER().getUserID;
+};
+
+
+const hasClickedInitSocket = ref(false);
+const hasLinkWebSocket = ref(false);
+
+const initSocket = () => {
+  initGameState();
+  hasClickedInitSocket.value = true;
+  const onOpen = () => {
+    console.log(`open websocket.`);
+    hasLinkWebSocket.value = true;
+    hasClickedInitSocket.value = false;
+  };
+  const onClose = () => {
+    console.log(`close websocket.`);
+    hasLinkWebSocket.value = false;
+  };
+  const onMessage = message => {
+    websocketRoute(JSON.parse(message));
+  };
+  const onError = error => {
+    console.log(error);
+  };
+  SOCKET().connect({
+    game: `snake`,
+    onOpen,
+    onClose,
+    onMessage,
+    onError
   });
-  game.value.start({
-    map: json.map,
-    userId0: userId,
-    userId1: userId
-  });
-  userId0.value = userId;
-  userId1.value = userId;
-  state.value = "waitingInput";
-  gameMode.value = "single";
-  checker.value = game.value.getChecker();
 };
 
-const receivedMoveSnake = json => {
-  const direction0 = json.direction0;
-  const direction1 = json.direction1;
-  const isIncreasing = json.isIncreasing;
-  const status0 = json.status0;
-  const status1 = json.status1;
-  checker.value.moveSnake({
-    id: 0,
-    direction: direction0,
-    status: status0,
-    isIncreasing
-  });
-  checker.value.moveSnake({
-    id: 1,
-    direction: direction1,
-    status: status1,
-    isIncreasing
-  });
-  if (gameMode.value === "record") {
-    lastStep0.value = direction0;
-    lastStep1.value = direction1;
-  }
-  ok0.value = false;
-  ok1.value = false;
-};
+const websocketRoute = json => {
+  console.log(json.action);
+  const wsRoutes = {
+    startSingleGaming(json) {
+      hasStartSingleGaming.value = false;
+      if (json.result !== "ok") {
+        alert(`danger`, json.result, 1000);
+        return;
+      }
+      singleBotId.value = [json.singleBotId0, json.singleBotId1];
+      console.log(singleBotId.value);
+      const userId = USER().getUserID;
+      game.value = new SnakeGame({
+        parent: parentRef.value,
+        context: canvasRef.value.getContext('2d')
+      });
+      game.value.start({
+        map: json.map,
+        userId0: userId,
+        userId1: userId
+      });
+      userId0.value = userId;
+      userId1.value = userId;
+      state.value = "waitingInput";
+      gameMode.value = "single";
+      checker.value = game.value.getChecker();
+    },
+    moveSnake(json) {
+      const direction0 = json.direction0;
+      const direction1 = json.direction1;
+      const isIncreasing = json.isIncreasing;
+      const status0 = json.status0;
+      const status1 = json.status1;
+      checker.value.moveSnake({
+        id: 0,
+        direction: direction0,
+        status: status0,
+        isIncreasing
+      });
+      checker.value.moveSnake({
+        id: 1,
+        direction: direction1,
+        status: status1,
+        isIncreasing
+      });
+      if (gameMode.value === "record") {
+        lastStep0.value = direction0;
+        lastStep1.value = direction1;
+      }
+      ok0.value = false;
+      ok1.value = false;
+    },
+    startMatching(json) {
+      hasClickMatching.value = false;
+      state.value = 'matching';
+    },
+    successMatching(json) {
+      opponentHeadIcon.value = json.opponentHeadIcon;
+      opponentUserId.value = json.opponentUserId;
+      opponentUsername.value = json.opponentUsername;
+      const you = json.opponentId;
+      const me = 1 - you;
+      userId0.value = me === 0 ? USER().getUserID : opponentUserId.value;
+      userId1.value = me === 1 ? USER().getUserID : opponentUserId.value;
+      state.value = 'matched';
+      alert(`success`, `成功匹配!`);
+      const message = {
+        id: randomId(),
+        username: json.opponentUsername,
+        userId: json.opponentUserId,
+        time: timeFormat(new Date(), `yyyy-MM-dd HH:mm`)
+      };
+      chatroomRef.value.addTalk(`enter`, message);
+    },
+    cancelMatching(json) {
+      state.value = 'toMatch';
+    },
+    matchOk(json) {
+      if (json.id === 0) {
+        matchOk0.value = true;
+      } else {
+        matchOk1.value = true;
+      }
+    },
+    matchNotOk(json) {
+      if (json.id === 0) {
+        matchOk0.value = false;
+      } else {
+        matchOk1.value = false;
+      }
+    },
+    exitMatching(json) {
+      if (userId0.value === USER().getUserID && json.id === 0 || userId1.value === USER().getUserID && json.id === 1) {
+        state.value = 'toMatch';
+      } else {
+        state.value = 'matching';
+        const message = {
+          id: randomId(),
+          username: opponentUsername.value,
+          userId: opponentUserId.value,
+          time: timeFormat(new Date(), `yyyy-MM-dd HH:mm`)
+        };
+        chatroomRef.value.addTalk(`exit`, message);
+        alert(`warning`, `对方退出了房间`);
+      }
+      userId0.value = userId1.value = 0;
+      opponentHeadIcon.value = opponentUsername.value = '';
+      opponentUserId.value = 0;
+      matchOk0.value = matchOk1.value = false;
+    },
+    startMultiGaming(json) {
+      game.value = new SnakeGame({
+        parent: parentRef.value,
+        context: canvasRef.value.getContext('2d')
+      });
+      game.value.start({
+        map: json.map,
+        userId0: json.userId0,
+        userId1: json.userId1
+      });
+      userId0.value = json.userId0;
+      userId1.value = json.userId1;
+      state.value = "waitingInput";
+      gameMode.value = "multi";
+      checker.value = game.value.getChecker();
+    },
+    setDirection(json) {
+      if (json.id == 0) {
+        ok0.value = true;
+      } else {
+        ok1.value = true;
+      }
+    },
+    playRecord(json) {
+      const userId = USER().getUserID;
+      game.value = new SnakeGame({
+        parent: parentRef.value,
+        context: canvasRef.value.getContext('2d')
+      });
+      game.value.start({
+        map: json.map,
+        userId0: userId,
+        userId1: userId
+      });
+      userId0.value = userId;
+      userId1.value = userId;
+      state.value = "playingRecord";
+      gameMode.value = "record";
+      checker.value = game.value.getChecker();
+    },
+    saveRecord(json) {
+      if (json.hasSaved) {
+        alert(`warning`, `已保存该录像`);
+      } else {
+        alert(`success`, `保存录像成功`);
+        allRecordList.value.unshift({
+          id: json.id,
+          createTime: json.createTime,
+          userId0: json.userId0,
+          userId1: json.userId1,
+          username0: json.username0,
+          username1: json.username1,
+          headIcon0: json.headIcon0,
+          headIcon1: json.headIcon1,
+          result: json.result
+        });
+        turnRecordPage(pagePtr.value);
+      }
+    },
+    tellResult(json) {
+      end0.value = json.result === 0 ? "WIN" : json.result === 1 ? "LOSE" : "DRAW";
+      end1.value = json.result === 1 ? "WIN" : json.result === 0 ? "LOSE" : "DRAW";
+      switch (json.result) {
+        case 0:
+          checker.value.setStatus(1, 'die');
+          checker.value.setStatus(0, 'idle');
+          break;
+        case 1:
+          checker.value.setStatus(0, 'die');
+          checker.value.setStatus(1, 'idle');
+          break;
+        case -1:
+          checker.value.setStatus(0, 'die');
+          checker.value.setStatus(1, 'die');
+          break;
+      }
+      state.value = "gameOver";
+      let reason0 = json.reason0;
+      let reason1 = json.reason1;
+      let reason = (reason0 || '') + (reason0 != null && reason1 != null ? '\n' : '') + (reason1 || '');
+      if (gameMode.value === 'multi') {
+        switch (json.result) {
+          case getMe():
+            alert(`success`, `胜利！Rating +${json.score}\n战败原因: \n${reason}`, 5000);
+            break;
+          case 1 - getMe():
+            alert(`danger`, `战败... Rating -${json.score}\n战败原因: \n${reason}`, 5000);
+            break;
+          case -1:
+            alert(`warning`, `平局 原因: \n${reason}`, 5000);
+            break;
+        }
+      } else {
+        switch (json.result) {
+          case 0:
+            alert(`primary`, `蓝方获胜！`, 5000);
+            break;
+          case 1:
+            alert(`danger`, `红方获胜！`, 5000);
+            break;
+          case -1:
+            alert(`warning`, `平局`, 5000);
+        }
+      }
+      selectedBotId.value = -1;
 
-const receivedStartMatching = json => {
-  hasClickMatching.value = false;
-  state.value = 'matching';
-};
-
-const receivedSuccessMatching = json => {
-  opponentHeadIcon.value = json.opponentHeadIcon;
-  opponentUserId.value = json.opponentUserId;
-  opponentUsername.value = json.opponentUsername;
-  const you = json.opponentId;
-  const me = 1 - you;
-  userId0.value = me === 0 ? USER().getUserID : opponentUserId.value;
-  userId1.value = me === 1 ? USER().getUserID : opponentUserId.value;
-  state.value = 'matched';
-  alert(`success`, `成功匹配!`);
-};
-
-const receivedCancelMatching = json => {
-  state.value = 'toMatch';
-}
-
-const receivedMatchOk = json => {
-  if (json.id === 0) {
-    matchOk0.value = true;
-  } else {
-    matchOk1.value = true;
-  }
-};
-
-const receivedMatchNotOk = json => {
-  if (json.id === 0) {
-    matchOk0.value = false;
-  } else {
-    matchOk1.value = false;
-  }
-};
-
-const receivedExitMatching = json => {
-  if (userId0.value === USER().getUserID && json.id === 0 || userId1.value === USER().getUserID && json.id === 1) {
-    state.value = 'toMatch';
-  } else {
-    state.value = 'matching';
-    alert(`warning`, `对方退出了房间`);
-  }
-  userId0.value = userId1.value = 0;
-  opponentHeadIcon.value = opponentUsername.value = '';
-  opponentUserId.value = 0;
-  matchOk0.value = matchOk1.value = false;
-};
-
-const receivedStartMultiGaming = json => {
-  game.value = new SnakeGame({
-    parent: parentRef.value,
-    context: canvasRef.value.getContext('2d')
-  });
-  game.value.start({
-    map: json.map,
-    userId0: json.userId0,
-    userId1: json.userId1
-  });
-  userId0.value = json.userId0;
-  userId1.value = json.userId1;
-  state.value = "waitingInput";
-  gameMode.value = "multi";
-  checker.value = game.value.getChecker();
-};
-
-const receivedSetDirection = json => {
-  if (json.id == 0) {
-    ok0.value = true;
-  } else {
-    ok1.value = true;
-  }
-};
-
-const receivedPlayRecord = json => {
-  const userId = USER().getUserID;
-  game.value = new SnakeGame({
-    parent: parentRef.value,
-    context: canvasRef.value.getContext('2d')
-  });
-  game.value.start({
-    map: json.map,
-    userId0: userId,
-    userId1: userId
-  });
-  userId0.value = userId;
-  userId1.value = userId;
-  state.value = "playingRecord";
-  gameMode.value = "record";
-  checker.value = game.value.getChecker();
-};
-
-const receivedSaveRecord = json => {
-  if (json.hasSaved) {
-    alert(`warning`, `已保存该录像`);
-  } else {
-    alert(`success`, `保存录像成功`);
-    allRecordList.value.unshift({
-      id: json.id,
-      createTime: json.createTime,
-      userId0: json.userId0,
-      userId1: json.userId1,
-      username0: json.username0,
-      username1: json.username1,
-      headIcon0: json.headIcon0,
-      headIcon1: json.headIcon1,
-      result: json.result
-    });
-    turnRecordPage(pagePtr.value);
-  }
-};
-
-const receivedTellResult = json => {
-  end0.value = json.result === 0 ? "WIN" : json.result === 1 ? "LOSE" : "DRAW";
-  end1.value = json.result === 1 ? "WIN" : json.result === 0 ? "LOSE" : "DRAW";
-  switch (json.result) {
-    case 0:
-      checker.value.setStatus(1, 'die');
-      checker.value.setStatus(0, 'idle');
-      break;
-    case 1:
-      checker.value.setStatus(0, 'die');
-      checker.value.setStatus(1, 'idle');
-      break;
-    case -1:
-      checker.value.setStatus(0, 'die');
-      checker.value.setStatus(1, 'die');
-      break;
-  }
-  state.value = "gameOver";
-  let reason0 = json.reason0;
-  let reason1 = json.reason1;
-  let reason = (reason0 || '') + (reason0 != null && reason1 != null ? '\n' : '') + (reason1 || '');
-  if (gameMode.value === 'multi') {
-    switch (json.result) {
-      case getMe():
-        alert(`success`, `胜利！Rating +${json.score}\n战败原因: \n${reason}`, 5000);
-        break;
-      case 1 - getMe():
-        alert(`danger`, `战败... Rating -${json.score}\n战败原因: \n${reason}`, 5000);
-        break;
-      case -1:
-        alert(`warning`, `平局 原因: \n${reason}`, 5000);
-        break;
-    }
-  } else {
-    switch (json.result) {
-      case 0:
-        alert(`primary`, `蓝方获胜！`, 5000);
-        break;
-      case 1:
-        alert(`danger`, `红方获胜！`, 5000);
-        break;
-      case -1:
-        alert(`warning`, `平局`, 5000);
-    }
-  }
-  selectedBotId.value = -1;
-};
-
-const receivedSendTalk = async json => {
-  if (json.result === "ok") {
-    let message = {
-      id: randomId(),
-      userId: json.userId,
-      username: json.username,
-      content: json.content,
-      time: json.time
-    };
-    messages.value.push(message);
-    await nextTick();
-    chatroomRef.value.scrollTop = chatroomRef.value.scrollHeight;
-    let messageDiv = document.querySelector(`#msg-${message.id}>.message-content`);
-    messageDiv.classList.add("new-talk");
-    setTimeout(() => {
-      messageDiv.classList.remove("new-talk");
-    }, 500);
-  } else {
-    alert('danger', json.result);
-  }
+    },
+    sendTalk(json) {
+      if (json.result === "ok") {
+        let message = {
+          id: randomId(),
+          userId: json.userId,
+          username: json.username,
+          content: json.content,
+          time: json.time
+        };
+        chatroomRef.value.addTalk(`msg`, message);
+      } else {
+        alert('danger', json.result);
+      }
+    },
+  };
+  wsRoutes[json.action];
 };
 
 onMounted(() => {
-  SOCKET().connect({
-    game: 'snake',
-    onOpen() {
-      console.log('open websocekt.');
-    },
-    onClose() {
-      console.log('close websocket.');
-    },
-    onMessage(message) {
-      let json = JSON.parse(message.data);
-      console.log(json.action);
-      if (json.action === "startSingleGaming") {
-        receivedStartSingleGaming(json);
-      } else if (json.action === "moveSnake") {
-        receivedMoveSnake(json);
-      } else if (json.action === "startMatching") {
-        receivedStartMatching(json);
-      } else if (json.action === "successMatching") {
-        receivedSuccessMatching(json);
-      } else if (json.action === "cancelMatching") {
-        receivedCancelMatching(json);
-      } else if (json.action === "matchOk") {
-        receivedMatchOk(json);
-      } else if (json.action === "matchNotOk") {
-        receivedMatchNotOk(json);
-      } else if (json.action === "exitMatching") {
-        receivedExitMatching(json);
-      } else if (json.action === "startMultiGaming") {
-        receivedStartMultiGaming(json);
-      } else if (json.action === "setDirection") {
-        receivedSetDirection(json);
-      } else if (json.action === "playRecord") {
-        receivedPlayRecord(json);
-      } else if (json.action === "saveRecord") {
-        receivedSaveRecord(json);
-      } else if (json.action === "tellResult") {
-        receivedTellResult(json);
-      } else if (json.action === "sendTalk") {
-        receivedSendTalk(json);
-      }
-    },
-    onError(error) {
-      console.log(error);
-    }
-  });
+  initSocket();
   game.value = new SnakeGame({
     parent: parentRef.value,
     context: canvasRef.value.getContext('2d')
@@ -1026,4 +924,7 @@ onUnmounted(() => {
   align-items: center;
 }
 
+div::-webkit-scrollbar {
+  display: none;
+}
 </style>

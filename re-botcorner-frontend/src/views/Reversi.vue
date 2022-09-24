@@ -18,7 +18,7 @@
             最近比赛
           </template>
           <template v-slot:content>
-            <div style="height: 300px; width: 100%; overflow: hidden">
+            <div style="height: 300px; width: 100%; overflow: auto">
               <table class="table table-striped">
                 <thead>
                   <tr>
@@ -65,7 +65,7 @@
         </Collapse>
       </Col>
       <Col col="col-4" v-if="!hasLinkWebSocket">
-        <button @click="initSocket" class="btn btn-primary" style="border-radius: 0; width: 100%">连接WebSocket</button>
+        <button :disabled="hasClickedInitSocket" @click="initSocket" class="btn btn-primary" style="border-radius: 0; width: 100%">连接WebSocket</button>
       </Col>
       <!-- 小版面 -->
       <Col col="col-4" v-if="hasLinkWebSocket">
@@ -204,50 +204,16 @@
         </Collapse>
         <hr>
         <!-- 交流窗口 -->
-        <Collapse button-style="width: 100%; border-radius: 0" collapse-id="chatroom">
-          <template v-slot:button>
-            交流窗口
+        <Window button-style="width: 100%; border-radius: 0" title="聊天窗口">
+          <template v-slot:body>
+            <ChatRoom 
+              ref="chatroomRef" 
+              :sendTalk="sendTalk" 
+              :isLeft="isLeft"
+              :isRight="isRight"
+            />
           </template>
-          <template v-slot:content>
-            <div ref="chatroomRef"
-              style="border: 1px solid #ccc; width: 100%; height: 600px; padding: 10px; box-sizing: border-box; overflow: auto">
-              <div :id="`msg-${message.id}`" v-for="(message, index) in messages" class="mt-2">
-                <div v-if="isShownTime(index)"
-                  style="margin: auto; padding: 0 5px; width: fit-content; color: white; background-color: rgba(4, 4, 4, 0.2); text-align: center">
-                  {{ message.time }}
-                </div>
-                <template v-if="message.type == `msg`">
-                  <div>{{ message.username }}
-                    <span style="color: #aaa">
-                      #{{ message.userId }}
-                    </span>
-                  </div>
-                  <div style=" border: 1px solid #ccc; padding: 10px; border-radius: 0 10px 10px 10px;" class="message-content">{{ message.content }}</div> </template>
-                <template v-if="message.type === `enter`">
-                  <div class="mt-2"
-                    style="margin: auto; padding: 0 5px; width: fit-content; color: white; background-color: rgba(4, 4, 4, 0.2); text-align: center">
-                    {{ message.username + "#" + message.userId }}<span> 加入了</span>
-                  </div>
-                </template>
-                <template v-if="message.type === `exit`">
-                  <div class="mt-2"
-                    style="margin: auto; padding: 0 5px; width: fit-content; color: white; background-color: rgba(4, 4, 4, 0.2); text-align: center">
-                    {{ message.username + "#" + message.userId }}<span> 退出了</span>
-                  </div>
-                </template>
-              </div>
-            </div>
-            <div id="chatroom-input" class="mt-2" style="width: 100%; height: 50px;">
-              <div style="display: inline-block; height: 100%; width: 80%;">
-                <input placeholder="单条消息不超过64个字" @keyup.enter="sendTalk" v-model="toSendTalk" type="text" class="form-control"
-                  style="width: 95%; height: 95%; border-radius: 0;">
-              </div>
-              <div style="display: inline-block; height: 100%; width: 20%;">
-                <button @click="sendTalk" class="btn btn-primary" style="height: 100%; width: 100%">发送</button>
-              </div>
-            </div>
-          </template>
-        </Collapse>
+        </Window>
         <hr>
         <!-- 游戏说明 -->
         <Collapse button-style="width: 100%; border-radius: 0" collapse-id="game-info">
@@ -255,7 +221,7 @@
             游戏说明
           </template>
           <template v-slot:content>
-        
+            <ReversiInfo />
           </template>
         </Collapse>
       </Col>
@@ -268,13 +234,17 @@ import CardBody from '../components/CardBody.vue';
 import Row from '../components/Row.vue';
 import Col from '../components/Col.vue';
 import Collapse from '../components/Collapse.vue';
-import { nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import SOCKET from '../store/SOCKET';
 import ReversiGame from '../script/games/reversi/ReversiGame'
 import alert from '../script/alert';
 import API from '../script/api';
-import randomId from '../script/randomid';
 import timeFormat from '../script/timeFormat';
+import ReversiInfo from './viewsChild/ReversiInfo.vue';
+import Window from '../components/Window.vue';
+import ChatRoom from '../components/ChatRoom.vue';
+import USER from '../store/USER';
+import randomId from '../script/randomid';
 
 const gameMode = ref('single');
 
@@ -282,23 +252,11 @@ const parentRef = ref(null);
 const canvasRef = ref(null);
 
 // ---交流窗口
-const chatroomRef = ref(null);
-const messages = ref([]);
-const toSendTalk = ref('');
-
-const isShownTime = index => {
-  const msgs = messages.value;
-  if (index === 0 || msgs[index].time !== msgs[index - 1].time) return true; 
-  return false;
-};
-
-const sendTalk = () => {
-  if (toSendTalk.value.length === 0) return ;
+const sendTalk = content => {
   SOCKET().sendMessage({
     action: 'sendTalk',
-    content: toSendTalk.value
+    content
   });
-  toSendTalk.value = '';
 };
 
 // ---
@@ -313,7 +271,7 @@ const hasStarted = ref(false);
 const chooseGameMode = _gameMode => { gameMode.value = _gameMode; };
 
 const continueGaming = () => {
-  state.value = `toMatch`;
+  initState();
 };
 
 // ---
@@ -381,6 +339,7 @@ const opponentHeadIcon = ref('');
 const iOk = ref(false);
 const uOk = ref(false);
 const selectedBotId = ref(-1);
+const chatroomRef = ref(null);
 
 const myId = () => {
   return 1 - opponentId.value;
@@ -392,6 +351,14 @@ const urId = () => {
 
 const iuOk = () => {
   return iOk.value && uOk.value;
+};
+
+const isLeft = message => {
+  return message.userId != USER().getUserID;
+};
+
+const isRight = message => {
+  return message.userId == USER().getUserID;
 };
 
 const startMatching = () => {
@@ -431,8 +398,16 @@ const exitMatching = () => {
 const initState = () => {
   iOk.value = false;
   uOk.value = false;
+  state.value = 'toMatch';
+  opponentId.value = -1;
+  opponentUserId.value = 0;
+  opponentUsername.value = '';
+  opponentHeadIcon.value = '';
+  selectedBotId.value = -1;
+  isWaiting.value = false;
+  hasStarted.value = false;
+  isPlayingRecord.value = false;
 };
-
 // ---
 
 
@@ -453,47 +428,33 @@ const websocketRoute = json => {
   console.log(json.action);
   switch (json.action) {
     case "startSingleGaming":
-      startSingleGaming(json);
-      break;
+      startSingleGaming(json); break;
     case "putChess":
-      putChess(json);
-      break;
+      putChess(json); break;
     case "pass":
-      pass(json);
-      break;
+      pass(json); break;
     case "gameOver":
-      gameOver(json);
-      break;
+      gameOver(json); break;
     case "saveRecord":
-      saveRecord(json);
-      break;
+      saveRecord(json); break;
     case "playRecord":
-      playRecord(json);
-      break;
+      playRecord(json); break;
     case "startMatching":
-      startMatching(json);
-      break;
+      startMatching(json); break;
     case "cancelMatching":
-      cancelMatching(json);
-      break;
+      cancelMatching(json); break;
     case "successMatching":
-      successMatching(json);
-      break;
+      successMatching(json); break;
     case "switchMatchOk":
-      switchMatchOk(json);
-      break;
+      switchMatchOk(json); break;
     case "switchMatchNot":
-      switchMatchNot(json);
-      break;
+      switchMatchNot(json); break;
     case "exitMatching":
-      exitMatching(json);
-      break;
+      exitMatching(json); break;
     case "startMultiGaming":
-      startMultiGaming(json);
-      break;
+      startMultiGaming(json); break;
     case "sendTalk":
-      sendTalk(json);
-      break;
+      sendTalk(json); break;
   }
 
   function startSingleGaming(json) {
@@ -525,7 +486,7 @@ const websocketRoute = json => {
       (json.result == 0 ? `黑子获胜` : `白子获胜`) + `\n战败原因: ${json.reason}`,
       3000
     );
-    state.value = 'gameOver'; initState();
+    state.value = 'gameOver';
   }
 
   function saveRecord(json) {
@@ -568,13 +529,12 @@ const websocketRoute = json => {
     opponentHeadIcon.value = json.headIcon;
     alert(`success`, `匹配成功`, 1000);
     const message = {
-      type: `enter`,
-      id: randomId(),
+      id: randomId(), 
       username: json.username,
       userId: json.userId,
       time: timeFormat(new Date(), `yyyy-MM-dd HH:mm`)
     };
-    messages.value.push(message);
+    chatroomRef.value.addTalk(`enter`, message);
   }
 
   function switchMatchOk(json) {
@@ -595,13 +555,12 @@ const websocketRoute = json => {
     if (id != myId()) {
       alert(`warning`, `对方退出了房间`);
       const message = {
-        type: `exit`,
         id: randomId(),
         username: opponentUsername.value,
-        userId: opponentId.value,
+        userId: opponentUserId.value,
         time: timeFormat(new Date(), `yyyy-MM-dd HH:mm`)
       };
-      messages.value.push(message);
+      chatroomRef.value.addTalk(`exit`, message);
     }
     opponentId.value = -1;
     opponentUserId.value = 0;
@@ -613,24 +572,16 @@ const websocketRoute = json => {
     initGame('multi', json.rows, json.cols, json.stringifiedChess);
   }
 
-  async function sendTalk(json) {
+  function sendTalk(json) {
     if (json.result === "ok") {
       let message = {
-        type: 'msg',
         id: randomId(),
         userId: json.userId,
         username: json.username,
         content: json.content,
         time: json.time
       };
-      messages.value.push(message);
-      await nextTick();
-      chatroomRef.value.scrollTop = chatroomRef.value.scrollHeight;
-      let messageDiv = document.querySelector(`#msg-${message.id}>.message-content`);
-      messageDiv.classList.add("new-talk");
-      setTimeout(() => {
-        messageDiv.classList.remove("new-talk");
-      }, 500);
+      chatroomRef.value.addTalk(`msg`, message);
     } else {
       alert('danger', json.result);
     }
@@ -661,11 +612,15 @@ const initGame = (mode, rows, cols, stringifiedChess) => {
 };
 
 const hasLinkWebSocket = ref(false);
+const hasClickedInitSocket = ref(false);
 
 const initSocket = () => {
+  initState();
+  hasClickedInitSocket.value = true;
   const onOpen = () => {
     console.log(`open websocket.`);
     hasLinkWebSocket.value = true;
+    hasClickedInitSocket.value = false;
   };
   
   const onClose = () => {
@@ -734,3 +689,9 @@ onUnmounted(() => {
   SOCKET().disconnect();
 });
 </script>
+
+<style scoped>
+div::-webkit-scrollbar {
+  display: none;
+}
+</style>

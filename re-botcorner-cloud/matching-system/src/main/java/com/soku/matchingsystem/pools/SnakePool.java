@@ -30,6 +30,9 @@ public class SnakePool extends Thread implements MatchPool {
     } finally {
       lock.unlock();
     }
+    if (!this.isAlive()) {
+      this.start();
+    }
     display();
   }
 
@@ -45,6 +48,9 @@ public class SnakePool extends Thread implements MatchPool {
       players = newPlayers;
     } finally {
       lock.unlock();
+    }
+    if (!this.isAlive()) {
+      this.start();
     }
     display();
   }

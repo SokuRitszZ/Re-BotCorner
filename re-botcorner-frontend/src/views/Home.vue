@@ -23,12 +23,19 @@
         <div style="padding: 20px">
           <h1>
             待开发区域
+            <hr>
+            <Window>
+              <template v-slot:body>
+                <ChatRoom />
+              </template>
+            </Window>
           </h1>
         </div>
       </Col>
     </Row>
     <div style="text-align: center;">
       <p>作者：<strong>Andrew Leung</strong></p>
+      <p>项目地址：<a target="_blank" style="text-decoration: none; color: #000" href="https://github.com/SokuRitszZ/Re-BotCorner"><i style="font-size: 20px" class="bi bi-github"></i></a></p>
     </div>
   </CardBody>
 </template>
@@ -37,9 +44,13 @@
 import CardBody from '../components/CardBody.vue';
 import Row from '../components/Row.vue';
 import Col from '../components/Col.vue';
+import Window from '../components/Window.vue';
+import ChatRoom from '../components/ChatRoom.vue';
 
 </script>
 
-<style>
-  
+<style scoped>
+* {
+  user-select: none;
+}
 </style>

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
@@ -343,21 +344,23 @@ public class ReversiGame extends Thread {
   }
 
   public void compileBot() {
-    boolean[] compiledOk = new boolean[2];
-    compiledOk[0] = compiledOk[1] = false;
-    for (int i = 0; i < 2; ++i) {
-      if (bot[i] != null) {
-        int finalI = i;
-        new Thread(() -> {
-          this.bot[finalI].start();
-          this.bot[finalI].compile();
-          compiledOk[finalI] = true;
-        }).start();
-      } else {
-        compiledOk[i] = true;
-      }
+    AtomicBoolean compiled0 = new AtomicBoolean(bot[0] == null);
+    AtomicBoolean compiled1 = new AtomicBoolean(bot[1] == null);
+    if (bot[0] != null) {
+      new Thread(() -> {
+        bot[0].start();
+        bot[0].compile();
+        compiled0.set(true);
+      }).start();
     }
-    while (!compiledOk[0] || !compiledOk[1]);
+    if (bot[1] != null) {
+      new Thread(() -> {
+        bot[1].start();
+        bot[1].compile();
+        compiled1.set(true);
+      }).start();
+    }
+    while (!compiled0.get() || !compiled1.get());
   }
 
   public void checkRunBot() throws InterruptedException {

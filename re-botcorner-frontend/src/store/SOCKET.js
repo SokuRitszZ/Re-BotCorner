@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import USER from "./USER";
-import { ws_url } from "../config.json";
+import { mode, ws_url } from "../config.json";
 
 const SOCKET = defineStore('SOCKET', {
   state: () => {
@@ -10,7 +10,7 @@ const SOCKET = defineStore('SOCKET', {
   },
   actions: {
     connect({ game, onOpen, onClose, onMessage, onError }) {
-      const URL = `${ws_url[0]}/websocket/${game}`;
+      const URL = `${ws_url[mode]}/websocket/${game}`;
       const token = USER().getToken;
       this.socket = new WebSocket(`${URL}/${token}`);
       this.socket.onopen = onOpen;

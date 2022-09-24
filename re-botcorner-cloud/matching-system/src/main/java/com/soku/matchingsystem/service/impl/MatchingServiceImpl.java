@@ -23,6 +23,7 @@ public class MatchingServiceImpl implements MatchingService {
 
   @Override
   public String addPlayer(String game, Integer userId, Integer rating) {
+    System.out.println(game + " " + userId + " " + rating);
     pools.get(game).addPlayer(userId, rating);
     return "add successfully";
   }

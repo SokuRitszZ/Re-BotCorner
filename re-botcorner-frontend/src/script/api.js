@@ -1,6 +1,6 @@
 import USER from './../store/USER';
 import $ from 'jquery';
-import { api_url } from '../config.json';
+import { mode, api_url } from '../config.json';
 
 const API = ({ url, type, data, async, success, error, needJWT }) => {
   let headers = {};
@@ -11,7 +11,7 @@ const API = ({ url, type, data, async, success, error, needJWT }) => {
   };
   if (async === undefined) async = true;
   $.ajax({
-    url: `${api_url[0]}/api${url}`,
+    url: `${api_url[mode]}/api${url}`,
     type,
     headers,
     data,

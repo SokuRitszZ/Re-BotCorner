@@ -54,6 +54,7 @@ public class ReversiWebSocketServer {
   @OnClose
   public void onClose() {
     hasClosed = true;
+    removeMatch();
     users.remove(user.getId());
     if (match != null && reversiGame != null && !reversiGame.isGameOver()) {
       reversiGame.setReason("早退");
@@ -76,6 +77,7 @@ public class ReversiWebSocketServer {
   @OnError
   public void onError(Session session, Throwable error) {
     error.printStackTrace();
+    removeMatch();
   }
 
   public void setReversiMatch(ReversiMatch reversiMatch) {
@@ -165,6 +167,7 @@ public class ReversiWebSocketServer {
   }
 
   public void startSingleGaming(JSONObject json) {
+    System.out.println(1);
     Integer botId0 = json.getInteger("botId0");
     Integer botId1 = json.getInteger("botId1");
     RunningBot bot0 = null;
@@ -177,6 +180,7 @@ public class ReversiWebSocketServer {
         bot0 = new RunningBot(botId0);
       }
     }
+    System.out.println(2);
     if (botId1 > 0) {
       if (!findBot(botId1)) {
         json.put("result", json.getString("result") + "不存在白子所选的Bot\n");
@@ -184,17 +188,21 @@ public class ReversiWebSocketServer {
         bot1 = new RunningBot(botId1);
       }
     }
+    System.out.println(3);
     if (json.getString("result") != "") {
       json.put("result", json.getString("result").strip());
       sendMessage(json);
       return ;
     }
+    System.out.println(4);
     reversiGame = new ReversiGame("single", 8, 8, this, this, bot0, bot1);
     json = reversiGame.parseData();
     json.put("action", "startSingleGaming");
     json.put("result", "ok");
     reversiGame.compileBot();
+    System.out.println(5);
     reversiGame.start();
+    System.out.println(6);
     sendMessage(json);
   }
 
@@ -249,13 +257,17 @@ public class ReversiWebSocketServer {
   }
 
   public void cancelMatching(JSONObject json) {
+    removeMatch();
+    json = new JSONObject();
+    json.put("action", "cancelMatching");
+    sendMessage(json);
+  }
+
+  public void removeMatch() {
     MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
     data.add("game", "reversi");
     data.add("userId", user.getId().toString());
     RT.POST(removeUrl, data);
-    json = new JSONObject();
-    json.put("action", "cancelMatching");
-    sendMessage(json);
   }
 
   public void switchMatchOk(JSONObject json) {
@@ -283,6 +295,7 @@ public class ReversiWebSocketServer {
       if (!match.isAllOk()) {
         uSocket.startMatching(json);
       }
+      match.sockets[id ^ 1].match = null;
       match = null;
     }
   }

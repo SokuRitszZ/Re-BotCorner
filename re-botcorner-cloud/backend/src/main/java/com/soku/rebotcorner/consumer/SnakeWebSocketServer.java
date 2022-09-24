@@ -289,6 +289,7 @@ public class SnakeWebSocketServer {
 
     /** 重新放入匹配池 */
     MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
+    data.add("game", youSocket.user.getId().toString());
     data.add("userId", youSocket.user.getId().toString());
     data.add("rating", youSocket.user.getRating().toString());
     restTemplate.postForObject(addUrl, data, String.class);
