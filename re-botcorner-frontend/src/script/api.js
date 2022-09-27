@@ -84,6 +84,7 @@ export const getAllLangApi = () => {
     API({
       url: '/lang/getAll',
       type: 'get',
+      async: false,
       success: resp => resolve(resp),
       error: err => reject(err)
     });
@@ -123,9 +124,9 @@ export const getBotApi = gameId => {
 export const getAllBotApi = () => {
   return new Promise((resolve, reject) => {
     API({
-      url: `/getrating/${game}`,
+      url: `/bot/getAll`,
       type: 'get',
-      async: false,
+      needJWT: true,
       success: resp => resolve(resp),
       error: err => reject(err)
     });

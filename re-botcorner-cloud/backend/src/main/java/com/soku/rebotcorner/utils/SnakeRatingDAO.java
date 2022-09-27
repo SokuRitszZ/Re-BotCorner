@@ -11,7 +11,7 @@ public class SnakeRatingDAO {
   @Autowired
   public static SnakeRatingMapper snakeRatingMapper;
 
-  public static void add(SnakeRating snakeRating) {
+  public static void insert(SnakeRating snakeRating) {
     snakeRatingMapper.insert(snakeRating);
   }
 

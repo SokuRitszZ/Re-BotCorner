@@ -15,4 +15,8 @@ public class ReversiRatingDAO {
   public static ReversiRating selectById(Integer id) {
     return reversiRatingMapper.selectById(id);
   }
+
+  public static void updateById(ReversiRating reversiRating) {
+    reversiRatingMapper.updateById(reversiRating);
+  }
 }

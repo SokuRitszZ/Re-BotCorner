@@ -21,7 +21,7 @@
                   <td>红方</td>
                   <td>胜者</td>
                   <td>
-                    <button class="btn btn-secondary" style="padding: 0; width: 25px; line-height: 25px; border-radius: 5px;"><i class="bi bi-arrow-repeat"></i></button>
+                    <button :disabled="hasInitRecordList" @click="initRecordList" class="btn btn-secondary" style="padding: 0; width: 25px; line-height: 25px; border-radius: 5px;"><i class="bi bi-arrow-repeat"></i></button>
                   </td>
                 </tr>
               </thead>
@@ -338,6 +338,9 @@
       <hr>
       <!-- 聊天窗口 -->
       <Window button-style="width: 100%; border-radius: 0" title="聊天窗口">
+        <template v-slot:button>
+          聊天窗口
+        </template>
         <template v-slot:body>
           <ChatRoom 
             ref="chatroomRef"
@@ -848,8 +851,37 @@ const websocketRoute = json => {
   wsRoutes[json.action](json);
 };
 
+const hasInitRecordList = ref(false);
+
+const initRecordList = () => {
+  hasInitRecordList.value = true;
+  getRecordListApi(1).then(list => {
+    allRecordList.value = list.reverse();
+    turnRecordPage(0);
+    hasInitRecordList.value = false;
+  })
+  .catch(err => {
+    alert(`danger`, `获取录像失败`, 1000);
+    hasInitRecordList.value = false;
+  });
+};
+
+const initBotList = () => {
+  getBotApi(1).then(list => {
+    myBotList.value = list;
+    myBotList.value.map(bot => {
+      bot.createTime = new Date(bot.createTime);
+      bot.modifyTime = new Date(bot.modifyTime);
+    });
+  });
+};
+
 onMounted(() => {
+
   initSocket();
+  initRecordList();
+  initBotList();
+
   game.value = new SnakeGame({
     parent: parentRef.value,
     context: canvasRef.value.getContext('2d')
@@ -860,17 +892,6 @@ onMounted(() => {
     i = (i + 1) % 3;
     matchingBoard.value = matchingBoardList[i];
   }, 1000);
-  getRecordListApi(1).then(list => {
-    allRecordList.value = list.reverse();
-    turnRecordPage(0);
-  });
-  getBotApi(1).then(list => {
-    myBotList.value = list;
-    myBotList.value.map(bot => {
-      bot.createTime = new Date(bot.createTime);
-      bot.modifyTime = new Date(bot.modifyTime);
-    });
-  });
 });
 
 onUnmounted(() => {

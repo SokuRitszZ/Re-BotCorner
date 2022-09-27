@@ -1,9 +1,12 @@
 package com.soku.rebotcorner.utils;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.mapper.UserMapper;
 import com.soku.rebotcorner.pojo.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class UserDAO {
@@ -16,5 +19,17 @@ public class UserDAO {
 
   public static User selectById(Integer id) {
     return userMapper.selectById(id);
+  }
+
+  public static User selectOne(QueryWrapper<User> qw) {
+    return userMapper.selectOne(qw);
+  }
+
+  public static List<User> selectList(QueryWrapper<User> qw) {
+    return userMapper.selectList(qw);
+  }
+
+  public static void insert(User user) {
+    userMapper.insert(user);
   }
 }

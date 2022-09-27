@@ -49,7 +49,6 @@
 
 <script setup>
 import { nextTick, ref } from 'vue';
-import 'animate.css';
 
 const chatroomRef = ref(null);
 
@@ -137,14 +136,5 @@ textarea {
 
 .no-select {
   user-select: none;
-}
-
-@keyframes newTalk {
-  from {
-    background-color: gray;
-  }
-  
-  to {
-  }
 }
 </style>

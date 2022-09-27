@@ -1,6 +1,8 @@
 <template>
-  <button ref="btnRef" @click="show" class="btn btn-primary" :style="buttonStyle">{{ title }}</button>
-  <div class="window-board" ref="boardRef" style="display: none; position: fixed; left: 50vw; top: 50vh; width: 500px; height: 500px; background-color: #f4f4f4; border-radius: 10px; border: 5px solid #ccc; overflow: hidden; box-shadow: 0 0 10px #aaa; z-index: 100;">
+  <button ref="btnRef" @click="show" class="btn btn-primary" :style="buttonStyle">
+    <slot name="button"></slot>
+  </button>
+  <div class="window-board" ref="boardRef" style="display: none; position: fixed; left: 50vw; top: 50vh; width: 500px; height: 500px; background-color: #f4f4f4; border-radius: 10px; border: 5px solid #ccc; overflow: hidden; box-shadow: 0 0 10px #aaa; z-index: 100; overflow: hidden">
     <div class="window-head no-select" ref="headRef" style="width: 100%; height: 40px; background-color: #ccc; padding: 5px">
       <div style="position: absolute; left: 10px; font-size: 20px">{{ title }}</div>
       <div @click.stop="close" class="btn btn-danger" style="position: absolute; padding: 0; right: 0; top: 7px; margin-right: 5px; height: 20px; width: 20px; border-radius: 50%;">
@@ -17,7 +19,6 @@
 
 <script setup>
 import { onMounted, ref } from 'vue';
-import 'animate.css';
 
 const boardRef = ref(null);
 const headRef = ref(null);
@@ -35,6 +36,7 @@ const show = () => {
       boardRef.value.classList.remove(`animate__headShake`);
     }, 1000);
   } else {
+    emit('show');
     boardRef.value.style.display = "block";
     boardRef.value.classList.add(`opening-board`);
     setTimeout(() => {
@@ -47,12 +49,17 @@ const show = () => {
 const close = () => {
   if (state.value === 'close') return ;
   boardRef.value.classList.add(`closing-board`);
+  emit('close');
   setTimeout(() => {
     boardRef.value.classList.remove(`closing-board`);
     boardRef.value.style.display = "none";
     state.value = 'close';
   }, 500);
 };
+
+const getState = () => {
+  return state.value;
+}
 
 const initBoard = () => {
   const board = boardRef.value;
@@ -142,8 +149,11 @@ const props = defineProps({
 defineExpose({
   show,
   close,
-  getBtn
+  getBtn,
+  getState
 });
+
+const emit = defineEmits(['show', 'close']);
 
 onMounted(() => { 
   initBoard();
@@ -185,8 +195,8 @@ onMounted(() => {
   to {
     width: 0;
     height: 0;
-    display: none;
     opacity: 0;
   }
 }
+
 </style>

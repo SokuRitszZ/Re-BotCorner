@@ -80,69 +80,47 @@ public class ReversiWebSocketServer {
     removeMatch();
   }
 
-  public void setReversiMatch(ReversiMatch reversiMatch) {
-    this.match = reversiMatch;
-  }
-
   public static void makeMatching(Integer userId0, Integer userId1) {
     User user0 = UserDAO.selectById(userId0);
     User user1 = UserDAO.selectById(userId1);
     ReversiWebSocketServer socket0 = users.get(userId0);
     ReversiWebSocketServer socket1 = users.get(userId1);
     ReversiMatch reversiMatch = new ReversiMatch(new ReversiWebSocketServer[]{socket0, socket1});
-    socket0.setReversiMatch(reversiMatch);
-    socket1.setReversiMatch(reversiMatch);
-
-    JSONObject json0 = new JSONObject();
-    json0.put("action", "successMatching");
-    json0.put("userId", userId1);
-    json0.put("id", 1);
-    json0.put("headIcon", user1.getHeadIcon());
-    json0.put("username", user1.getUsername());
-    socket0.sendMessage(json0);
-
-    JSONObject json1 = new JSONObject();
-    json1.put("action", "successMatching");
-    json1.put("userId", userId0);
-    json1.put("id", 0);
-    json1.put("headIcon", user0.getHeadIcon());
-    json1.put("username", user0.getUsername());
-    socket1.sendMessage(json1);
+    if (socket0 != null) {
+      socket0.setMatch(reversiMatch);
+      JSONObject json0 = new JSONObject();
+      json0.put("action", "successMatching");
+      json0.put("userId", userId1);
+      json0.put("id", 1);
+      json0.put("headIcon", user1.getHeadIcon());
+      json0.put("username", user1.getUsername());
+      socket0.sendMessage(json0);
+    }
+    if (socket1 != null) {
+      socket1.setMatch(reversiMatch);
+      JSONObject json1 = new JSONObject();
+      json1.put("action", "successMatching");
+      json1.put("userId", userId0);
+      json1.put("id", 0);
+      json1.put("headIcon", user0.getHeadIcon());
+      json1.put("username", user0.getUsername());
+      socket1.sendMessage(json1);
+    }
   }
 
   public void route(JSONObject json) {
     System.out.println("route." + json.getString("action"));
     switch (json.getString("action")) {
-      case "startSingleGaming":
-        startSingleGaming(json);
-        break;
-      case "putChess":
-        putChess(json);
-        break;
-      case "saveRecord":
-        saveRecord(json);
-        break;
-      case "playRecord":
-        playRecord(json);
-        break;
-      case "startMatching":
-        startMatching(json);
-        break;
-      case "cancelMatching":
-        cancelMatching(json);
-        break;
-      case "switchMatchOk":
-        switchMatchOk(json);
-        break;
-      case "switchMatchNot":
-        switchMatchNot(json);
-        break;
-      case "exitMatching":
-        exitMatching(json);
-        break;
-      case "sendTalk":
-        sendTalk(json);
-        break;
+      case "startSingleGaming": startSingleGaming(json); break;
+      case "putChess": putChess(json); break;
+      case "saveRecord": saveRecord(json); break;
+      case "playRecord": playRecord(json); break;
+      case "startMatching": startMatching(json); break;
+      case "cancelMatching": cancelMatching(json); break;
+      case "switchMatchOk": switchMatchOk(json); break;
+      case "switchMatchNot": switchMatchNot(json); break;
+      case "exitMatching": exitMatching(json); break;
+      case "sendTalk": sendTalk(json); break;
     }
   }
 
@@ -158,16 +136,11 @@ public class ReversiWebSocketServer {
     }
   }
 
-  public User getUser() {
-    return user;
-  }
-
   public boolean findBot(Integer id) {
     return BotDAO.selectOne(new QueryWrapper<Bot>().eq("id", id).eq("game_id", 2)) != null;
   }
 
   public void startSingleGaming(JSONObject json) {
-    System.out.println(1);
     Integer botId0 = json.getInteger("botId0");
     Integer botId1 = json.getInteger("botId1");
     RunningBot bot0 = null;
@@ -180,7 +153,6 @@ public class ReversiWebSocketServer {
         bot0 = new RunningBot(botId0);
       }
     }
-    System.out.println(2);
     if (botId1 > 0) {
       if (!findBot(botId1)) {
         json.put("result", json.getString("result") + "不存在白子所选的Bot\n");
@@ -188,21 +160,17 @@ public class ReversiWebSocketServer {
         bot1 = new RunningBot(botId1);
       }
     }
-    System.out.println(3);
     if (json.getString("result") != "") {
       json.put("result", json.getString("result").strip());
       sendMessage(json);
       return ;
     }
-    System.out.println(4);
     reversiGame = new ReversiGame("single", 8, 8, this, this, bot0, bot1);
     json = reversiGame.parseData();
     json.put("action", "startSingleGaming");
     json.put("result", "ok");
     reversiGame.compileBot();
-    System.out.println(5);
     reversiGame.start();
-    System.out.println(6);
     sendMessage(json);
   }
 

@@ -9,6 +9,7 @@ import com.soku.rebotcorner.pojo.Record;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.utils.SnakeRatingDAO;
 import com.soku.rebotcorner.utils.UserDAO;
+import lombok.Data;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -16,12 +17,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
-;
-
+@Data
 public class SnakeGame extends Thread {
   private int rows;
   private int cols;
   private int[][] g;
+  private int[][] initG;
   private int innerWallsCount;
   private static int[] dx = { -1, 0, 1, 0 };
   private static int[] dy = { 0, 1, 0, -1 };
@@ -197,7 +198,7 @@ public class SnakeGame extends Thread {
         break;
       }
     }
-    int[][] initG = new int[rows][cols];
+    initG = new int[rows][cols];
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; ++j) {
         initG[i][j] = g[i][j];

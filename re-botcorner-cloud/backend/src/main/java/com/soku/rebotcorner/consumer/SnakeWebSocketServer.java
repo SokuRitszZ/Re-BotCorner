@@ -73,7 +73,7 @@ public class SnakeWebSocketServer {
     // 检查是否有rating
     SnakeRating snakeRating = SnakeRatingDAO.selectById(userId);
     if (snakeRating == null) {
-      SnakeRatingDAO.add(new SnakeRating(userId, 1500));
+      SnakeRatingDAO.insert(new SnakeRating(userId, 1500));
     }
   }
 
@@ -187,8 +187,9 @@ public class SnakeWebSocketServer {
     json.put("userId1", user.getId());
     json.put("singleBotId0", botId0);
     json.put("singleBotId1", botId1);
-    sendMessage(json.toJSONString());
+    snakeGame.compileBots();
     snakeGame.start();
+    sendMessage(json.toJSONString());
   }
 
   public void startMatching(JSONObject getJson) {
@@ -310,12 +311,13 @@ public class SnakeWebSocketServer {
     socket1.snakeGame = snakeGame;
     JSONObject json = new JSONObject();
     json.put("action", "startMultiGaming");
-    json.put("map", snakeGame.getG());
+    json.put("map", snakeGame.getInitG());
     json.put("userId0", socket0.user.getId());
     json.put("userId1", socket1.user.getId());
+    snakeGame.compileBots();
+    snakeGame.start();
     socket0.sendMessage(json.toJSONString());
     socket1.sendMessage(json.toJSONString());
-    snakeGame.start();
   }
 
   public void setDirection(int id) {

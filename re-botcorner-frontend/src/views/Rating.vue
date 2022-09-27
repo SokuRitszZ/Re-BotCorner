@@ -4,8 +4,8 @@
       <Row>
         <Col col="col-3">
           <CardBody>
-            <button @click="selectGame(game.title)" :class="`btn btn-outline-primary mb-2 ${selectedGame === game.title ? 'active' : ''}`" v-for="game in GAME().list" style="width: 100%; height: 50px; border-radius: 0">
-              {{ game.title }}
+            <button @click="selectGame(game.title)" :class="`btn btn-outline-dark mb-2 ${selectedGame === game.title ? 'active' : ''}`" v-for="game in GAME().list" style="width: 100%; height: 50px; border-radius: 0">
+              {{ game.name }}
             </button>
           </CardBody>
         </Col>
@@ -21,7 +21,7 @@
               </thead>
               <tbody>
                 <tr v-for="(user, index) in shownList">
-                  <td style="font-size: 35px">{{ index + 1 }}</td>
+                  <td style="font-size: 35px">{{ user.rank }}</td>
                   <td>
                     <img :src="user.headIcon" style="width: 50px">
                     {{ user.username }}
@@ -51,10 +51,10 @@ const selectedGame = ref('');
 const hasSelectedGame = ref({});
 const shownList = ref([]);
 
-const selectGame = game => {
+const selectGame = async game => {
   selectedGame.value = game;
   if (hasSelectedGame.value[game] === undefined) {
-    getRatingApi(game)
+    await getRatingApi(game)
     .then(list => {
       hasSelectedGame.value[game] = list;
       hasSelectedGame.value[game].sort((a, b) => {
@@ -63,6 +63,10 @@ const selectGame = game => {
     })
   }
   shownList.value = hasSelectedGame.value[game];
+  const list = shownList.value;
+  shownList.value.map((user, index) => {
+    user.rank = index > 0 && list[index].rating == list[index - 1].rating ? list[index - 1].rank : index + 1;
+  });
 };
 
 </script>

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build & scp -r dist root-andrew:/home/andrew/",
+    "build": "vite build",
+    "upload": "scp -r dist root-andrew:/home/andrew/",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -14,7 +15,6 @@
     "bootstrap": "^5.2.0",
     "bootstrap-icons": "^1.9.1",
     "cropperjs": "^1.5.12",
-    "highlight.js": "^11.6.0",
     "jquery": "^3.6.1",
     "lorem-ipsum": "^2.0.8",
     "monaco-editor": "^0.34.0",

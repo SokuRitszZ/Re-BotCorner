@@ -26,7 +26,9 @@
                     <td>黑子</td>
                     <td>白子</td>
                     <td>胜者</td>
-                    <td>回放</td>
+                    <td>
+                      <button :disabled="hasInitRecordList" @click="initRecordList" class="btn btn-secondary" style="padding: 0; width: 25px; line-height: 25px; border-radius: 5px;"><i class="bi bi-arrow-repeat"></i></button>
+                    </td>
                   </tr>
                 </thead>
                 <tbody>
@@ -35,7 +37,6 @@
                     <td> <span><img :src="record.headIcon0" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid black" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.username0 }}</div> </td>
                     <td> <span><img :src="record.headIcon1" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid white" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.username1 }}</div></td>
                     <td :style="{ color: record.result == -1 ? 'black' : record.result == 0 ? 'black' : 'white', lineHeight: '45px' }">
-                      <!-- {{ record.result == -1 ? "平局" : record.result == 0 ? "黑子" : "白子" }} -->
                       <div v-if="record.result == -1 || record.result == 0" class="black-chess" style="box-shadow: 0 0 10px black; border-radius: 50%; display: inline-block; position: relative; width: 20px; height: 20px; margin: auto">
                         <div style="position: absolute; z-index: 1; border-radius: 50%; background-color: black; width: 20px; height: 20px" />
                         <div style="position: absolute; transform: translateY(1px); border-radius: 50%; background-color: white; width: 20px; height: 20px" />
@@ -63,6 +64,7 @@
                 </li>
                 <li :class="`page-item ${pagePtr === idx ? 'active' : ''}`" v-for="(item, idx) in Math.ceil(allRecordList.length / 4)">
                   <button @click="turnRecordPage(idx)" class="page-link">{{ item }}</button>
+
                 </li>
                 <li class="page-item">
                   <button @click="nextPage" class="page-link">
@@ -213,7 +215,10 @@
         </Collapse>
         <hr>
         <!-- 交流窗口 -->
-        <Window button-style="width: 100%; border-radius: 0" title="聊天窗口">
+        <Window ref="chatroomWindowRef" @show="showChatRoomWindow" button-style="width: 100%; border-radius: 0" title="聊天窗口">
+          <template v-slot:button>
+            聊天窗口
+          </template>
           <template v-slot:body>
             <ChatRoom 
               ref="chatroomRef" 
@@ -261,11 +266,19 @@ const parentRef = ref(null);
 const canvasRef = ref(null);
 
 // ---交流窗口
+const chatroomWindowRef = ref(null);
+const hasNewMessage = ref(false);
+
 const sendTalk = content => {
   SOCKET().sendMessage({
     action: 'sendTalk',
     content
   });
+};
+
+const showChatRoomWindow = () => {
+  hasNewMessage.value = false;
+  chatroomWindowRef.value.getBtn().classList.remove('jumping-btn');
 };
 
 // ---
@@ -317,6 +330,7 @@ const turnRecordPage = page => {
     if (page * 4 + i >= allRecordList.value.length) break;
     recordList.value.push(allRecordList.value[page * 4 + i]);
   }
+  pagePtr.value = page;
 };
 // ---
 
@@ -548,6 +562,10 @@ const websocketRoute = json => {
           time: json.time
         };
         chatroomRef.value.addTalk(`msg`, message);
+        if (chatroomWindowRef.value.getState() == 'close') {
+          chatroomWindowRef.value.getBtn().classList.add(`jumping-btn`);
+          hasNewMessage.value = true;
+        }
       } else {
         alert('danger', json.result);
       }
@@ -615,21 +633,22 @@ const initSocket = () => {
   });
 };
 
-onMounted(() => {
-  initSocket();
-  
-  game.value = new ReversiGame({
-    parent: parentRef.value,
-    context: canvasRef.value.getContext('2d')
-  });
-
-  // 获取录像
+const hasInitRecordList = ref(false);
+const initRecordList = () => {
+  hasInitRecordList.value = true;
   getRecordListApi(2)
   .then(list => {
-    allRecordList.value = resp.reverse();
+    allRecordList.value = list.reverse();
     turnRecordPage(0);
+    hasInitRecordList.value = false;
   })
-  // 获取机器人
+  .catch(err => {
+    alert(`danger`, `获取录像失败`, 1000);
+    hasInitRecordList.value = false;
+  });
+};
+
+const initBotList = () => {
   getBotApi(2)
   .then(list => {
     myBotList.value = list;
@@ -637,6 +656,18 @@ onMounted(() => {
       bot.createTime = new Date(bot.createTime);
       bot.modifyTime = new Date(bot.modifyTime);
     });
+  });
+};
+
+onMounted(() => {
+
+  initSocket();
+  initRecordList();
+  initBotList();
+  
+  game.value = new ReversiGame({
+    parent: parentRef.value,
+    context: canvasRef.value.getContext('2d')
   });
 });
 

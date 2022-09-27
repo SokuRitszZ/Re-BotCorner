@@ -1,13 +1,16 @@
 package com.soku.rebotcorner.games;
 
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.consumer.ReversiWebSocketServer;
 import com.soku.rebotcorner.consumer.match.ReversiMatch;
 import com.soku.rebotcorner.pojo.Record;
+import com.soku.rebotcorner.pojo.ReversiRating;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.utils.BotDAO;
 import com.soku.rebotcorner.utils.RecordDAO;
+import com.soku.rebotcorner.utils.ReversiRatingDAO;
 import com.soku.rebotcorner.utils.UserDAO;
 
 import java.text.SimpleDateFormat;
@@ -222,13 +225,24 @@ public class ReversiGame extends Thread {
     return true;
   }
 
+  public void settleUp() {
+    if (mode == "multi" && gameResult != -1) {
+      ReversiRating[] ratings = new ReversiRating[2];
+      ratings[0] = ReversiRatingDAO.selectById(match.sockets[0].getUser().getId());
+      ratings[1] = ReversiRatingDAO.selectById(match.sockets[1].getUser().getId());
+      Integer winner = gameResult;
+      ratings[winner].setRating(ratings[winner].getRating() + 5);
+      ratings[1 - winner].setRating(ratings[1 - winner].getRating() - 5);
+      ReversiRatingDAO.updateById(ratings[0]);
+      ReversiRatingDAO.updateById(ratings[1]);
+    }
+  }
+
   public void gameOver() {
     isGameOver = true;
     JSONObject json = new JSONObject();
-    json.put("action", "gameOver");
-    json.put("result", gameResult);
-    json.put("reason", reason);
-    match.broadcast(json);
+    settleUp();
+    tellResult();
   }
 
   public boolean checkIsPassed() {
@@ -336,11 +350,7 @@ public class ReversiGame extends Thread {
       }
       match.broadcast(json);
     }
-    JSONObject json = new JSONObject();
-    json.put("action", "gameOver");
-    json.put("result", gameResult);
-    json.put("reason", reason);
-    match.broadcast(json);
+    tellResult();
   }
 
   public void compileBot() {
@@ -400,6 +410,14 @@ public class ReversiGame extends Thread {
         bot[i].stop();
       }
     }
+  }
+
+  public void tellResult() {
+    JSONObject json = new JSONObject();
+    json.put("action", "gameOver");
+    json.put("result", gameResult);
+    json.put("reason", reason);
+    match.broadcast(json);
   }
 
   public void run() {

@@ -16,4 +16,5 @@ public class User {
   private String password;
   private String headIcon;
   private Integer rating;
+  private String openid;
 }

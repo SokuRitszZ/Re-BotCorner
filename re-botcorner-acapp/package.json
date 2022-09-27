@@ -1,0 +1,27 @@
+{
+  "name": "re-botcorner",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "upload": "ssh root-andrew rm -rf /home/andrew/acapp & scp -r dist root-andrew:/home/andrew/acapp",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "animate.css": "^4.1.1",
+    "bootstrap": "^5.2.0",
+    "bootstrap-icons": "^1.9.1",
+    "cropperjs": "^1.5.12",
+    "jquery": "^3.6.1",
+    "lorem-ipsum": "^2.0.8",
+    "monaco-editor": "^0.34.0",
+    "pinia": "^2.0.21",
+    "vue": "^3.2.37"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^3.0.3",
+    "vite": "^3.0.7"
+  }
+}
