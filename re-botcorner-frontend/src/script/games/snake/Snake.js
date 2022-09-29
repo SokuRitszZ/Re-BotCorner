@@ -1,5 +1,4 @@
 import C from "../../C";
-import copy from "../../copy";
 import G from "../../G";
 import GameObject from "../../GameObject";
 import Cell from './Cell';

@@ -34,7 +34,7 @@ import router from '../routes';
 <style scoped>
 .game-card-container {
   display: flex;
-  justify-content: space-around;
+  flex-direction: row;
 }
 
 .game-card {
@@ -43,11 +43,23 @@ import router from '../routes';
   border-radius: 0;
   box-shadow: 0 0 5px #989898;
   cursor: pointer;
+  margin-left: -40px;
   transition: 0.5s;
+  overflow: auto;
+  padding: 10px;
+}
+
+.game-card::-webkit-scrollbar {
+  display: none;
+}
+
+.game-card:first-child {
+  margin-left: 20px;
 }
 
 .game-card:hover {
   transform: scale(1.05);
   box-shadow: 0 0 30px #989898;
+  margin-right: 60px;
 }
 </style>

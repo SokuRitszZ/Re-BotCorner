@@ -146,25 +146,25 @@
                 <template v-if="state === 'matched'">
                   <Row>
                     <Col col="col-4">
-                    <img style="width: 100%" :src="opponentHeadIcon" />
-                    <hr>
-                    <div style="text-align: center">
-                      {{ opponentUsername }}
-                    </div>
-                    <div style="text-align: center; color: gray;">#{{ opponentUserId }}</div>
+                      <img style="width: 100%" :src="opponentHeadIcon" />
+                      <hr>
+                      <div style="text-align: center">
+                        {{ opponentUsername }}
+                      </div>
+                      <div style="text-align: center; color: gray;">#{{ opponentUserId }}</div>
                     </Col>
                     <Col col="col-8">
-                    <button :disabled="iuOk()" @click="switchMatchOk" v-if="!iOk" class="btn btn-success mb-3"
-                      style="width: 100%; border-radius: 0;">确认</button>
-                    <button :disabled="iuOk()" @click="switchMatchNot" v-if="iOk" class="btn btn-secondary mb-3"
-                      style="width: 100%; border-radius: 0;">取消</button>
-                    <button :disabled="iuOk()" @click="exitMatching" class="btn btn-danger"
-                      style="width: 100%; border-radius: 0">退出</button>
-                    <div v-if="uOk" style="color: green; text-align: center; font-size: 10px">对手已准备就绪</div>
-                    <div v-if="iuOk()" style="width: 100%; text-align: center;">
-                      <span class="spinner-border spinner-border-sm text-warning" role="status" aria-hidden="true"></span>
-                      <span class="text-warning" style="font-size: small">等待Bot编译完成...</span>
-                    </div>
+                      <button :disabled="iuOk()" @click="switchMatchOk" v-if="!iOk" class="btn btn-success mb-3"
+                              style="width: 100%; border-radius: 0;">确认</button>
+                      <button :disabled="iuOk()" @click="switchMatchNot" v-if="iOk" class="btn btn-secondary mb-3"
+                              style="width: 100%; border-radius: 0;">取消</button>
+                      <button :disabled="iuOk()" @click="exitMatching" class="btn btn-danger"
+                              style="width: 100%; border-radius: 0">退出</button>
+                      <div v-if="uOk" style="color: green; text-align: center; font-size: 10px">对手已准备就绪</div>
+                      <div v-if="iuOk()" style="width: 100%; text-align: center;">
+                        <span class="spinner-border spinner-border-sm text-warning" role="status" aria-hidden="true"></span>
+                        <span class="text-warning" style="font-size: small">等待Bot编译完成...</span>
+                      </div>
                     </Col>
                   </Row>
                 </template>
@@ -216,9 +216,7 @@
         <hr>
         <!-- 交流窗口 -->
         <Window ref="chatroomWindowRef" @show="showChatRoomWindow" button-style="width: 100%; border-radius: 0" title="聊天窗口">
-          <template v-slot:button>
-            聊天窗口
-          </template>
+          <template v-slot:button>聊天窗口</template>
           <template v-slot:body>
             <ChatRoom 
               ref="chatroomRef" 
@@ -634,6 +632,7 @@ const initSocket = () => {
 };
 
 const hasInitRecordList = ref(false);
+
 const initRecordList = () => {
   hasInitRecordList.value = true;
   getRecordListApi(2)

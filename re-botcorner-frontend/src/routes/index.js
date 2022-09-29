@@ -7,6 +7,7 @@ import NotFound from '../views/NotFound.vue';
 import Snake from '../views/Snake.vue';
 import Reversi from '../views/Reversi.vue';
 import Rating from '../views/Rating.vue';
+import Backgammon from '../views/Backgammon.vue';
 
 import USER from './../store/USER';
 import alert from './../script/alert';
@@ -52,6 +53,14 @@ const routes = [
     path: '/reversi',
     name: 'reversi',
     component: Reversi,
+    meta: {
+      requireAuth: true
+    }
+  },
+  {
+    path: '/backgammon',
+    name: 'backgammon',
+    component: Backgammon,
     meta: {
       requireAuth: true
     }

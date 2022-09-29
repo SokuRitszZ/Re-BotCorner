@@ -69,6 +69,7 @@ export default class GameMap extends GameObject {
     renderGrid();
   }
 
-  onDestroy() { 
+  onDestroy() {
+    super.onDestroy();
   }
 }
