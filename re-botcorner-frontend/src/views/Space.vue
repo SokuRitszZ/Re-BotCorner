@@ -7,9 +7,21 @@
           <div class="username card-body">
             <h5 class="card-title" style="text-align: center; height: auto">{{ USER().getUsername }}<span style="color: gray; margin-left: 5px">#{{ userId }}</span></h5>
           </div>
-          <button @click="updateInfo" v-if="userId === USER().getUserID" class="btn btn-dark" style="border-radius: 0; color: #eee; height: auto">
-            修改信息
-          </button>
+          <Window
+            title="更换头像"
+            :opacity="1"
+            button-style="border-radius: 0; width: 100%"
+          >
+            <template v-slot:button>更换头像</template>
+            <template v-slot:body>
+              <div
+                class="frame"
+                style="padding: 20px"
+              >
+                <Cropper></Cropper>
+              </div>
+            </template>
+          </Window>
         </div>
         <CardBody height="45vh">
           <CardBody height="100%">
@@ -37,6 +49,8 @@ import USER from '../store/USER';
 import BotList from './viewsChild/BotList.vue';
 import { getAllBotApi } from '../script/api';
 import alert from '../script/alert';
+import Window from "../components/Window.vue";
+import Cropper from "../components/Cropper.vue";
 
 const route = useRoute();
 const userId = ref(route.params.userId);

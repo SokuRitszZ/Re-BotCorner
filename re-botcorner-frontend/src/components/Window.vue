@@ -8,11 +8,11 @@
       <div @click.stop="close" class="btn btn-danger" style="position: absolute; padding: 0; right: 0; top: 7px; margin-right: 5px; height: 20px; width: 20px; border-radius: 50%;">
       </div>
     </div>
-    <div class="window-body" style="width: 100%; height: calc(100%-50px);">
+    <div class="window-body" style="width: 100%; height: calc(100% - 50px);">
       <slot name="body"></slot>
     </div>
     <div class="window-foot no-select" style="position: absolute; bottom: 0; width: 100%; height: 20px; background-color: aliceblue;">
-      <div class="window-right-foot" ref="rightFootRef" style="position: absolute; right: 0; width: 20px; height: 20px; background-color: none; border-radius: 1px; font-size: 5px; padding: 5px; color: #888"><i class="bi bi-arrows-fullscreen"></i></div>
+      <div class="window-right-foot" ref="rightFootRef" style="position: absolute; right: 0; width: 20px; height: 20px; border-radius: 1px; font-size: 5px; padding: 5px; color: #888"><i class="bi bi-arrows-fullscreen"></i></div>
     </div>
   </div>
 </template>

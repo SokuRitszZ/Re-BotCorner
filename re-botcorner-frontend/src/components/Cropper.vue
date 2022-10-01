@@ -1,0 +1,116 @@
+<template>
+  <div class="mb-3" style="width: 200px; height: 200px">
+    <img ref="imgRef" src="https://sdfsdf.dev/500x500.png" style="width: 500px;">
+  </div>
+  <input style="display: inline-block; width: calc(100% - 20px - 100px)" ref="inputRef" type="file" class="form-control" @change="changeImg">
+  <div style="display: inline-block; margin-left: 20px; transform: translateY(-7%)" @click="cut" class="btn btn-primary">裁剪</div>
+  <div ref="insertRef" class="insert"></div>
+</template>
+
+<script setup>
+import Cropper from 'cropperjs';
+import 'cropperjs/dist/cropper.min.css';
+import alert from '../script/alert.js';
+import $ from 'jquery';
+
+import {nextTick, onMounted, ref} from "vue";
+import USER from "../store/USER.js";
+
+const imgRef = ref(null);
+const inputRef = ref(null);
+const insertRef = ref(null);
+
+const cropper = ref(null);
+const option = ref({});
+
+const getCrop = () => {
+  return cropper.value.getCroppedCanvas();
+};
+
+const canvas2base64 = canvas => {
+  const url = canvas.toDataURL("image/png");
+  return url;
+};
+
+const base642file = url => {
+  let arr = url.split(','),
+    mime = arr[0].match(/:(.*?);/)[1],
+    bstr = atob(arr[1]),
+    n = bstr.length,
+    u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  const file = new File([u8arr], "filename", { type: mime });
+  return file;
+};
+
+const getFile = () => {
+  const canvas = getCrop();
+  const base64 = canvas2base64(canvas);
+  const file = base642file(base64);
+  return file;
+}
+
+const cut = () => {
+  const div = insertRef.value;
+  div.innerHTML = '';
+  const crop = getCrop();
+  if (crop !== null) {
+    const data = new FormData();
+    data.append('file', getFile());
+    $.ajax({
+      url: "http://localhost:8080/api/upload",
+      "type": 'post',
+      "headers": {
+        "Authorization": `Bearer ${USER().getToken}`
+      },
+      "processData": false,
+      "contentType": false,
+      data,
+      "success": resp => {
+        if (resp.result === 'ok') {
+          (async () => {
+            USER().setHeadIcon('');
+            await nextTick();
+            USER().setHeadIcon(resp.url);
+          })();
+        }
+      },
+      "error": err => {
+        console.log(err);
+      }
+    });
+  }
+};
+
+const changeImg = () => {
+  const file = inputRef.value.files[0];
+  if (typeof file === 'undefined' || file.type.split('/')[0] !== "image") {
+    alert(`danger`, `文件类型不是图片`);
+    return ;
+  }
+  const url = URL.createObjectURL(file);
+  imgRef.value.setAttribute('src', url);
+  cropper.value.destroy();
+  cropper.value = new Cropper(imgRef.value, option.value);
+};
+
+const initCropper = () => {
+  option.value = {
+    viewMode: 0,
+    aspectRatio: 1 / 1
+  }
+  cropper.value = new Cropper(imgRef.value, option.value);
+};
+
+onMounted(() => {
+  initCropper();
+});
+</script>
+
+<style scoped>
+div {
+  margin: auto;
+}
+</style>

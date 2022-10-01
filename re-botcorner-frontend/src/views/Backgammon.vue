@@ -109,12 +109,19 @@
         </Collapse>
         <hr>
         <Window
+          ref="chatroomWindowRef"
+          @show="showChatRoomWindow"
           button-style="width: 100%; border-radius: 0%"
           title="聊天窗口"
         >
           <template v-slot:button>聊天窗口</template>
           <template v-slot:body>
-            聊天室
+            <ChatRoom
+              ref="chatroomRef"
+              :sendTalk="sendTalk"
+              :isLeft="isLeft"
+              :isRight="isRight"
+            />
           </template>
         </Window>
         <hr>
@@ -143,6 +150,8 @@ import BackgammonGame from "../script/games/backgammon/BackgammonGame.js";
 import {onMounted, onUnmounted, ref} from "vue";
 import alert from "../script/alert.js";
 import SOCKET from "../store/SOCKET.js";
+import ChatRoom from "../components/ChatRoom.vue";
+import USER from "../store/USER.js";
 
 /** 连接Websocket */
 
@@ -176,6 +185,24 @@ const initSocket = () => {
 const linkWebSocket = () => {
   hasClickedInitSocket.value = true;
   initSocket();
+};
+
+/** 聊天室 */
+const chatroomRef = ref(null);
+
+const sendTalk = content => {
+  SOCKET().sendMessage({
+    action: 'sendTalk',
+    content
+  });
+};
+
+const isLeft = message => {
+  return message.userId != USER().getUserID;
+};
+
+const isRight = message => {
+  return message.userId == USER().getUserID;
 };
 
 /** 选择模式 */

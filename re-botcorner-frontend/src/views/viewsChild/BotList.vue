@@ -45,7 +45,7 @@
         <div style="height: 90% ; overflow: auto;">
           <button @click="chooseBot(bots.indexOf(bot))" v-for="bot in bots" class="btn btn-light mb-2" style="border: 1px solid #ccc">
             <span style="float: left">
-              <img :src="`http://localhost:8080/static/lang/lang_${LANG().langs[bot.langId].lang}.png`" alt="" width="50">
+              <img :src="`${api_url[mode]}/static/lang/lang_${LANG().langs[bot.langId].lang}.png`" alt="" width="50">
             </span>
             <span>
               <strong class="title">{{  bot.title  }}</strong>
@@ -125,6 +125,7 @@ import LANG from '../../store/LANG.js';
 import MonacoEditor from '../../components/MonacoEditor.vue';
 import { addBotApi, deleteBotApi, updateBotApi } from '../../script/api';
 import alert from '../../script/alert';
+import { mode, api_url } from '../../config.json';
 
 const props = defineProps({
   bots: {

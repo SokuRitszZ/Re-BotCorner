@@ -22,7 +22,7 @@
       <Col col="col-8">
         <div style="padding: 20px">
           <h1>
-            待开发区域
+            实验室
             <hr>
             <Window>
               <template v-slot:button>
@@ -32,6 +32,8 @@
                 <ChatRoom />
               </template>
             </Window>
+            <hr>
+            <Chessboard />
           </h1>
         </div>
       </Col>
@@ -49,6 +51,7 @@ import Row from '../components/Row.vue';
 import Col from '../components/Col.vue';
 import Window from '../components/Window.vue';
 import ChatRoom from '../components/ChatRoom.vue';
+import Chessboard from "../components/Chessboard.vue";
 
 </script>
 
