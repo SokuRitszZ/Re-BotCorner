@@ -34,7 +34,7 @@ import ROUTE from '../store/ROUTE';
   transition: 0.5s;
   margin-left: -40px;
   background-color: yellow;
-  color: rgba(0, 0, 255, 0.8)
+  color: rgba(0, 0, 255, 0.8);
 }
 
 .game-card:hover {

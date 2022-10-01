@@ -7,6 +7,9 @@
       <NavbarItem> 
         <router-link class="nav-link" to="/rating"> 排行榜 </router-link>
       </NavbarItem>
+      <NavbarItem>
+        <router-link class="nav-link" to="/group"> 小组 </router-link>
+      </NavbarItem>
     </template>
     <template v-slot:right>
       <template v-if="USER().checkIsPulling">

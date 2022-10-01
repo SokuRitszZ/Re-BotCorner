@@ -15,7 +15,8 @@
       </Col>
       <Col col="col-3">
       <CardBody>
-        <h1>Demo</h1>
+        <h1>待开发区域</h1>
+        <hr>
       </CardBody>
       </Col>
     </Row>

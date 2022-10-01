@@ -189,3 +189,20 @@ export const getRatingApi = game => {
     });
   });
 };
+
+export const updateHeadIconApi = data => {
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      url: `${api_url[mode]}/api/updateHeadIcon`,
+      type: 'post',
+      headers: {
+        "Authorization": `Bearer ${USER().getToken}`
+      },
+      processData: false,
+      contentType: false,
+      data,
+      success: resp => resolve(resp),
+      error: err => reject(err)
+    });
+  });
+};

@@ -15,6 +15,7 @@ import $ from 'jquery';
 
 import {nextTick, onMounted, ref} from "vue";
 import USER from "../store/USER.js";
+import {updateHeadIconApi} from "../script/api.js";
 
 const imgRef = ref(null);
 const inputRef = ref(null);
@@ -59,26 +60,14 @@ const cut = () => {
   if (crop !== null) {
     const data = new FormData();
     data.append('file', getFile());
-    $.ajax({
-      url: "http://localhost:8080/api/upload",
-      "type": 'post',
-      "headers": {
-        "Authorization": `Bearer ${USER().getToken}`
-      },
-      "processData": false,
-      "contentType": false,
-      data,
-      "success": resp => {
-        if (resp.result === 'ok') {
-          (async () => {
-            USER().setHeadIcon('');
-            await nextTick();
-            USER().setHeadIcon(resp.url);
-          })();
-        }
-      },
-      "error": err => {
-        console.log(err);
+    updateHeadIconApi(data)
+    .then(resp => {
+      if (resp.result === 'ok') {
+        (async () => {
+          USER().setHeadIcon('');
+          await nextTick();
+          USER().setHeadIcon(resp.url);
+        })();
       }
     });
   }

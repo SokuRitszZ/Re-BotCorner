@@ -9,6 +9,6 @@ public class StaticSourceConfig implements WebMvcConfigurer {
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
     WebMvcConfigurer.super.addResourceHandlers(registry);
-    registry.addResourceHandler("/static/**").addResourceLocations("classpath:/static/");
+    registry.addResourceHandler("/static/**").addResourceLocations("classpath:/static/", "file:static/");
   }
 }

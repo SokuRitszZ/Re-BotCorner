@@ -7,6 +7,7 @@ import NotFound from '../views/NotFound.vue';
 import Snake from '../views/Snake.vue';
 import Reversi from '../views/Reversi.vue';
 import Rating from '../views/Rating.vue';
+import Group from '../views/Group.vue';
 import Backgammon from '../views/Backgammon.vue';
 
 import USER from './../store/USER';
@@ -35,6 +36,11 @@ const routes = [
     path: '/rating',
     name: 'rating',
     component: Rating
+  },
+  {
+    path: '/group',
+    name: 'group',
+    component: Group
   },
   {
     path: '/notfound',

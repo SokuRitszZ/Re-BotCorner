@@ -24,7 +24,8 @@ public class WebSocketConfig {
     RestTemplate restTemplate,
     LangMapper langMapper,
     SnakeRatingMapper snakeRatingMapper,
-    ReversiRatingMapper reversiRatingMapper
+    ReversiRatingMapper reversiRatingMapper,
+    BackgammonRatingMapper backgammonRatingMapper
   ) {
     RecordDAO.recordMapper = recordMapper;
     UserDAO.userMapper = userMapper;
@@ -33,5 +34,6 @@ public class WebSocketConfig {
     LangDAO.langMapper = langMapper;
     SnakeRatingDAO.snakeRatingMapper = snakeRatingMapper;
     ReversiRatingDAO.reversiRatingMapper = reversiRatingMapper;
+    BackgammonRatingDAO.backgammonRatingMapper = backgammonRatingMapper;
   }
 }

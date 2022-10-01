@@ -70,8 +70,8 @@ public class ReversiWebSocketServer {
   @OnMessage
   public void onMessage(String message, Session session) {
     JSONObject json = JSONObject.parseObject(message);
-    route(json);
     System.out.println("received.");
+    route(json);
   }
 
   @OnError

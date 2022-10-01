@@ -1,6 +1,6 @@
 package com.soku.rebotcorner.controller.getrating;
 
-import com.soku.rebotcorner.service.getrating.ReversiRatingService;
+import com.soku.rebotcorner.service.getrating.BackgammonRatingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-public class ReversiRatingController {
+public class BackgammonRatingController {
   @Autowired
-  private ReversiRatingService reversiRatingService;
+  private BackgammonRatingService backgammonRatingService;
 
-  @GetMapping("/api/getrating/reversi")
+  @GetMapping("/api/getrating/backgammon")
   public List<Map<String, String>> getRatingList() {
-    return reversiRatingService.getRatingList();
+    return backgammonRatingService.getRatingList();
   }
 }
