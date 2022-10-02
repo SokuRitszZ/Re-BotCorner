@@ -18,7 +18,7 @@
                 class="frame"
                 style="padding: 20px"
               >
-                <Cropper></Cropper>
+                <Cropper @cut="updateHeadIcon" />
               </div>
             </template>
           </Window>
@@ -30,25 +30,24 @@
       </Col>
       <Col col="col-8">
         <CardBody height="20vh"></CardBody>
-          <template v-if="userId === USER().getUserID">
-            <BotList :bots="bots">
-            </BotList>
-          </template>
+        <template v-if="userId === USER().getUserID">
+          <BotList :bots="bots">
+          </BotList>
+        </template>
       </Col>
-    </Row>
+    </Row>0
   </CardBody>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import {nextTick, onMounted, ref} from 'vue';
 import { useRoute } from 'vue-router';
 import CardBody from '../components/CardBody.vue';
 import Row from '../components/Row.vue';
 import Col from '../components/Col.vue';
 import USER from '../store/USER';
 import BotList from './viewsChild/BotList.vue';
-import { getAllBotApi } from '../script/api';
-import alert from '../script/alert';
+import {getAllBotApi, updateHeadIconApi} from '../script/api';
 import Window from "../components/Window.vue";
 import Cropper from "../components/Cropper.vue";
 
@@ -56,8 +55,19 @@ const route = useRoute();
 const userId = ref(route.params.userId);
 const bots = ref([]);
 
-const updateInfo = () => {
-  alert(`warning`, `敬请期待`);
+const updateHeadIcon = file => {
+  const data = new FormData();
+  data.append('file', file);
+  updateHeadIconApi(data)
+  .then(resp => {
+    if (resp.result === 'ok') {
+      (async () => {
+        USER().setHeadIcon('');
+        await nextTick();
+        USER().setHeadIcon(resp.url);
+      })();
+    }
+  });
 };
 
 onMounted(() => {

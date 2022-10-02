@@ -8,6 +8,8 @@ import Snake from '../views/Snake.vue';
 import Reversi from '../views/Reversi.vue';
 import Rating from '../views/Rating.vue';
 import Group from '../views/Group.vue';
+import GroupDetail from '../views/GroupDetail.vue';
+import ContestDetail from '../views/ContestDetail.vue';
 import Backgammon from '../views/Backgammon.vue';
 
 import USER from './../store/USER';
@@ -41,6 +43,16 @@ const routes = [
     path: '/group',
     name: 'group',
     component: Group
+  },
+  {
+    path: '/group/:id',
+    name: 'groupDetail',
+    component: GroupDetail
+  },
+  {
+    path: '/contest/:id',
+    name: 'contestDetail',
+    component: ContestDetail
   },
   {
     path: '/notfound',

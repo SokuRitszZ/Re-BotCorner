@@ -11,11 +11,8 @@
 import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.min.css';
 import alert from '../script/alert.js';
-import $ from 'jquery';
 
-import {nextTick, onMounted, ref} from "vue";
-import USER from "../store/USER.js";
-import {updateHeadIconApi} from "../script/api.js";
+import {onMounted, ref} from "vue";
 
 const imgRef = ref(null);
 const inputRef = ref(null);
@@ -57,20 +54,7 @@ const cut = () => {
   const div = insertRef.value;
   div.innerHTML = '';
   const crop = getCrop();
-  if (crop !== null) {
-    const data = new FormData();
-    data.append('file', getFile());
-    updateHeadIconApi(data)
-    .then(resp => {
-      if (resp.result === 'ok') {
-        (async () => {
-          USER().setHeadIcon('');
-          await nextTick();
-          USER().setHeadIcon(resp.url);
-        })();
-      }
-    });
-  }
+  if (crop !== null) emits('cut', getFile());
 };
 
 const changeImg = () => {
@@ -92,6 +76,10 @@ const initCropper = () => {
   }
   cropper.value = new Cropper(imgRef.value, option.value);
 };
+
+const emits = defineEmits(['cut']);
+
+defineExpose(['cut']);
 
 onMounted(() => {
   initCropper();

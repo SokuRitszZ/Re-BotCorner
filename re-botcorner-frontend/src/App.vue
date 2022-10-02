@@ -63,7 +63,7 @@
     </template>
   </Navbar>
   <Container>
-    <router-view />
+    <router-view :key="$route.fullPath" />
   </Container>
 </template>
 
@@ -79,6 +79,7 @@ import alert from './script/alert';
 import router from './routes';
 import GAME from './store/GAME';
 import LANG from './store/LANG';
+import fakeMaker from "./script/fakeMaker.js";
 
 const username = ref(null);
 const password = ref(null);
@@ -118,7 +119,7 @@ const toRegister = () => {
 
 const gotoSpace = () => {
   router.push(`/space/${USER().getUserID}`);
-}
+};
 
 onMounted(() => {
   USER().loginByToken();
