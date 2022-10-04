@@ -125,7 +125,7 @@ import LANG from '../../store/LANG.js';
 import MonacoEditor from '../../components/MonacoEditor.vue';
 import { addBotApi, deleteBotApi, updateBotApi } from '../../script/api';
 import alert from '../../script/alert';
-import { mode, api_url } from '../../config.json';
+import {api_url, mode} from '../../config.json';
 
 const props = defineProps({
   bots: {
@@ -222,7 +222,7 @@ const backupTitle = () => {
 const updateTitle = () => {
   const newTitle = props.bots[ptr.value].title;
   if (newTitle === bkupTitle.value) return ;
-  updateBotApi(props.bot[ptr.value].id, { title: newTitle})
+  updateBotApi(props.bots[ptr.value].id, { title: newTitle})
   .then(resp => {
     if (resp.result === "success") {
       props.bots[ptr.value].title = newTitle;
@@ -242,7 +242,7 @@ const backupDescription = () => {
 const updateDescription = () => {
   const newDescription = props.bots[ptr.value].description;
   if (newDescription === bkupDescription.value) return ;
-  updateBotApi(props.bot[ptr.value].id, { description: newDescription })
+  updateBotApi(props.bots[ptr.value].id, { description: newDescription })
   .then(resp => {
     if (resp.result === "success") {
       props.bots[ptr.value].description = newDescription;
@@ -267,7 +267,7 @@ const updateCode = () => {
     return ;
   }
   updateCodeLoading.value = true;
-  updateBotApi(props.bot[ptr.value].id, { code: newCode })
+  updateBotApi(props.bots[ptr.value].id, { code: newCode })
   .then(resp => {
     if (resp.result === "success") {
       props.bots[ptr.value].code = newCode;

@@ -64,7 +64,6 @@
                 </li>
                 <li :class="`page-item ${pagePtr === idx ? 'active' : ''}`" v-for="(item, idx) in Math.ceil(allRecordList.length / 4)">
                   <button @click="turnRecordPage(idx)" class="page-link">{{ item }}</button>
-
                 </li>
                 <li class="page-item">
                   <button @click="nextPage" class="page-link">

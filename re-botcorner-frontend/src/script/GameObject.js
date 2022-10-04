@@ -28,6 +28,10 @@ export default class GameObject {
     }
   }
 
+  goInto() {
+    this.parent.gameObjects.push(this);
+  }
+
   onStart() { }
   
   onDestroy() { }

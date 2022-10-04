@@ -20,6 +20,7 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -161,7 +162,7 @@ public class ReversiWebSocketServer {
       }
     }
     if (json.getString("result") != "") {
-      json.put("result", json.getString("result").strip());
+      json.put("result", json.getString("result").trim());
       sendMessage(json);
       return ;
     }
@@ -196,7 +197,7 @@ public class ReversiWebSocketServer {
     int cols = data.getInteger("cols");
     String reason = data.getString("reason");
     String stringifiedSteps = data.getString("steps");
-    List<String> steps = List.of(stringifiedSteps.split(" "));
+    List<String> steps = Arrays.asList(stringifiedSteps.split(" "));
     reversiGame = new ReversiGame("record", rows, cols, this, this, null, null);
     reversiGame.setSteps(steps);
     reversiGame.setGameResult(record.getResult());

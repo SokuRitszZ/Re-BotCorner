@@ -384,7 +384,7 @@ public class ReversiGame extends Thread {
       String result = json.getString("data");
       try {
         if (result == null || result.length() == 0) throw new RuntimeException("运行超时");
-        result = result.strip();
+        result = result.trim();
         Pattern pattern = Pattern.compile("^((\\d)|([1-9]\\d*))\\s((\\d)|([1-9]\\d*))$");
         if (!pattern.matcher(result).matches()) {
           throw new RuntimeException(String.format("非法输出0: %s", result));

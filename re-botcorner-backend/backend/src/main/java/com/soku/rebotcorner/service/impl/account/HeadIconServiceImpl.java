@@ -7,12 +7,10 @@ import com.soku.rebotcorner.utils.UserDetailsImpl;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,7 +34,6 @@ public class HeadIconServiceImpl implements HeadIconService {
     String filename = user.getUsername() + ".png";
 
     // 获取项目类路径
-//    String path = ResourceUtils.getURL("classpath:").getPath();
     String path = System.getProperty("user.dir");
 
     File uploadDir = new File(path + "/static/profile/");
@@ -53,7 +50,7 @@ public class HeadIconServiceImpl implements HeadIconService {
 
     // 修改用户信息
     String[] url = new String[]{"http://localhost:8080/static/profile", "https://app3495.acapp.acwing.com.cn/static/profile"};
-    String newHeadIcon = url[0] + "/" + filename;
+    String newHeadIcon = url[1] + "/" + filename;
     user.setHeadIcon(newHeadIcon);
     UserDAO.updateById(user);
     Map<String, String> map = new HashMap<>();

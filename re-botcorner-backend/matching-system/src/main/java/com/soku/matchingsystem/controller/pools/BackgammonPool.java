@@ -1,4 +1,4 @@
-package com.soku.matchingsystem.pools;
+package com.soku.matchingsystem.controller.pools;
 
 import com.soku.matchingsystem.Player;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
-public class ReversiPool extends Thread implements MatchPool {
+public class BackgammonPool extends Thread implements MatchPool {
   private static List<Player> players = new ArrayList<>();
   private ReentrantLock lock = new ReentrantLock();
   private static RestTemplate restTemplate;
@@ -20,7 +20,7 @@ public class ReversiPool extends Thread implements MatchPool {
 
   @Autowired
   public void setRestTemplate(RestTemplate restTemplate) {
-    ReversiPool.restTemplate = restTemplate;
+    BackgammonPool.restTemplate = restTemplate;
   }
 
   public void addPlayer(Integer userId, Integer rating) {
@@ -93,14 +93,14 @@ public class ReversiPool extends Thread implements MatchPool {
 
   private void sendResult(Player a, Player b) {
     MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
-    data.add("game", "reversi");
+    data.add("game", "backgammon");
     data.add("userId0", a.getUserId().toString());
     data.add("userId1", b.getUserId().toString());
     restTemplate.postForObject(startGameUrl, data, String.class);
   }
 
   public void display() {
-    System.out.print("Reversi Pool: [ ");
+    System.out.print("Backgammon Pool: [ ");
     for (Player player: players) {
       System.out.print(player.getUserId() + " ");
     }

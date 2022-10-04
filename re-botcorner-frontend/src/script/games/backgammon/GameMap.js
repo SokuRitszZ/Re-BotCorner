@@ -8,19 +8,15 @@ export default class GameMap extends GameObject {
     this.L = 0;
   }
 
-  setPoint() {
-
-  }
-
   onStart() {
   }
 
   update() {
     const updateSize = () => {
       const parentRect = this.parent.parent;
-      this.L = Math.floor(Math.min(parentRect.clientHeight / 11, parentRect.clientWidth / 13));
+      this.L = Math.floor(Math.min(parentRect.clientHeight / 11, parentRect.clientWidth / 14));
       this.parent.L = this.L;
-      this.context.canvas.width = this.L * 13;
+      this.context.canvas.width = this.L * 14;
       this.context.canvas.height = this.L * 11;
     };
 
@@ -110,6 +106,23 @@ export default class GameMap extends GameObject {
           angle: Math.PI
         });
       }
+
+      G.rectangleSide({
+        x: 0,
+        y: 13 * L,
+        lx: 5 * L,
+        ly: L,
+        color: `#900`,
+        width: L / 20
+      });
+      G.rectangleSide({
+        x: 6 * L,
+        y: 13 * L,
+        lx: 5 * L,
+        ly: L,
+        color: `#ccc`,
+        width: L / 20
+      });
     };
 
     renderBackground();
