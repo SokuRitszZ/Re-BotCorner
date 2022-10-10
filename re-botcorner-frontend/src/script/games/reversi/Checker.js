@@ -15,6 +15,7 @@ export default class Checker extends GameObject {
 
     this.cnt0 = 0;
     this.cnt1 = 0;
+    this.curId = 0;
   }
 
   isIn(r, c) {

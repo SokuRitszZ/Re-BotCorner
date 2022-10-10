@@ -19,7 +19,7 @@ export default class SnakeGame {
     this.L = 0;
   }
 
-  start({ map, userId0, userId1 }) {
+  start({ map }) {
     this.rows = map.length;
     this.cols = map[0].length;
     this.gameMap = new GameMap(this, {
@@ -28,13 +28,11 @@ export default class SnakeGame {
     this.snakes.push(
       new Snake(this, {
         id: 0,
-        userId: userId0
       })
     );
     this.snakes.push(
       new Snake(this, {
         id: 1,
-        userId: userId1
       })
     );
     this.checker = new Checker(this);

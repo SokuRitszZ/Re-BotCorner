@@ -16,15 +16,17 @@
         正在自动登录...
       </template>
       <template v-else-if="USER().checkIsLogined">
-        <NavbarItem :classes="['dropstart']">
+        <NavbarItem :classes="['dropdown']">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button"
             data-bs-toggle="dropdown" aria-expanded="false">
             {{ USER().getUsername }}
           </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <li> <div @click="gotoSpace" class="dropdown-item">个人空间</div> </li>
-            <li> <div @click="logout" class="dropdown-item">注销</div> </li>
-          </ul>
+          <transition name="dropdown">
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+              <li> <div @click="gotoSpace" class="dropdown-item">个人空间</div> </li>
+              <li> <div @click="logout" class="dropdown-item">注销</div> </li>
+            </ul>
+          </transition>
         </NavbarItem>
       </template>
       <template v-else>
@@ -63,7 +65,9 @@
     </template>
   </Navbar>
   <Container>
-    <router-view :key="$route.fullPath" />
+      <transition name="page">
+        <router-view :key="$route.fullPath" />
+      </transition>
   </Container>
 </template>
 
@@ -79,7 +83,6 @@ import alert from './script/alert';
 import router from './routes';
 import GAME from './store/GAME';
 import LANG from './store/LANG';
-import fakeMaker from "./script/fakeMaker.js";
 
 const username = ref(null);
 const password = ref(null);
@@ -131,5 +134,34 @@ onMounted(() => {
 <style scoped>
 body {
   background-color: rgb(228, 227, 227);
+}
+
+.page-enter-active {
+  animation: fadeInZoom 0.5s;
+  animation-delay: 0.5s;
+}
+
+.page-leave-active {
+  animation: fadeInLeft reverse 0.5s;
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-2.5%);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInZoom {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
+  to {
+    opacity: 1;
+  }
 }
 </style>

@@ -303,14 +303,30 @@ const gameTurn = ref('黑子');
 const allRecordList = ref([]);
 const recordList = ref([]);
 const pagePtr = ref(0);
+const playingRecordId = ref(0);
 const isPlayingRecord = ref(false);
 
 const playRecord = index => {
+  clearInterval(playingRecordId.value);
   const record = recordList.value[index];
-  SOCKET().sendMessage({
-    action: 'playRecord',
-    id: parseInt(record.id)
-  });
+  const recordJson = JSON.parse(record.json);
+  initGame("record", 8, 8);
+  const steps = recordJson.steps.split(' ');
+  let ptr = 0;
+  playingRecordId.value = setInterval(() => {
+    if (ptr >= steps.length) {
+      alert("success", `游戏结束: ${recordJson.reason}`);
+      return clearInterval(playingRecordId.value);
+    }
+    const id = ptr % 2;
+    gameTurn.value = id === 0 ? '白子' : '黑子';
+    const act = steps[ptr++];
+    if (act === "passed") alert(`warning`, id === 0 ? "黑子跳过" : "白子跳过");
+    else {
+      const [r, c] = act.split(',').map(item => parseInt(item));
+      checker.value.putChess(r, c, id);
+    }
+  }, 750);
 };
 
 const lastPage = () => {
@@ -451,7 +467,7 @@ const websocketRoute = json => {
       if (json.result != 'ok') {
         alert(`danger`, json.result);
       } else {
-        initGame('single', json.rows, json.cols, json.stringifiedChess);
+        initGame('single', json.rows, json.cols);
       }
       isWaiting.value = false;
     },
@@ -493,9 +509,6 @@ const websocketRoute = json => {
       } else {
         alert(`warning`, `已保存该录像`);
       }
-    },
-    playRecord(json) {
-      initGame('record', json.rows, json.cols, json.stringifiedChess);
     },
     startMatching(json) {
       state.value = "matching";
@@ -547,7 +560,7 @@ const websocketRoute = json => {
       opponentHeadIcon.value = '';
     },
     startMultiGaming(json) {
-      initGame('multi', json.rows, json.cols, json.stringifiedChess);
+      initGame('multi', json.rows, json.cols);
     },
     sendTalk(json) {
       if (json.result === "ok") {
@@ -571,7 +584,7 @@ const websocketRoute = json => {
   wsRoutes[json.action](json);
 };
 
-const initGame = (mode, rows, cols, stringifiedChess) => {
+const initGame = (mode, rows, cols) => {
   if (mode !== 'record') isPlayingRecord.value = false;
   else isPlayingRecord.value = true;
   game.value.endGaming();
@@ -583,7 +596,6 @@ const initGame = (mode, rows, cols, stringifiedChess) => {
     mode,
     rows,
     cols,
-    stringifiedChess,
     userId0: 0,
     userId1: 1,
     putChessCallback: putChessCallback

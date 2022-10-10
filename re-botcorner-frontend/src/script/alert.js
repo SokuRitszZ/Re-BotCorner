@@ -6,9 +6,7 @@ const alert = (type, content, remain) => {
     }, 450);
   };
   let div;
-  if (div = document.querySelector(`.alert`)) {
-    removeAlert(div);
-  }
+  if (div = document.querySelector(`.alert`)) removeAlert(div);
   div = document.createElement('div');
   div.classList.add('alert');
   div.classList.add(`alert-${type}`);
@@ -18,13 +16,9 @@ const alert = (type, content, remain) => {
     div, 
     document.querySelectorAll('#app>*')[0]
   );
-  div.addEventListener('click', () => {
-    removeAlert(div);
-  });
+  div.addEventListener('click', () => { removeAlert(div); });
   setTimeout(() => {
-    if (div) {
-      removeAlert(div);
-    }
+    if (div) removeAlert(div);
   }, (remain || 1000) + 500);
 };
 

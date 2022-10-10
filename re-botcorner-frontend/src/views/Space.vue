@@ -35,7 +35,7 @@
           </BotList>
         </template>
       </Col>
-    </Row>0
+    </Row>
   </CardBody>
 </template>
 
@@ -82,6 +82,3 @@ onMounted(() => {
 });
 
 </script>
-
-<style>
-</style>

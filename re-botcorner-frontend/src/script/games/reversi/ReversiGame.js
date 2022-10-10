@@ -18,16 +18,20 @@ export default class ReversiGame {
     this.hasAddListener = false;
   }
   
-  start({ mode, rows, cols, stringifiedChess, userId0, userId1, putChessCallback }) {
+  start({ mode, rows, cols, userId0, userId1, putChessCallback }) {
     this.mode = mode;
     this.rows = rows;
     this.cols = cols;
     for (let i = 0, k = 0; i < rows; ++i) {
       this.chess[i] = [];
       for (let j = 0; j < cols; ++j) {
-        this.chess[i][j] = parseInt(stringifiedChess[k++]);
+        this.chess[i][j] = 2;
       }
     }
+    const midRow = rows >> 1;
+    const midCol = cols >> 1;
+    this.chess[midRow][midCol] = this.chess[midRow - 1][midCol - 1] = 1;
+    this.chess[midRow][midCol - 1] = this.chess[midRow - 1][midCol] = 0;
     this.gameMap = new GameMap(this, { map: this.chess, rows, cols });
     this.checker = new Checker(this, { putChessCallback });
     

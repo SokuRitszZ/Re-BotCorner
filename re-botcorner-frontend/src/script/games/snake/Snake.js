@@ -22,11 +22,10 @@ export default class Snake extends GameObject {
     ];
   }
 
-  constructor(parent, { id, userId }) {
+  constructor(parent, { id }) {
     super(parent);
     
     this.id = id;
-    this.userId = userId;
 
     this.cells = [new Cell(
       id === 0 ? this.parent.rows - 2 : 1,
@@ -38,19 +37,39 @@ export default class Snake extends GameObject {
     this.status = 'idle';
     this.nextCell = null;
     this.isIncreasing = false;
+
+    this.step = 0;
   }
 
-  nextStep({ isIncreasing, d, status }) {
+  checkIncreasing() {
+    return this.step < 10 || (this.step - 9) % 3 == 0;
+  }
+
+  checkStatus() {
+    const r = this.nextCell.r;
+    const c = this.nextCell.c;
+    let flag = false;
+    const map = this.parent.gameMap.map;
+    const snakes = this.parent.snakes;
+    snakes.map(snake => {
+      snake.cells.map(cell => {
+        flag |= (r === cell.r && c === cell.c);
+      });
+    });
+    flag |= (map[r][c] === 1);
+    return flag ? "die" : "move";
+  }
+
+  nextStep({ d }) {
     if (this.status === 'die') return ;
     this.nextCell = new Cell(this.cells[0].r + this.dx[d], this.cells[0].c + this.dy[d]);
     this.eyeDirection = d;
-    this.status = status;
-    this.isIncreasing = isIncreasing;
-    
+    this.setStatus(this.checkStatus());
+    this.isIncreasing = this.checkIncreasing();
+    this.step++;
+
     const n = this.cells.length;
-    for (let i = n; i; --i) {
-      this.cells[i] = new Cell(this.cells[i - 1].r, this.cells[i - 1].c);
-    }
+    for (let i = n; i; --i) this.cells[i] = new Cell(this.cells[i - 1].r, this.cells[i - 1].c);
   }
 
   setStatus(status) {

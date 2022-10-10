@@ -19,15 +19,16 @@
             最近比赛
           </template>
           <template v-slot:content>
-            <table class="table table-striped">
-              <thead>
+            <div style="height: 300px; width: 100%; overflow: auto">
+              <table class="table table-striped">
+                <thead>
                 <tr>
                   <td>时间</td>
                   <td>白子</td>
                   <td>红子</td>
                   <td>胜者</td>
                   <td>
-                    <button class="btn btn-secondary" style="padding: 0; width: 25px; line-height: 25px; border-radius: 5px;">
+                    <button @click="initRecordList" class="btn btn-secondary" style="padding: 0; width: 25px; line-height: 25px; border-radius: 5px;">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16">
                         <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>
                         <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>
@@ -35,23 +36,41 @@
                     </button>
                   </td>
                 </tr>
-              </thead>
-              <tbody>
+                </thead>
+                <tbody>
                 <tr v-for="(record, index) in recordList">
                   <td>{{record.createTime}}</td>
-                  <td> <span><img :src="record.headIcon0" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid #ccc" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.username0 }}</div></td>
-                  <td> <span><img :src="record.headIcon1" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid #900" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.username1 }}</div></td>
-                  <td> {{record.result === 0 ? '白子' : '红子'}} </td>
+                  <td> <span><img :src="record.headIcon0" style="width: 40px; border-radius: 50%; padding: 1px; border: 1px solid #ccc" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.username0 }}</div></td>
+                  <td> <span><img :src="record.headIcon1" style="width: 40px; border-radius: 50%; padding: 1px; border: 1px solid #900" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.username1 }}</div></td>
+                  <td style="line-height: 40px"> {{record.result === 0 ? '白子' : '红子'}} </td>
                   <td>
-                    <button @click="playRecord(JSON.parse(record.json))" class="btn btn-primary" style="padding: 0; width: 45px; height: 45px; border-radius: 0">
+                    <button @click="playRecord(index)" class="btn btn-primary" style="padding: 0; width: 40px; height: 40px; border-radius: 0">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-circle-fill" viewBox="0 0 16 16">
                         <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM6.79 5.093A.5.5 0 0 0 6 5.5v5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814l-3.5-2.5z"/>
                       </svg>
                     </button>
                   </td>
                 </tr>
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
+            <nav>
+              <ul class="pagination justify-content-center">
+                <li class="page-item">
+                  <button @click="lastPage" class="page-link">
+                    <span>&laquo;</span>
+                  </button>
+                </li>
+                <li :class="`page-item ${pagePtr === idx ? 'active' : ''}`" v-for="(item, idx) in Math.ceil(allRecordList.length / 4)">
+                  <button @click="turnRecordPage(idx)" class="page-link">{{ item }}</button>
+                </li>
+                <li class="page-item">
+                  <button @click="nextPage" class="page-link">
+                    <span>&raquo;</span>
+                  </button>
+                </li>
+              </ul>
+            </nav>
           </template>
         </Collapse>
       </Col>
@@ -187,6 +206,7 @@
         <Collapse
           collapse-id="game-info"
           button-style="width: 100%; border-radius: 0"
+          other-style="height: 500px; overflow: scroll"
         >
           <template v-slot:button>游戏说明</template>
           <template v-slot:content>
@@ -225,6 +245,7 @@ const resultText = ref('');
 
 const initSocket = () => {
   initState();
+  hasClickedInitSocket.value = true;
   SOCKET().connect({
     game: 'backgammon',
     onOpen() {
@@ -293,8 +314,12 @@ const initRoutes = () => {
       resultText.value = `胜者${winner} ${result}`;
     },
     saveRecord(json) {
-      alert(`success`, json.message, 3000);
-      if (json.message === '录像成功保存') recordList.value.unshift(json);
+      if (json.message === '录像成功保存') {
+        recordList.value.unshift(json);
+        alert(`success`, json.message, 1000);
+      }
+      else if (json.message === '录像已经保存') alert(`warning`, json.message, 1000);
+      else alert(`danger`, json.message, 1000);
     },
     startMatching(json) {
       state.value = "matching";
@@ -430,18 +455,22 @@ const initGame = ({ mode, stringifiedChess, moveChessCallback }) => {
 
 /** 录像 */
 
+const allRecordList = ref([]);
 const recordList = ref([]);
+const pagePtr = ref(0);
 const playingRecord = ref(0);
 
 const initRecordList = () => {
   getRecordListApi(3)
   .then((list) => {
-    recordList.value = list.reverse();
-  })
+    allRecordList.value = list.reverse();
+    turnRecordPage(0);
+  });
 };
 
-const playRecord = json => {
+const playRecord = index => {
   clearTimeout(playingRecord.value);
+  const json = JSON.parse(recordList.value[index].json);
   const steps = json.steps;
   const n = steps.length;
   let i = 0;
@@ -509,6 +538,23 @@ const playRecord = json => {
       state.value = "record";
     }, 1000);
   })
+};
+
+const lastPage = () => {
+  turnRecordPage(Math.max(0, pagePtr.value - 1));
+};
+
+const nextPage = () => {
+  turnRecordPage(Math.min(Math.ceil(allRecordList.value.length / 4) - 1, pagePtr.value + 1));
+};
+
+const turnRecordPage = page => {
+  recordList.value = [];
+  for (let i = 0; i < 4; ++i) {
+    if (page * 4 + i >= allRecordList.value.length) break;
+    recordList.value.push(allRecordList.value[page * 4 + i]);
+  }
+  pagePtr.value = page;
 };
 
 /** 聊天室 */

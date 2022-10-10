@@ -444,12 +444,6 @@ const initGameState = () => {
   lastStep1.value = 4;
 };
 
-const dbg = () => {
-  setInterval(() => {
-    console.log(state.value, gameMode.value);
-  }, 100);
-};
-
 const turnRecordPage = idx => {
   let lst = recordList.value = [];
   const n = allRecordList.value.length;
@@ -553,13 +547,40 @@ const sendChoose1 = () => {
   ok1.value = true
 };
 
+const playingRecordId = ref(0);
+
 const playRecord = index => {
+  clearInterval(playingRecordId.value);
   initGameState();
   const record = recordList.value[index];
-  SOCKET().sendMessage({
-    action: 'playRecord',
-    id: parseInt(record.id)
+  const recordJson = JSON.parse(record.json);
+  game.value = new SnakeGame({
+    parent: parentRef.value,
+    context: canvasRef.value.getContext('2d')
   });
+  const map = recordJson.map;
+  game.value.start({
+    map
+  });
+  checker.value = game.value.getChecker();
+  const steps = recordJson.steps;
+  let ptr = 0;
+  playingRecordId.value = setInterval(() => {
+    if (ptr >= steps.length) {
+      alert(`success`, `游戏结束`);
+      clearInterval(playingRecordId.value);
+      return ;
+    }
+    const step = steps[ptr++];
+    checker.value.moveSnake({
+      id: 0,
+      direction: step[0]
+    });
+    checker.value.moveSnake({
+      id: 1,
+      direction: step[1]
+    });
+  }, 750);
 };
 
 const matchOk = () => {
@@ -831,7 +852,6 @@ const websocketRoute = json => {
         }
       }
       selectedBotId.value = -1;
-
     },
     sendTalk(json) {
       if (json.result === "ok") {
@@ -877,11 +897,9 @@ const initBotList = () => {
 };
 
 onMounted(() => {
-
   initSocket();
   initRecordList();
   initBotList();
-
   game.value = new SnakeGame({
     parent: parentRef.value,
     context: canvasRef.value.getContext('2d')

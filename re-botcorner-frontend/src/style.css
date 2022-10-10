@@ -1,3 +1,9 @@
+#app {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
 .alert {
   z-index: 9999;
   width: fit-content;

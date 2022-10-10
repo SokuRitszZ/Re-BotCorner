@@ -2,29 +2,25 @@
   <h1>西洋双陆棋</h1>
   <hr>
   <p>这是一款需要结合运气与技术的游戏。</p>
-  <p>可以将其理解为飞行棋，骰子多少点数即可走几步。相应的有如下规定。</p>
-  <p></p>
+  <p>西洋双陆棋供两人玩。棋盘分为4大区。每部分用红、 白颜色交替标出6个楔形狭长区或小据点。有一条称作边界的垂直线把棋盘分为内区和外区。比赛时双方各使用15枚白子、15枚红子。双方根据其所投骰子上显示的点数，从各自的内区（本区）向相反方向从一个据点到另一个据点移动自己的棋子
+  两枚骰子显示的点数用于移动棋子，棋子走的每一步都只能选择骰子的某个点数，如果两枚骰子摇出相同的点数，那么就加倍（比如如果摇到两个6，则最终产生4个6）。</p>
+  <p>如果某个据点被同一个颜色的两枚及以上的棋子占领时，该点不能被其他颜色的棋子占领。如果某个据点只有一枚棋子，那么这个棋子将会受到攻击，既被其他颜色的棋子占领并且将其放到中间。
+  如果某一方的颜色中间还有棋子，就必须先将其取出直到中间没有该颜色的棋子，当然也要按照骰子的点数来进行。</p>
+  <p>如果在某个局面没有棋子可动，则会跳过，并将棋权转至对手。</p>
+  <p>
+    只有在将所有的棋子移至自己的本区时，才能开始将棋子移离，既把棋子移到棋盘边界外的虚设据点。如果在移离棋盘的过程中被攻击了也要先移到本区才能开始移离。先把全部15枚棋子离盘者胜。如果输方至少有一枚棋子离盘，这盘棋即为单胜局（singles）；如果输方一枚棋子也未离盘，对方即为大胜（gammon）两倍计分；如果输方还在胜方的本区（包括边界）留下棋子，对方即为全胜（backgammon）三倍计分。
+    移离棋盘的时候，同样必须按照点数来走，如果没有棋子可以正常按照点数走，那么可以直接将最外的棋子（目前存在的离终点最远的据点上的棋子）移离。
+  </p>
+  <p>
+    <a target="_blank" href="https://www.bilibili.com/video/BV1BL4y1z7SB/?spm_id_from=autoNext&vd_source=fcd3cb5437aab9fd75559e3cb04da3ed">比较直观的规则教学视频</a>
+  </p>
+  <p>
+    <a target="_blank" href="https://www.bilibili.com/video/BV1Ur4y1y7bc/?spm_id_from=333.337.search-card.all.click">对局示例（视频里的可以直接一步用两个骰子，但本质上还是两步分两次走，在这里只能一步一步按照骰子来走。）</a>。或者看回放。
+  </p>
+  <hr>
+  <a target="_blank" class="btn btn-primary" style="border-radius: 0; width: 100%;" href="https://www.yuque.com/sokuritszz/lot2s5/pl1fou">Bot代码模板</a>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import Modal from '../../components/Modal.vue';
-import MonacoEditor from '../../components/MonacoEditor.vue';
-import LANG from '../../store/LANG';
-import reversiDemo from '../../templateBotCode/reversiDemo';
 
-const botTemplateModalRef = ref(null);
-const botTemplateEditorRef = ref(null);
-const selectedTemplateLang = ref(-1);
-
-const botTemplateModalHide = () => {
-  botTemplateModalRef.value.hide();
-};
-
-const changeTemplateLang = () => {
-  const langId = selectedTemplateLang.value;
-  const lang = LANG().langs[langId].lang;
-  botTemplateEditorRef.value.setLang(lang);
-  botTemplateEditorRef.value.setContent(reversiDemo(langId));
-};
 </script>
