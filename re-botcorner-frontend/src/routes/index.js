@@ -95,9 +95,9 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   if (to.meta.requireAuth && !USER().checkIsLogined) {
-    USER().loginByToken(true);
+    await USER().loginByToken(true);
     if (USER().checkIsLogined) {
       next();
     } else {

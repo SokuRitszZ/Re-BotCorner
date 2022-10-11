@@ -1,208 +1,115 @@
 import USER from './../store/USER';
-import $ from 'jquery';
 import { mode, api_url } from '../config.json';
+import axios from "axios";
 
-const API = ({ url, type, data, async, success, error, needJWT }) => {
-  let headers = {};
-  if (needJWT) {
-    headers = {
-      Authorization: `Bearer ${USER().getToken}`
-    }
-  };
-  if (async === undefined) async = true;
-  $.ajax({
-    url: `${api_url[mode]}/api${url}`,
-    type,
-    headers,
-    data,
-    async,
-    success,
-    error: error || (resp => console.log(resp)) 
-  });
+const api = axios.create({
+  baseURL: `${api_url[mode]}/api`
+});
+
+export default api;
+
+const headers = () => {
+  return {
+    Authorization: `Bearer ${USER().getToken}`
+  }
 };
 
-export default API;
+const callback = resp => new Promise(resolve => resolve(resp.data));
 
 export const registerApi = (username, password, confirmedPassword) => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/account/register/',
-      type: 'post',
-      data: {
-        username,
-        password,
-        confirmedPassword
-      },
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api.post("/account/register/", {
+    username,
+    password,
+    confirmedPassword
+  }).then(callback);
 };
 
 export const loginApi = (username, password) => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/account/token/',
-      type: 'post',
-      data: {
-        username,
-        password,
-      },
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api.post("/account/token/", {
+    username, password
+  }).then(callback);
 };
 
 export const getInfoApi = () => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: `/account/getInfo`,
-      type: `get`,
-      needJWT: true,
-      async: false,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api.get("/account/getInfo", {
+    headers: headers()
+  }).then(callback);
 };
 
 export const getAllGameApi = () => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/game/getAll',
-      type: 'get',
-      needJWT: false,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api.get("/game/getAll").then(callback);
 };
 
 export const getAllLangApi = () => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/lang/getAll',
-      type: 'get',
-      async: false,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api.get("/lang/getAll").then(callback);
 };
 
 export const getRecordListApi = gameId => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/record/getListByGameId',
-      type: 'get',
-      data: {
-        gameId
-      },
-      needJWT: true,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api({
+    url: "/record/getListByGameId",
+    type: "GET",
+    params: {
+      gameId
+    },
+    headers: headers()
+  }).then(callback);
 };
 
 export const getBotApi = gameId => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/bot/getByGame',
-      type: 'get',
-      data: {
-        gameId
-      },
-      needJWT: true,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api({
+    url: "/bot/getByGame",
+    type: "GET",
+    params: {
+      gameId
+    },
+    headers: headers()
+  }).then(callback);
 };
 
 export const getAllBotApi = () => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: `/bot/getAll`,
-      type: 'get',
-      needJWT: true,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api({
+    url: "/bot/getAll",
+    type: "GET",
+    headers: headers()
+  }).then(callback);
 };
 
 export const addBotApi = (title, langId, gameId, description, code) => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/bot/add',
-      type: 'post',
-      needJWT: true,
-      data: {
-        title,
-        langId,
-        gameId,
-        description,
-        code
-      },
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api.post("/bot/add", {
+    title, langId, gameId, description, code
+  }, {
+    headers: headers()
+  }).then(callback);
 };
 
 export const deleteBotApi = id => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/bot/delete',
-      type: 'delete',
-      needJWT: true,
-      data: { id },
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api({
+    url: "/bot/delete",
+    method: "DELETE",
+    headers: headers(),
+    params: { id }
+  }).then(callback);
 };
 
 export const updateBotApi = (id, info) => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/bot/update',
-      type: 'post',
-      needJWT: true,
-      data: { id, ...info },
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api.post("/bot/update", {
+    id, ...info
+  }, {
+    headers: headers()
+  }).then(callback);
 };
 
 export const getRatingApi = game => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: `/getrating/${game}`,
-      type: 'get',
-      async: false,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api({
+    url: `/getrating/${game}`,
+    method: "GET"
+  }).then(callback);
 };
 
 export const updateHeadIconApi = data => {
-  return new Promise((resolve, reject) => {
-    $.ajax({
-      url: `${api_url[mode]}/api/updateHeadIcon`,
-      type: 'post',
-      headers: {
-        "Authorization": `Bearer ${USER().getToken}`
-      },
-      processData: false,
-      contentType: false,
-      data,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api.post("/updateHeadIcon", data, {
+    "Content-type": false,
+    "Process-data": false,
+    headers: headers()
+  }).then(callback);
 };

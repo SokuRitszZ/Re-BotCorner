@@ -65,9 +65,11 @@
     </template>
   </Navbar>
   <Container>
+    <router-view v-slot="{ Component }">
       <transition name="page">
-        <router-view :key="$route.fullPath" />
+        <component :is="Component"/>
       </transition>
+    </router-view>
   </Container>
 </template>
 

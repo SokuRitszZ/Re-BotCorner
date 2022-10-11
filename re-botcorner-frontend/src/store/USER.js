@@ -40,11 +40,11 @@ const USER = defineStore(`USER`, {
 
     setHeadIcon(headIcon) { this.headIcon = headIcon; },
 
-    loginByToken() {
+    async loginByToken() {
       if (localStorage.getItem(`token`) == null) return ;
       this.setToken(localStorage.getItem('token'));
       this.changeIsPulling(true);
-      getInfoApi()
+      await getInfoApi()
       .then(info => {
         this.setUserID(info.id);
         this.setUsername(info.username);
