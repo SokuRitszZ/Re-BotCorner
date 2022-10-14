@@ -6,6 +6,8 @@ const api = axios.create({
   baseURL: `${api_url[mode]}/api`
 });
 
+api.interceptors.response.use(response => response.data, error => Promise.reject(error));
+
 export default api;
 
 const headers = () => {
@@ -14,34 +16,32 @@ const headers = () => {
   }
 };
 
-const callback = resp => new Promise(resolve => resolve(resp.data));
-
 export const registerApi = (username, password, confirmedPassword) => {
   return api.post("/account/register/", {
     username,
     password,
     confirmedPassword
-  }).then(callback);
+  });
 };
 
 export const loginApi = (username, password) => {
   return api.post("/account/token/", {
     username, password
-  }).then(callback);
+  });
 };
 
 export const getInfoApi = () => {
   return api.get("/account/getInfo", {
     headers: headers()
-  }).then(callback);
+  });
 };
 
 export const getAllGameApi = () => {
-  return api.get("/game/getAll").then(callback);
+  return api.get("/game/getAll");
 };
 
 export const getAllLangApi = () => {
-  return api.get("/lang/getAll").then(callback);
+  return api.get("/lang/getAll");
 };
 
 export const getRecordListApi = gameId => {
@@ -52,7 +52,7 @@ export const getRecordListApi = gameId => {
       gameId
     },
     headers: headers()
-  }).then(callback);
+  });
 };
 
 export const getBotApi = gameId => {
@@ -63,7 +63,7 @@ export const getBotApi = gameId => {
       gameId
     },
     headers: headers()
-  }).then(callback);
+  });
 };
 
 export const getAllBotApi = () => {
@@ -71,7 +71,7 @@ export const getAllBotApi = () => {
     url: "/bot/getAll",
     type: "GET",
     headers: headers()
-  }).then(callback);
+  });
 };
 
 export const addBotApi = (title, langId, gameId, description, code) => {
@@ -79,7 +79,7 @@ export const addBotApi = (title, langId, gameId, description, code) => {
     title, langId, gameId, description, code
   }, {
     headers: headers()
-  }).then(callback);
+  });
 };
 
 export const deleteBotApi = id => {
@@ -88,7 +88,7 @@ export const deleteBotApi = id => {
     method: "DELETE",
     headers: headers(),
     params: { id }
-  }).then(callback);
+  });
 };
 
 export const updateBotApi = (id, info) => {
@@ -96,20 +96,18 @@ export const updateBotApi = (id, info) => {
     id, ...info
   }, {
     headers: headers()
-  }).then(callback);
+  });
 };
 
 export const getRatingApi = game => {
   return api({
     url: `/getrating/${game}`,
     method: "GET"
-  }).then(callback);
+  });
 };
 
 export const updateHeadIconApi = data => {
   return api.post("/updateHeadIcon", data, {
-    "Content-type": false,
-    "Process-data": false,
     headers: headers()
-  }).then(callback);
+  });
 };

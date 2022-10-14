@@ -56,8 +56,8 @@ export default class BackgammonGame {
           const pos = this.checker.getChessPosition(i, j + 1);
           this.chess[i][1].push(new Chess(this, {
             id: this.chess[i][0],
-            x: pos.x * L,
-            y: pos.y * L
+            x: pos.x,
+            y: pos.y
           }));
         }
       }

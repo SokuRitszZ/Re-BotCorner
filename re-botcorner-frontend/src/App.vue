@@ -139,12 +139,12 @@ body {
 }
 
 .page-enter-active {
-  animation: fadeInZoom 0.5s;
-  animation-delay: 0.5s;
+  animation: fadeInZoom 0.2s;
+  animation-delay: 0.2s;
 }
 
 .page-leave-active {
-  animation: fadeInLeft reverse 0.5s;
+  animation: fadeInLeft reverse 0.2s;
 }
 
 @keyframes fadeInLeft {

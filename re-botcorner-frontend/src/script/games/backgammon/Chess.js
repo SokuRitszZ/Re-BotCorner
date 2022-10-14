@@ -26,8 +26,8 @@ export default class Chess extends GameObject {
     const count = 0 <= to && to < 26 ? checker.chess[to][1].length + 1 : to === -1 ? checker.inHome[0] : checker.inHome[1];
     const pos = checker.getChessPosition(to, count);
     const L = this.parent.L;
-    this.tx = pos.x * L;
-    this.ty = pos.y * L;
+    this.tx = pos.x;
+    this.ty = pos.y;
     const distance = C.distance({x: this.x, y: this.y}, {x: this.tx, y: this.ty});
     const t = 0.75;
     // s = at^2 / 2
@@ -79,32 +79,32 @@ export default class Chess extends GameObject {
     const renderChess = () => {
       if (!this.isInHome) {
         G.circle({
-          x: this.x,
-          y: this.y,
+          x: this.x * L,
+          y: this.y * L,
           radius: L / 2,
           color: `#222`
         });
         G.circle({
-          x: this.x,
-          y: this.y,
-          radius: L / 2 * 0.99,
+          x: this.x * L,
+          y: this.y * L,
+          radius: L / 2 * 0.95,
           color: this.id === 0 ? `#ccc` : `#900`
         });
       } else {
         G.rectangle({
-          x: this.x,
-          y: this.y,
+          x: this.x * L,
+          y: this.y * L,
           lx: 0.33 * L,
           ly: L,
           color: this.id === 0 ? `#ccc` : `#900`
         });
         G.rectangleSide({
-          x: this.x,
-          y: this.y,
+          x: this.x * L,
+          y: this.y * L,
           lx: 0.33 * L,
           ly: L,
           color: `#000`,
-          width: L / 100
+          width: L / 50
         });
       }
     };

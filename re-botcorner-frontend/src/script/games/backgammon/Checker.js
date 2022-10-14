@@ -1,7 +1,6 @@
 import GameObject from "../../GameObject.js";
 import G from "../../G.js";
 import Chess from "./Chess.js";
-import {createStaticVNode} from "vue";
 
 export default class Checker extends GameObject {
   static {
@@ -192,8 +191,8 @@ export default class Checker extends GameObject {
             x = ++k * 0.5;
           this.chessObject.push(new Chess(this.parent, {
             id: type,
-            x: x * L,
-            y: y * L
+            x: x,
+            y: y
           }));
         }
       }
