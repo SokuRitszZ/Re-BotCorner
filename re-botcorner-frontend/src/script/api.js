@@ -149,4 +149,28 @@ export const getGroupByIdApi = id => {
 
 export const deleteGroupApi = id => {
   return api.post("/group/delete/", {id});
+};
+
+export const applyGroupApi = (groupId, application) => {
+  return api.post("/group/apply/", {groupId, application});
+};
+
+export const getApplicationApi = () => {
+  return api({
+    url: "/group/application",
+    method: "get"
+  });
+};
+
+
+export const handleApplicationApi = (groupId, applicantId, state) => {
+  return api.post("/group/handleApp/", {groupId, applicantId, state});
+};
+
+export const getMembers = groupId => {
+  return api({
+    url: "/group/members",
+    method: "GET",
+    params: { groupId }
+  });
 }

@@ -12,4 +12,12 @@ public interface BGroupService {
   Res groupList();
 
   Res getById(Integer id);
+
+  Res apply(Integer groupId, String application);
+
+  Res getApplication();
+
+  Res handleApplication(Integer groupId, Integer applicantId, Boolean state);
+
+  Res getMembers(Integer groupId);
 }

@@ -39,4 +39,30 @@ public class BGroupController {
     Integer id = Integer.valueOf(data.get("id"));
     return groupService.getById(id);
   }
+
+  @PostMapping("/apply")
+  Res apply(@RequestBody JSONObject json) {
+    Integer groupId = json.getInt("groupId");
+    String application = json.getStr("application");
+    return groupService.apply(groupId, application);
+  }
+
+  @GetMapping("/application")
+  Res getApplication() {
+    return groupService.getApplication();
+  }
+
+  @PostMapping("/handleApp")
+  Res handleApplication(@RequestBody JSONObject json) {
+    Integer groupId = json.getInt("groupId");
+    Integer applicantId = json.getInt("applicantId");
+    Boolean state = json.getBool("state");
+    return groupService.handleApplication(groupId, applicantId, state);
+  }
+
+  @GetMapping("/members")
+  Res getMembers(@RequestParam Map<String, String> data) {
+    Integer groupId = Integer.parseInt(data.get("groupId"));
+    return groupService.getMembers(groupId);
+  }
 }

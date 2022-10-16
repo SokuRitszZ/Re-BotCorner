@@ -4,12 +4,12 @@
   </button>
   <transition>
     <div class="window-board" ref="boardRef" style="display: none; position: fixed; left: 50vw; top: 50vh; width: 500px; height: 500px; background-color: #f4f4f4; border-radius: 10px; border: 5px solid #ccc; overflow: hidden; box-shadow: 0 0 10px #aaa; z-index: 100; overflow: hidden">
-      <div class="window-head no-select" ref="headRef" style="width: 102%; height: 42px; background-color: #ccc; padding: 5px;">
+      <div class="window-head no-select" ref="headRef" style="width: 100%; height: 42px; background-color: #ccc; padding: 5px;">
         <div style="position: absolute; left: 10px; font-size: 20px">{{ title }}</div>
         <div @click.stop="close" class="btn btn-danger" style="position: absolute; padding: 0; right: 0; top: 7px; margin-right: 5px; height: 20px; width: 20px; border-radius: 50%;">
         </div>
       </div>
-      <div class="window-body" style="width: 100%; height: calc(100% - 50px); overflow: auto">
+      <div class="window-body" style="width: 100%; height: calc(100% - 62px); overflow: auto">
         <slot name="body"></slot>
       </div>
       <div class="window-foot no-select" style="position: absolute; bottom: 0; width: 100%; height: 20px; background-color: aliceblue;">
@@ -44,7 +44,7 @@ const show = () => {
     setTimeout(() => {
       boardRef.value.classList.remove(`opening-board`);
       state.value = 'open';
-    }, 1000);
+    }, 500);
   }
 };
 
@@ -56,7 +56,7 @@ const close = () => {
     boardRef.value.style.display = "none";
     boardRef.value.classList.remove(`closing-board`);
     state.value = 'close';
-  }, 500);
+  }, 200);
 };
 
 const getState = () => {
@@ -168,13 +168,11 @@ onMounted(() => {
 
 <style scoped>
 .opening-board {
-  animation-name: openingBoard;
-  animation-duration: 1s;
+  animation: openingBoard 0.5s;
 }
 
 .closing-board {
-  animation-name: closingBoard;
-  animation-duration: 0.5s;
+  animation: openingBoard reverse 0.2s;
 }
 
 .window-head:hover {
@@ -183,19 +181,12 @@ onMounted(() => {
 
 @keyframes openingBoard {
   0% {
-    width: 0;
-    height: 0;
     opacity: 0;
-    transform: translate(-50%, -50%);
-  }
-
-  50% {
-    opacity: 1;
-    display: block;
-    transform: translate(-50%, -50%);
+    transform: translateY(-5%);
   }
 
   100% {
+    opacity: 1;
     display: block;
   }
 }

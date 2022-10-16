@@ -1,6 +1,6 @@
 <template>
   <div class="mb-3" style="width: 200px; height: 200px">
-    <img ref="imgRef" src="https://sdfsdf.dev/500x500.png" style="width: 500px;">
+    <img ref="imgRef" :src="`https://sdfsdf.dev/500x500.png,${randomHex()},${randomHex()}`" style="width: 200px;">
   </div>
   <input style="display: inline-block; width: 100%" ref="inputRef" type="file" class="form-control" @change="changeImg">
   <div ref="insertRef" class="insert"></div>
@@ -11,7 +11,7 @@ import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.min.css';
 import alert from '../script/alert.js';
 
-import {onMounted, ref} from "vue";
+import {nextTick, onMounted, ref} from "vue";
 
 const imgRef = ref(null);
 const inputRef = ref(null);
@@ -54,7 +54,13 @@ const cut = () => {
   div.innerHTML = '';
   const crop = getCrop();
   if (crop !== null) emits('cut', getFile());
+  else alert("danger", )
 };
+
+const flushImg = () => {
+  cropper.value.destroy();
+  cropper.value = new Cropper(imgRef.value, option.value);
+}
 
 const changeImg = () => {
   const file = inputRef.value.files[0];
@@ -64,8 +70,13 @@ const changeImg = () => {
   }
   const url = URL.createObjectURL(file);
   imgRef.value.setAttribute('src', url);
-  cropper.value.destroy();
-  cropper.value = new Cropper(imgRef.value, option.value);
+  flushImg();
+};
+
+const randomHex = () => {
+  let res = "";
+  for (let i = 0; i < 6; ++i) res += Math.floor(Math.random() * 16).toString(16);
+  return res;
 };
 
 const initCropper = () => {
@@ -82,8 +93,10 @@ defineExpose({
   cut
 });
 
-onMounted(() => {
+onMounted(async () => {
   initCropper();
+  await nextTick();
+  flushImg();
 });
 </script>
 

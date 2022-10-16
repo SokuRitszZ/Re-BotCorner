@@ -7,6 +7,8 @@ import cn.hutool.json.JSONUtil;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -149,5 +151,30 @@ public class CacheClient {
    */
   public static void unlock(String lockKey) {
     redis.delete(lockKey);
+  }
+
+  /**
+   * 检验key是否存在
+   *
+   * @param key
+   * @return
+   */
+  public static boolean containsKey(String key) {
+    return redis.hasKey(key);
+  }
+
+  /**
+   * 使用通配符批量获取
+   *
+   * @param pattern
+   * @return
+   */
+  public static List<String> getByPattern(String pattern) {
+    Set<String> keys = redis.keys(pattern);
+    return redis.opsForValue().multiGet(keys);
+  }
+
+  public static boolean deleteKey(String key) {
+    return redis.delete(key);
   }
 }

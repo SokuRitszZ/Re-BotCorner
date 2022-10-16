@@ -1,5 +1,5 @@
 <template>
-  <div :class="props.col || `col`">
+  <div :class="(props.col || `col`) + ' h-100'" style="overflow: scroll">
     <slot></slot>
   </div>
 </template>
@@ -13,4 +13,8 @@ const props = defineProps({
 });
 </script>
 
-<style></style>
+<style scoped>
+*::-webkit-scrollbar {
+  display: none;
+}
+</style>

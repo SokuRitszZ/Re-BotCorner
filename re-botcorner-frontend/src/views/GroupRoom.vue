@@ -15,8 +15,9 @@
               <hr>
               <div style="display: inline-block">创建者：</div><div style="display: inline-block; float: right">{{group.creatorUsername}}</div>
               <div v-show="!hasApplied">
+                <h6 v-if="isIn" style="color: green" class="text-center">你现在是这个小组的成员</h6>
                 <Window
-                  v-if="!isCreator()"
+                  v-if="!isCreator() && !isIn"
                   ref="submitWindowRef"
                   buttonClass="btn btn-success mt-3"
                   title="申请加入小组"
@@ -36,7 +37,7 @@
                         <h5 style="white-space: nowrap; text-align: center; font-weight: 800; margin-top: 10px">为什么要加入小组？</h5>
                         <h5 style="white-space: nowrap; text-align: center; font-weight: 800; margin-top: 10px">填写你的验证信息</h5>
                         <hr>
-                        <textarea class="form-control"></textarea>
+                        <textarea v-model="application" class="form-control"></textarea>
                         <button @click="submitApply" class="btn btn-success mt-3" style="border-radius: 0; width: 100%">提交申请</button>
                       </template>
                       <template v-else>
@@ -141,7 +142,7 @@
 
 <script setup>
 import CardBody from "../components/CardBody.vue";
-import {useRoute} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import Container from "../components/Container.vue";
 import Row from "../components/Row.vue";
 import Col from "../components/Col.vue";
@@ -149,9 +150,11 @@ import {onMounted, ref} from "vue";
 import fakeMaker from "../script/fakeMaker.js";
 import Window from '../components/Window.vue';
 import router from "../routes/index.js";
-import {deleteGroupApi, getGroupByIdApi} from "../script/api.js";
+import {applyGroupApi, deleteGroupApi, getGroupByIdApi, getMembers} from "../script/api.js";
 import USER from "../store/USER.js";
 import alert from "../script/alert.js";
+
+const route = useRoute();
 
 const group = ref({});
 
@@ -169,12 +172,18 @@ const gotoContest = id => {
   });
 };
 
-const apply = () => {
-  hasApplied.value = true;
-};
+const application = ref();
 
 const submitApply = () => {
-  apply();
+  submitWindowRef.value.close();
+  applyGroupApi(group.value.id, application.value).then(resp => {
+    application.value = "";
+    if (resp.result === "success") {
+      alert("success", resp.message);
+    } else {
+      alert("danger", resp.message, 2000)
+    }
+  });
 };
 
 const isCreator = () => {
@@ -193,20 +202,26 @@ const initContests = () => {
 };
 
 const initMembers = () => {
-  members.value = fakeMaker({
-    headIcon: { type: 'image' },
-    id: { type: 'number', max: 10000 },
-    username: { type: 'word' }
-  }, 100);
-}
+  const id = route.params.id;
+  getMembers(id).then(resp => {
+    const data = JSON.parse(resp.data);
+    members.value = data;
+  });
+};
+
+const isIn = ref(true);
 
 const initGroup = () => {
-  const id = useRoute().params.id;
+  const id = route.params.id;
   getGroupByIdApi(id).then(resp => {
     if (resp.result === "success") {
       let data = resp.data;
       data = JSON.parse(data);
       group.value = data;
+      isIn.value = data.isIn;
+    } else {
+      alert("danger", resp.message, 2000);
+      router.push("/group");
     }
   });
 };
@@ -224,8 +239,8 @@ const toDeleteGroup = () => {
   }
 };
 
-onMounted(() => {
-  initGroup();
+onMounted(async () => {
+  await initGroup();
   ;;; initContests();
   ;;; initMembers();
 });

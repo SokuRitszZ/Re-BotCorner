@@ -1,5 +1,5 @@
 <template>
-  <div :class="`container` + (otherClass || '')" :style="otherStyle || ''">
+  <div :class="`container` + (otherClass || '')" :style="(otherStyle || '') + ' height: 100%; overflow: auto'">
     <slot></slot>
   </div>
 </template>
@@ -15,4 +15,8 @@ const props = defineProps({
 });
 </script>
 
-<style></style>
+<style scoped>
+*::-webkit-scrollbar {
+  display: none;
+}
+</style>

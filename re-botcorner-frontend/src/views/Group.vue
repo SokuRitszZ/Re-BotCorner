@@ -1,18 +1,20 @@
 <template>
-  <CardBody>
+  <CardBody height="80vh">
     <Container>
       <Row>
         <Col col="col-8">
-          <div style="width: 100%; height: 100%; display: flex; flex-direction: column">
-            <div ref="groupRef" @click="showGroup(index)" class="group" v-for="(group, index) in groups" :style="{zIndex: index}">
-              <h2 style="display: inline-block"> {{ group.title }} </h2>
-              <h3 style="display: inline-block; color: #ccc">#{{ group.id }}</h3>
-              <h5 style="display: inline-block; margin-left: 40px; float: right"> 创建者：{{ group.creatorUsername }}</h5>
-              <hr>
-              <div style="color: #ccc; height: 150px; overflow: auto;">
-                {{ group.description }}
+          <div>
+            <div style="width: 100%; height: 100%; display: flex; flex-direction: column; ">
+              <div ref="groupRef" @click="showGroup(index)" class="group" v-for="(group, index) in groups" :style="{zIndex: index}">
+                <h2 style="display: inline-block"> {{ group.title }} </h2>
+                <h3 style="display: inline-block; color: #ccc">#{{ group.id }}</h3>
+                <h5 style="display: inline-block; margin-left: 40px; float: right"> 创建者：{{ group.creatorUsername }}</h5>
+                <hr>
+                <div style="color: #ccc; height: 150px; overflow: auto;">
+                  {{ group.description }}
+                </div>
+                <button @click.stop="gotoGroup(group)" class="btn btn-primary" style="float: right">进去看看</button>
               </div>
-              <button @click.stop="gotoGroup(group)" class="btn btn-primary" style="float: right">进去看看</button>
             </div>
           </div>
         </Col>
@@ -34,6 +36,36 @@
                 <label class="form-label" for="group-description">描述</label>
                 <textarea v-model="description" class="form-control mb-3" name="group-title" />
                 <button @click="handleSubmitCreateGroup" class="btn btn-success" style="float: right">创建小组</button>
+              </div>
+            </template>
+          </Window>
+          <hr>
+          <Window
+            button-class="btn btn-primary"
+            button-style="width: 100%; border-radius: 0"
+            title="申请"
+          >
+            <template v-slot:button>申请表</template>
+            <template v-slot:body>
+              <div class="p-3">
+                <transition-group name="app">
+                  <div :key="application" v-for="application in applications" style="font-size: 20px; overflow: hidden; background-color: #eee; height: fit-content; padding: 15px; box-sizing: border-box" class="shadow-lg application">
+                    <img :src="application.applicantHeadIcon" style="width: 40px; height: 40px;" class="rounded-circle" alt="">
+                    {{application.applicantUsername}}<span style="color: gray;">#{{application.applicantId}}</span>
+                    <span style="color: green; padding: 10px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-send-plus-fill" viewBox="0 0 16 16">
+                      <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 1.59 2.498C8 14 8 13 8 12.5a4.5 4.5 0 0 1 5.026-4.47L15.964.686Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471-.47 1.178Z"/>
+                      <path d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-3.5-2a.5.5 0 0 0-.5.5v1h-1a.5.5 0 0 0 0 1h1v1a.5.5 0 0 0 1 0v-1h1a.5.5 0 0 0 0-1h-1v-1a.5.5 0 0 0-.5-.5Z"/>
+                    </svg>
+                  </span>
+                    <img :src="application.groupIcon" style="width: 40px; height: 40px;" class="rounded-circle" alt="">
+                    {{application.groupTitle}}<span style="color: gray;">#{{application.groupId}}</span>
+                    <div style="display: flex; flex-direction: row-reverse">
+                      <button @click="reject(application)" class="btn btn-danger" style="margin: 0 5px">拒绝</button>
+                      <button @click="allow(application)" class="btn btn-success">同意</button>
+                    </div>
+                  </div>
+                </transition-group>
               </div>
             </template>
           </Window>
@@ -61,7 +93,7 @@ import {onMounted, ref} from "vue";
 import router from "../routes/index.js";
 import Window from '../components/Window.vue';
 import Cropper from "../components/Cropper.vue";
-import api, {createGroupApi, getGroupListApi} from "../script/api.js";
+import api, {createGroupApi, getApplicationApi, getGroupListApi, handleApplicationApi} from "../script/api.js";
 import alert from "../script/alert.js";
 
 const groupRef = ref(null);
@@ -105,16 +137,15 @@ const description = ref();
 const creatingGroup = ref(false);
 const createGroupWindowRef = ref();
 
-const submitCreateGroup = file => {
+const submitCreateGroup = async file => {
   const data = new FormData();
   data.append("file", file);
   data.append("title", title.value);
   data.append("description", description.value);
   creatingGroup.value = true;
-  createGroupApi(data).then(resp => {
+  await createGroupApi(data).then(resp => {
     if (resp.result === "success") {
       let data = JSON.parse(resp.data);
-      console.log(data);
       groups.value.push(data);
       createGroupWindowRef.value.close();
       title.value = "";
@@ -124,16 +155,51 @@ const submitCreateGroup = file => {
       alert("danger", resp.message, 3000);
     }
     creatingGroup.value = false;
+  }).catch(err => {
+    alert("warning", "请刷新页面再进行创建", 2000)
+  });
+};
+
+const applications = ref([]);
+
+const initApplication = () => {
+  getApplicationApi().then(resp => {
+    if (resp.result === "success") applications.value = JSON.parse(resp.data);
+    else alert("danger", resp.message, 2000);
+  });
+};
+
+const reject = app => {
+  handleApplicationApi(app.groupId, app.applicantId, false).then(resp => {
+    const apps = applications.value;
+    if (resp.result === "success") {
+      apps.splice(apps.indexOf(app), 1);
+    } else {
+      alert("danger", resp.message, 2000);
+    }
+  });
+};
+
+const allow = app => {
+  handleApplicationApi(app.groupId, app.applicantId, true).then(resp => {
+    const apps = applications.value;
+    if (resp.result === "success") {
+      apps.splice(apps.indexOf(app), 1);
+    } else {
+      alert("danger", resp.message, 2000);
+    }
   });
 };
 
 onMounted(() => {
   initGroups();
+  initApplication();
 });
 
 </script>
 
 <style scoped>
+
 .group {
   background-color: #fff;
   color: #000;
@@ -163,5 +229,13 @@ onMounted(() => {
 
 .group:first-child {
   margin-top: 0;
+}
+
+.app-enter-active {
+  animation: flipInX 0.5s;
+}
+
+.app-leave-active {
+  animation: flipOutX 0.5s;
 }
 </style>

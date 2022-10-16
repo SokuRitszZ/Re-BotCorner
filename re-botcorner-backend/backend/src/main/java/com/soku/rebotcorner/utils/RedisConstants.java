@@ -12,4 +12,5 @@ public class RedisConstants {
   public static final String CACHE_BOT_KEY = "rebc:bot:";
   public static final Long CACHE_BOT_TTL = 2L;
   public static final String LOCK_BOT_KEY = "rebc:lock:bot:";
+  public static final String CACHE_APPLICATION_KEY = "rebc:application:";
 }
