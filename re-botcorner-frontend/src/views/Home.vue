@@ -34,6 +34,25 @@
             </Window>
             <hr>
             <Chessboard />
+            <hr>
+            <div>
+              <form class="row g-3">
+                <div class="col-auto">
+                  <input v-model="phone" type="text" class="form-control" name="phone" placeholder="手机号">
+                </div>
+                <div class="col-auto">
+                  <button @click.prevent="handleClickPhoneAuth" class="btn btn-primary mb-3">发送验证码</button>
+                </div>
+              </form>
+              <form class="row g-3">
+                <div class="col-auto">
+                  <input v-model="auth" type="text" class="form-control" name="auth" placeholder="验证码">
+                </div>
+                <div class="col-auto">
+                  <button @click.prevent="handleClickLogin" class="btn btn-success mb-3">登录</button>
+                </div>
+              </form>
+            </div>
           </h1>
         </div>
       </Col>
@@ -52,6 +71,20 @@ import Col from '../components/Col.vue';
 import Window from '../components/Window.vue';
 import ChatRoom from '../components/ChatRoom.vue';
 import Chessboard from "../components/Chessboard.vue";
+import {phoneAuthApi, phoneLoginApi} from "../script/api.js";
+import {ref} from "vue";
+import { mode } from "../config.json";
+
+const phone = ref();
+const auth = ref();
+
+const handleClickPhoneAuth = () => {
+  if (mode === 0) phoneAuthApi(phone.value).then(resp => console.log(resp));
+};
+
+const handleClickLogin = () => {
+  if (mode === 0) phoneLoginApi(phone.value, auth.value).then(resp => console.log(resp));
+}
 
 </script>
 

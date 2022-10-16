@@ -4,7 +4,7 @@
   </button>
   <transition>
     <div class="window-board" ref="boardRef" style="display: none; position: fixed; left: 50vw; top: 50vh; width: 500px; height: 500px; background-color: #f4f4f4; border-radius: 10px; border: 5px solid #ccc; overflow: hidden; box-shadow: 0 0 10px #aaa; z-index: 100; overflow: hidden">
-      <div class="window-head no-select" ref="headRef" style="width: 100%; height: 40px; background-color: #ccc; padding: 5px">
+      <div class="window-head no-select" ref="headRef" style="width: 102%; height: 42px; background-color: #ccc; padding: 5px;">
         <div style="position: absolute; left: 10px; font-size: 20px">{{ title }}</div>
         <div @click.stop="close" class="btn btn-danger" style="position: absolute; padding: 0; right: 0; top: 7px; margin-right: 5px; height: 20px; width: 20px; border-radius: 50%;">
         </div>
@@ -44,7 +44,7 @@ const show = () => {
     setTimeout(() => {
       boardRef.value.classList.remove(`opening-board`);
       state.value = 'open';
-    }, 500);
+    }, 1000);
   }
 };
 
@@ -169,7 +169,7 @@ onMounted(() => {
 <style scoped>
 .opening-board {
   animation-name: openingBoard;
-  animation-duration: 0.5s;
+  animation-duration: 1s;
 }
 
 .closing-board {
@@ -177,14 +177,25 @@ onMounted(() => {
   animation-duration: 0.5s;
 }
 
+.window-head:hover {
+  cursor: move;
+}
+
 @keyframes openingBoard {
-  from {
+  0% {
     width: 0;
     height: 0;
     opacity: 0;
+    transform: translate(-50%, -50%);
   }
 
-  to {
+  50% {
+    opacity: 1;
+    display: block;
+    transform: translate(-50%, -50%);
+  }
+
+  100% {
     display: block;
   }
 }

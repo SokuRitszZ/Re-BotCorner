@@ -4,18 +4,19 @@
       <Row>
         <Col col="col-4">
           <CardBody height="fit-content">
-            <img :src="groupHeadIcon" style="width: 100%">
+            <img :src="group.icon" style="width: 100%">
           </CardBody>
           <CardBody height="fit-content">
             <div style="height: fit-content; padding: 20px">
-              <h2 style="display: inline-block">{{groupName}}</h2>
-              <h3 style="display: inline-block; color: #ccc">#{{groupId}}</h3>
+              <h2 style="display: inline-block">{{group.title}}</h2>
+              <h3 style="display: inline-block; color: #ccc">#{{group.id}}</h3>
               <hr>
-              <div style="height: 100px; overflow: auto;">{{groupDescription}}</div>
+              <div style="height: 100px; overflow: auto;">{{group.description}}</div>
               <hr>
-              <div style="display: inline-block">创建者：</div><div style="display: inline-block; float: right">{{groupCreater}}</div>
+              <div style="display: inline-block">创建者：</div><div style="display: inline-block; float: right">{{group.creatorUsername}}</div>
               <div v-show="!hasApplied">
                 <Window
+                  v-if="!isCreator()"
                   ref="submitWindowRef"
                   buttonClass="btn btn-success mt-3"
                   title="申请加入小组"
@@ -32,7 +33,8 @@
                   <template v-slot:body>
                     <div style="padding: 10px">
                       <template v-if="!hasApplied">
-                        <h5 style="text-align: center; font-weight: 800; margin-top: 10px">为什么要加入小组？填写你的验证信息</h5>
+                        <h5 style="white-space: nowrap; text-align: center; font-weight: 800; margin-top: 10px">为什么要加入小组？</h5>
+                        <h5 style="white-space: nowrap; text-align: center; font-weight: 800; margin-top: 10px">填写你的验证信息</h5>
                         <hr>
                         <textarea class="form-control"></textarea>
                         <button @click="submitApply" class="btn btn-success mt-3" style="border-radius: 0; width: 100%">提交申请</button>
@@ -43,6 +45,12 @@
                     </div>
                   </template>
                 </Window>
+                <button @click="toDeleteGroup" v-if="isCreator()" class="btn btn-danger w-100 rounded-0 mt-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-dash-circle-fill" viewBox="0 0 16 16">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM4.5 7.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7z"/>
+                  </svg>
+                  解散小组
+                </button>
               </div>
               <div v-show="hasApplied">
                 <button @click="apply" class="btn btn-success mt-3" style="width: 100%; border-radius: 0" :disabled="hasApplied">
@@ -70,8 +78,9 @@
                 <thead>
                 <tr>
                   <td>ID</td><td>标题</td><td>游戏</td><td>时间</td><td>状态</td><td>参赛人数</td>
-                  <td v-if="isCreater()">
+                  <td v-if="true">
                     <Window
+                      v-if="isCreator()"
                       button-class="btn btn-success btn-sm"
                       title="添加比赛"
                     >
@@ -137,17 +146,14 @@ import Container from "../components/Container.vue";
 import Row from "../components/Row.vue";
 import Col from "../components/Col.vue";
 import {onMounted, ref} from "vue";
-import {LoremIpsum} from "lorem-ipsum";
 import fakeMaker from "../script/fakeMaker.js";
 import Window from '../components/Window.vue';
-import USER from "../store/USER.js";
 import router from "../routes/index.js";
+import {deleteGroupApi, getGroupByIdApi} from "../script/api.js";
+import USER from "../store/USER.js";
+import alert from "../script/alert.js";
 
-const groupName = ref(new LoremIpsum().generateWords(1));
-const groupId = ref(fakeMaker({ id: { type: 'number', max: 100000 }}, 1)[0].id);
-const groupDescription = ref(new LoremIpsum().generateParagraphs(1));
-const groupCreater = ref(new LoremIpsum().generateWords(1));
-const groupHeadIcon = ref("https://sdfsdf.dev/500x500.png");
+const group = ref({});
 
 const contests = ref([]);
 const members = ref([]);
@@ -163,18 +169,16 @@ const gotoContest = id => {
   });
 };
 
-const isCreater = () => {
-  // ;;; return true;
-  console.log(USER().username, groupCreater.value);
-  return USER().username === groupCreater.value;
-};
-
 const apply = () => {
   hasApplied.value = true;
 };
 
 const submitApply = () => {
   apply();
+};
+
+const isCreator = () => {
+  return USER().getUserID == group.value.creatorId;
 };
 
 const initContests = () => {
@@ -196,7 +200,32 @@ const initMembers = () => {
   }, 100);
 }
 
+const initGroup = () => {
+  const id = useRoute().params.id;
+  getGroupByIdApi(id).then(resp => {
+    if (resp.result === "success") {
+      let data = resp.data;
+      data = JSON.parse(data);
+      group.value = data;
+    }
+  });
+};
+
+const toDeleteGroup = () => {
+  if (confirm(`确认删除小组\n\n${group.value.title}#${group.value.id}？`)) {
+    deleteGroupApi(group.value.id).then(resp => {
+      if (resp.result === "success") {
+        alert("success", "成功解散小组", 2000);
+        router.push("/group");
+      } else {
+        alert("danger", resp.message, 2000);
+      }
+    });
+  }
+};
+
 onMounted(() => {
+  initGroup();
   ;;; initContests();
   ;;; initMembers();
 });

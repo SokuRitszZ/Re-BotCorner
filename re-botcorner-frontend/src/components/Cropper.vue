@@ -2,8 +2,7 @@
   <div class="mb-3" style="width: 200px; height: 200px">
     <img ref="imgRef" src="https://sdfsdf.dev/500x500.png" style="width: 500px;">
   </div>
-  <input style="display: inline-block; width: calc(100% - 20px - 100px)" ref="inputRef" type="file" class="form-control" @change="changeImg">
-  <div style="display: inline-block; margin-left: 20px; transform: translateY(-7%)" @click="cut" class="btn btn-primary">裁剪</div>
+  <input style="display: inline-block; width: 100%" ref="inputRef" type="file" class="form-control" @change="changeImg">
   <div ref="insertRef" class="insert"></div>
 </template>
 
@@ -79,7 +78,9 @@ const initCropper = () => {
 
 const emits = defineEmits(['cut']);
 
-defineExpose(['cut']);
+defineExpose({
+  cut
+});
 
 onMounted(() => {
   initCropper();

@@ -17,4 +17,5 @@ public class User {
   private String headIcon;
   private Integer rating;
   private String openid;
+  private String phone;
 }

@@ -468,50 +468,31 @@ public class SnakeGame extends Thread {
   @Override
   public void run() {
     g[rows - 2][1] = g[1][cols - 2] = 1;
-    if (!"record".equals(mode)) {
-      // 非录像模式
-      while (!isOver) {
-        try {
-          Thread.sleep(200);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-        if (direction0 != -1 && direction1 != -1) {
-          lock.lock();
-          moveSnake();
-          lock.unlock();
-        }
-        checkIsOver();
-        if (isOver) break;
-        if (direction0 == -1 && bot0 != null && !hasRunBot0) {
-          runBot0();
-        }
-        if (direction1 == -1 && bot1 != null && !hasRunBot1) {
-          runBot1();
-        }
+    while (!isOver) {
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
       }
-      /** stop */
-      recordJson.put("steps", steps);
-      recordJson.put("reason0", reason0);
-      recordJson.put("reason1", reason1);
-    } else {
-      while (step < steps.size()) {
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-        Integer d0 = steps.get(step)[0];
-        Integer d1 = steps.get(step)[1];
-        if (isOver) break;
-        setDirection0(d0);
-        setDirection1(d1);
+      if (direction0 != -1 && direction1 != -1) {
+        lock.lock();
         moveSnake();
-        checkIsOver();
+        lock.unlock();
+      }
+      checkIsOver();
+      if (isOver) break;
+      if (direction0 == -1 && bot0 != null && !hasRunBot0) {
+        runBot0();
+      }
+      if (direction1 == -1 && bot1 != null && !hasRunBot1) {
+        runBot1();
       }
     }
 
-    // 关闭机器人
+    recordJson.put("steps", steps);
+    recordJson.put("reason0", reason0);
+    recordJson.put("reason1", reason1);
+
     if (socket0.bot != null) {
       socket0.bot.stop();
     }

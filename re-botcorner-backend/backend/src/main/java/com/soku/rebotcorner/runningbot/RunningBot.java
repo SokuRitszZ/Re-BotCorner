@@ -2,13 +2,20 @@ package com.soku.rebotcorner.runningbot;
 
 import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.utils.BotDAO;
+import com.soku.rebotcorner.utils.CacheClient;
 import com.soku.rebotcorner.utils.LangDAO;
 import com.soku.rebotcorner.utils.RT;
+import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import javax.annotation.Resource;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+
+import static com.soku.rebotcorner.utils.RedisConstants.CACHE_BOT_KEY;
+import static com.soku.rebotcorner.utils.RedisConstants.CACHE_BOT_TTL;
 
 public class RunningBot {
   private final static String URL = "http://103.52.153.224:8000/api";
@@ -28,7 +35,7 @@ public class RunningBot {
 
   public RunningBot(Integer id) {
     this.uuid = UUID.randomUUID();
-    this.bot = BotDAO.selectById(id);
+    this.bot = CacheClient.queryWithPassThrough(CACHE_BOT_KEY, id, Bot.class, BotDAO::selectById, 10L, TimeUnit.MINUTES);
     bots.put(uuid, this);
   }
 

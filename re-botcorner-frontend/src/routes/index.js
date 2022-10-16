@@ -8,7 +8,7 @@ import Snake from '../views/Snake.vue';
 import Reversi from '../views/Reversi.vue';
 import Rating from '../views/Rating.vue';
 import Group from '../views/Group.vue';
-import GroupDetail from '../views/GroupDetail.vue';
+import GroupDetail from '../views/GroupRoom.vue';
 import ContestDetail from '../views/ContestDetail.vue';
 import Backgammon from '../views/Backgammon.vue';
 
@@ -46,7 +46,7 @@ const routes = [
   },
   {
     path: '/group/:id',
-    name: 'groupDetail',
+    name: 'groupRoom',
     component: GroupDetail
   },
   {

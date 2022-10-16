@@ -18,7 +18,8 @@
                 class="frame"
                 style="padding: 20px"
               >
-                <Cropper @cut="updateHeadIcon" />
+                <Cropper ref="cropperRef" @cut="updateHeadIcon" />
+                <div @click="cropperRef.cut()" class="mt-3 float-end btn btn-primary">裁剪</div>
               </div>
             </template>
           </Window>
@@ -54,6 +55,7 @@ import Cropper from "../components/Cropper.vue";
 const route = useRoute();
 const userId = ref(route.params.userId);
 const bots = ref([]);
+const cropperRef = ref();
 
 const updateHeadIcon = file => {
   const data = new FormData();

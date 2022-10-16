@@ -81,7 +81,7 @@ const USER = defineStore(`USER`, {
 
     logout() {
       this.changeIsLogined(false);
-      this.setToken(null);
+      this.setToken("null");
       localStorage.setItem(`token`, null);
       alert(`warning`, `注销成功`);
       router.push({ name: `home` });

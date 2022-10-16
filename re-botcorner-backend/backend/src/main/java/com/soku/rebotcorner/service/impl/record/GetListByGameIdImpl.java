@@ -3,7 +3,7 @@ package com.soku.rebotcorner.service.impl.record;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.mapper.RecordMapper;
 import com.soku.rebotcorner.pojo.Record;
-import com.soku.rebotcorner.service.record.GetListByGameIdService;
+import com.soku.rebotcorner.service.bot.record.GetListByGameIdService;
 import com.soku.rebotcorner.utils.UserDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,8 +18,7 @@ public class GetListByGameIdImpl implements GetListByGameIdService {
   private RecordMapper recordMapper;
 
   @Override
-  public List<Record> getListByGameId(Map<String, String> data) {
-    Integer gameId = Integer.parseInt(data.get("gameId"));
+  public List<Record> getListByGameId(Integer gameId) {
     // 这里不能直接存下headicon，要从数据库中查找过来然后放入数据中
     QueryWrapper<Record> qw = new QueryWrapper<>();
     qw.eq("game_id", gameId);

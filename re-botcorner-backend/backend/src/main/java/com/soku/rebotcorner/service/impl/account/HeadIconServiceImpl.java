@@ -1,7 +1,9 @@
 package com.soku.rebotcorner.service.impl.account;
 
+import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.service.account.HeadIconService;
+import com.soku.rebotcorner.utils.FileUtil;
 import com.soku.rebotcorner.utils.UserDAO;
 import com.soku.rebotcorner.utils.UserDetailsImpl;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,32 +32,17 @@ public class HeadIconServiceImpl implements HeadIconService {
       return map;
     }
 
-    // 获取文件，并命名
     String filename = user.getUsername() + ".png";
 
-    // 获取项目类路径
-    String path = System.getProperty("user.dir");
-
-    File uploadDir = new File(path + "/static/profile/");
-    if (!uploadDir.exists()) uploadDir.mkdir();
-
-    // 保存进来
-    File localPath = new File(path + "/static/profile/", filename);
-    if (!localPath.exists()) localPath.mkdirs();
-    try {
-      multipartFile.transferTo(localPath);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    JSONObject json = FileUtil.saveAndGetIcon(multipartFile, filename, "/user");
 
     // 修改用户信息
-    String[] url = new String[]{"http://localhost:8080/static/profile", "https://app3495.acapp.acwing.com.cn/static/profile"};
-    String newHeadIcon = url[1] + "/" + filename;
-    user.setHeadIcon(newHeadIcon);
+    String newUrl = json.getStr("newUrl");
+    user.setHeadIcon(newUrl);
     UserDAO.updateById(user);
     Map<String, String> map = new HashMap<>();
     map.put("result", "ok");
-    map.put("url", newHeadIcon);
+    map.put("url", newUrl);
     return map;
   }
 }

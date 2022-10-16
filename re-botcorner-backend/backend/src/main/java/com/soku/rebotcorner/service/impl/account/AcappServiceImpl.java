@@ -105,7 +105,8 @@ public class AcappServiceImpl implements AcappService {
       null,
       headIcon,
       1500,
-      openid
+      openid,
+      null
     );
     UserDAO.insert(user);
     String jwt = JwtUtil.createJWT(user.getId().toString());

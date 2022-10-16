@@ -172,7 +172,9 @@ public class BackgammonGame extends Thread {
     String diceString = "dice " + curId + " ";
     for (Integer d: dice) diceString += d + " ";
     steps.add(diceString.trim());
-    nextStep();
+    new Thread(() -> {
+      nextStep();
+    }).start();
   }
 
   public void nextStep() {
@@ -429,13 +431,12 @@ public class BackgammonGame extends Thread {
       BackgammonRatingDAO.updateById(rating0);
       BackgammonRatingDAO.updateById(rating1);
     }
-    if (bot0 != null) bot0.stop();
-    if (bot1 != null) bot1.stop();
-
     tellResult();
   }
 
   private void tellResult() {
+    if (bot0 != null) bot0.stop();
+    if (bot1 != null) bot1.stop();
     JSONObject json = new JSONObject();
     json.put("action", "tellResult");
     json.put("winner", winner);
@@ -480,18 +481,24 @@ public class BackgammonGame extends Thread {
       3,
       winner
     );
-    RecordDAO.add(record);
-    ret.put("json", jsonString);
-    ret.put("userId0", userId0);
-    ret.put("userId1", userId1);
-    ret.put("username0", username0);
-    ret.put("username1", username1);
-    ret.put("headIcon0", user0.getHeadIcon());
-    ret.put("headIcon1", user1.getHeadIcon());
-    ret.put("createTime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(record.getCreateTime()));
-    if (result == "单胜" || result == "全胜" || result == "完胜") ret.put("result", (winner == 0 ? "白子" : "红子") + " 输家" + result);
-    else ret.put("result", (winner == 0 ? "白子" : "红子") + " " + result);
-    return ret;
+    try {
+      RecordDAO.add(record);
+      ret.put("isOk", "ok");
+      ret.put("json", jsonString);
+      ret.put("userId0", userId0);
+      ret.put("userId1", userId1);
+      ret.put("username0", username0);
+      ret.put("username1", username1);
+      ret.put("headIcon0", user0.getHeadIcon());
+      ret.put("headIcon1", user1.getHeadIcon());
+      ret.put("createTime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(record.getCreateTime()));
+      if (result == "单胜" || result == "全胜" || result == "完胜") ret.put("result", (winner == 0 ? "白子" : "红子") + " 输家" + result);
+      else ret.put("result", (winner == 0 ? "白子" : "红子") + " " + result);
+      return ret;
+    } catch (Exception e) {
+      ret.put("message", "内容过大，此录像无法保存");
+      return ret;
+    }
   }
 
   public JSONObject parseData() {

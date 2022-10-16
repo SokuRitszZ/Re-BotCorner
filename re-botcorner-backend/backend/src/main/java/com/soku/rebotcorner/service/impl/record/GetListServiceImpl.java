@@ -2,7 +2,7 @@ package com.soku.rebotcorner.service.impl.record;
 
 import com.soku.rebotcorner.mapper.RecordMapper;
 import com.soku.rebotcorner.pojo.Record;
-import com.soku.rebotcorner.service.record.GetListService;
+import com.soku.rebotcorner.service.bot.record.GetListService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

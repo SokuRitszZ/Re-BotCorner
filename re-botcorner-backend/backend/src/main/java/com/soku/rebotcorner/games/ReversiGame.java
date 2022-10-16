@@ -421,36 +421,26 @@ public class ReversiGame extends Thread {
   }
 
   public void run() {
-    if ("record".equals(mode)) {
+    isGameOver = false;
+    // 游戏还没结束
+    while (!isGameOver) {
+      // 忙等，还没有做下一步动作
       try {
-        playRecord();
+        checkRunBot();
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
-    } else {
-      isGameOver = false;
-      // 游戏还没结束
-      while (!isGameOver) {
-        // 忙等，还没有做下一步动作
-        try {
-          checkRunBot();
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-        if (isGameOver) break;
-        if (toPut != null) {
-          JSONObject json = putChess(toPut[0], toPut[1]);
-          match.broadcast(json);
-          toPut = null;
-        }
-        if (checkIsOver()) {
-          gameOver();
-          break;
-        }
-        if (checkIsPassed()) {
-          pass();
-        }
+      if (isGameOver) break;
+      if (toPut != null) {
+        JSONObject json = putChess(toPut[0], toPut[1]);
+        match.broadcast(json);
+        toPut = null;
       }
+      if (checkIsOver()) {
+        gameOver();
+        break;
+      }
+      if (checkIsPassed()) pass();
     }
     stopBot();
   }

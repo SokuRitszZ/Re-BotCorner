@@ -20,16 +20,27 @@ public class LoginServiceImpl implements LoginService {
 
   @Override
   public Map<String, String> getToken(String username, String password) {
-    UsernamePasswordAuthenticationToken authenticationToken =
-      new UsernamePasswordAuthenticationToken(username, password); // 获取token
-    Authentication authenticate = authenticationManager.authenticate(authenticationToken); // 验证token
-    // 如果登录失败会自动处理
-    UserDetailsImpl loginUser = (UserDetailsImpl) authenticate.getPrincipal(); // 获取登录用户（这个用户是Security的）
-    User user = loginUser.getUser();// 这个用户才是Pojo自己定义的
-    String jwt = JwtUtil.createJWT(user.getId().toString()); // 通过工具类创建JWT
     Map<String, String> map = new HashMap<>();
-    map.put("result", "success");
-    map.put("token", jwt);
-    return map;
+    try {
+      // 获取token（已经自动放在了请求头上）
+      UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+      // 验证token
+      Authentication authenticate = authenticationManager.authenticate(authenticationToken);
+      // 如果登录失败会自动处理
+
+      // 获取登录用户（这个用户是Security的）
+      UserDetailsImpl loginUser = (UserDetailsImpl) authenticate.getPrincipal();
+      // 这个用户才是Pojo定义的
+      User user = loginUser.getUser();
+      // 通过工具类创建JWT
+      String jwt = JwtUtil.createJWT(user.getId().toString());
+      map.put("result", "success");
+      map.put("token", jwt);
+      return map;
+    } catch (Exception e) {
+      // 登录失败的
+      map.put("result", "fail");
+      return map;
+    }
   }
 }

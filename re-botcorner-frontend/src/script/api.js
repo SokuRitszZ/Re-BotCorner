@@ -6,15 +6,25 @@ const api = axios.create({
   baseURL: `${api_url[mode]}/api`
 });
 
-api.interceptors.response.use(response => response.data, error => Promise.reject(error));
-
-export default api;
-
 const headers = () => {
+  if (USER().getToken === "null") return {};
   return {
     Authorization: `Bearer ${USER().getToken}`
   }
 };
+
+api.interceptors.request.use(config => {
+  const newHeaders = { ...config.headers, ...headers() };
+  config.headers = newHeaders;
+  return config;
+}, error => {
+  console.log(error);
+  return Promise.reject(error);
+});
+
+api.interceptors.response.use(response => response.data, error => Promise.reject(error));
+
+export default api;
 
 export const registerApi = (username, password, confirmedPassword) => {
   return api.post("/account/register/", {
@@ -107,7 +117,36 @@ export const getRatingApi = game => {
 };
 
 export const updateHeadIconApi = data => {
-  return api.post("/updateHeadIcon", data, {
-    headers: headers()
+  return api.post("/updateHeadIcon", data);
+};
+
+export const phoneAuthApi = phone => {
+  return api.post("/account/phoneauth/", {phone});
+};
+
+export const phoneLoginApi = (phone, authCode) => {
+  return api.post("/account/phonelogin/", { phone, authCode });
+};
+
+export const getGroupListApi = () => {
+  return api({
+    url: "/group/list",
+    method: "GET"
   });
 };
+
+export const createGroupApi = data => {
+  return api.post("/group/create/", data);
+};
+
+export const getGroupByIdApi = id => {
+  return api({
+    url: "/group/getById",
+    method: "GET",
+    params: { id }
+  });
+};
+
+export const deleteGroupApi = id => {
+  return api.post("/group/delete/", {id});
+}

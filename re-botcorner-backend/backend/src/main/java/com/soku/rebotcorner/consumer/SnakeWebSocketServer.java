@@ -160,18 +160,16 @@ public class SnakeWebSocketServer {
     RunningBot bot0 = null;
     RunningBot bot1 = null;
     if (botId0 > 0) {
-      if (BotDAO.selectOne(new QueryWrapper<Bot>().eq("id", botId0).eq("game_id", 1)) == null) {
+      if (BotDAO.selectOne(new QueryWrapper<Bot>().eq("id", botId0).eq("game_id", 1)) == null)
         json.put("result", "不存在蓝方所选的Bot");
-      } else {
+      else
         bot0 = new RunningBot(botId0);
-      }
     }
     if (botId1 > 0) {
-      if (BotDAO.selectOne(new QueryWrapper<Bot>().eq("id", botId0).eq("game_id", 1)) == null) {
+      if (BotDAO.selectOne(new QueryWrapper<Bot>().eq("id", botId0).eq("game_id", 1)) == null)
         json.put("result", "不存在红方所选的Bot");
-      } else {
+      else
         bot1 = new RunningBot(botId1);
-      }
     }
     if (json.getString("result") != null) {
       sendMessage(json.toJSONString());
@@ -182,7 +180,7 @@ public class SnakeWebSocketServer {
     snakeMatch.sockets[0].snakeGame = snakeGame;
     snakeMatch.sockets[1].snakeGame = snakeGame;
     json.put("result", "ok");
-    json.put("map", snakeGame.getG());
+    json.put("map", snakeGame.getInitG());
     json.put("userId0", user.getId());
     json.put("userId1", user.getId());
     json.put("singleBotId0", botId0);

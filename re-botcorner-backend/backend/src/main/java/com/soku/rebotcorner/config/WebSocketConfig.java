@@ -5,6 +5,7 @@ import com.soku.rebotcorner.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 
@@ -25,7 +26,8 @@ public class WebSocketConfig {
     LangMapper langMapper,
     SnakeRatingMapper snakeRatingMapper,
     ReversiRatingMapper reversiRatingMapper,
-    BackgammonRatingMapper backgammonRatingMapper
+    BackgammonRatingMapper backgammonRatingMapper,
+    StringRedisTemplate redis
   ) {
     RecordDAO.recordMapper = recordMapper;
     UserDAO.userMapper = userMapper;
@@ -35,5 +37,6 @@ public class WebSocketConfig {
     SnakeRatingDAO.snakeRatingMapper = snakeRatingMapper;
     ReversiRatingDAO.reversiRatingMapper = reversiRatingMapper;
     BackgammonRatingDAO.backgammonRatingMapper = backgammonRatingMapper;
+    CacheClient.redis = redis;
   }
 }

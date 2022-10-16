@@ -23,6 +23,7 @@ public class RegisterServiceImpl implements RegisterService {
   @Override
   public Map<String, String> register(String username, String password, String confirmedPassword) {
     Map<String, String> map = new HashMap<>();
+    // 检测格式
     if (username == null) {
       map.put("result", "用户名为空");
       return map;
@@ -53,8 +54,18 @@ public class RegisterServiceImpl implements RegisterService {
       return map;
     }
 
+    // 加密密码
     String encodedPassword = passwordEncoder.encode(password);
-    User user = new User(null, username, encodedPassword, "https://sdfsdf.dev/500x500.jpg,0000ff,ffff00", 1500, null);
+    // 初始化用户信息
+    User user = new User(
+      null,
+      username,
+      encodedPassword,
+      "https://sdfsdf.dev/500x500.jpg,0000ff,ffff00",
+      1500,
+      null,
+      null
+    );
     userMapper.insert(user);
     map.put("result", "success");
     return map;

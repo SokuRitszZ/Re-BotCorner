@@ -1,4 +1,4 @@
-package com.soku.rebotcorner.service.record;
+package com.soku.rebotcorner.service.bot.record;
 
 import com.soku.rebotcorner.pojo.Record;
 
