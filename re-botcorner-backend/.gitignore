@@ -4,6 +4,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+!**/IGame.java
+!**/WebSocketConsumer.java
+!**/NewSnakeWebSocketServer.java
+
 ### STS ###
 .apt_generated
 .classpath

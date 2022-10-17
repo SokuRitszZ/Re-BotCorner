@@ -46,7 +46,7 @@ const USER = defineStore(`USER`, {
       this.changeIsPulling(true);
       await getInfoApi()
       .then(info => {
-        this.setUserID(info.id);
+        this.setUserID(parseInt(info.id));
         this.setUsername(info.username);
         this.setHeadIcon(info.headIcon);
         this.changeIsPulling(false);

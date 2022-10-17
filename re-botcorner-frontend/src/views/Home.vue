@@ -53,6 +53,11 @@
                 </div>
               </form>
             </div>
+            <hr>
+            <div>
+              <div @click="gameSocketTest" class="m-1 btn btn-primary">测试一下WebSocket捏</div>
+              <div @click="startSingleGaming" class="btn btn-success">测试一下捏</div>
+            </div>
           </h1>
         </div>
       </Col>
@@ -72,8 +77,10 @@ import Window from '../components/Window.vue';
 import ChatRoom from '../components/ChatRoom.vue';
 import Chessboard from "../components/Chessboard.vue";
 import {phoneAuthApi, phoneLoginApi} from "../script/api.js";
-import {ref} from "vue";
+import {onMounted, onUnmounted, ref} from "vue";
 import { mode } from "../config.json";
+import SOCKET from "../store/SOCKET.js";
+import USER from "../store/USER.js";
 
 const phone = ref();
 const auth = ref();
@@ -84,7 +91,52 @@ const handleClickPhoneAuth = () => {
 
 const handleClickLogin = () => {
   if (mode === 0) phoneLoginApi(phone.value, auth.value).then(resp => console.log(resp));
+};
+
+const gameSocketTest = () => {
+  if (mode === 0) {
+    SOCKET().sendMessage({
+      action: "startSingleGaming",
+      botIds: [
+        0, 1, 2
+      ]
+    });
+  }
 }
+
+import alert from "../script/alert.js";
+
+onMounted(() => {
+  if (mode === 0) {
+    SOCKET().connect({
+      game: "test/nsnake",
+      onOpen() {
+        console.log("open socket.");
+      },
+      onClose() {
+        console.log("close socket.");
+      },
+      onMessage(resp) {
+        resp = JSON.parse(resp.data);
+        if (resp.result === "success") {
+          const data = JSON.parse(resp.data);
+          console.log(data);
+        } else {
+          alert("danger", resp.message);
+        }
+      },
+      onError(error) {
+        console.log(error);
+      }
+    });
+  }
+});
+
+onUnmounted(() => {
+  if (mode === 0) {
+    SOCKET().disconnect();
+  }
+});
 
 </script>
 

@@ -1,7 +1,6 @@
 package com.soku.rebotcorner.controller.contest;
 
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.soku.rebotcorner.service.contest.ContestService;
 import com.soku.rebotcorner.utils.Res;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +10,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 @RequestMapping("/api/contest")
 @RestController
@@ -40,5 +37,4 @@ public class ContestController {
     Integer groupId = Integer.parseInt(data.get("groupId"));
     return service.getContests(groupId);
   }
-
 }

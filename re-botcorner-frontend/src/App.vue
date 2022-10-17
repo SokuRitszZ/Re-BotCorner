@@ -67,7 +67,7 @@
   <Container>
     <router-view v-slot="{ Component }">
       <transition name="page">
-        <component style="margin-bottom: 100vh" :is="Component"/>
+        <component :is="Component"/>
       </transition>
     </router-view>
   </Container>
