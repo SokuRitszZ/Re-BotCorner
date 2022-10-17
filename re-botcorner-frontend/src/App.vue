@@ -1,14 +1,14 @@
 <template>
-  <Navbar>
+  <Navbar class="p-0">
     <template v-slot:left>
       <NavbarItem> 
-        <router-link class="nav-link" to="/game"> 游戏 </router-link>
+        <router-link class="nav-link" :class="{active: route.name === 'game'}" to="/game"> 游戏 </router-link>
       </NavbarItem>
       <NavbarItem> 
-        <router-link class="nav-link" to="/rating"> 排行榜 </router-link>
+        <router-link class="nav-link" :class="{active: route.name === 'rating'}" to="/rating"> 排行榜 </router-link>
       </NavbarItem>
       <NavbarItem>
-        <router-link class="nav-link" to="/group"> 小组 </router-link>
+        <router-link class="nav-link" :class="{active: route.name === 'group'}" to="/group"> 小组 </router-link>
       </NavbarItem>
     </template>
     <template v-slot:right>
@@ -85,9 +85,12 @@ import alert from './script/alert';
 import router from './routes';
 import GAME from './store/GAME';
 import LANG from './store/LANG';
+import {useRoute} from "vue-router";
 
 const username = ref(null);
 const password = ref(null);
+
+const route = useRoute();
 
 const registerModalRef = ref(null);
 const registerUsername = ref(null);
@@ -126,9 +129,9 @@ const gotoSpace = () => {
   router.push(`/space/${USER().getUserID}`);
 };
 
-onMounted(() => {
+onMounted(async () => {
   USER().loginByToken();
-  GAME().init();
+  await GAME().init();
   LANG().init();
 });
 </script>
@@ -138,6 +141,11 @@ onMounted(() => {
 .page-enter-active {
   animation: fadeInZoom 0.2s;
   animation-delay: 0.2s;
+}
+
+.active {
+  font-weight: 800;
+
 }
 
 .page-leave-active {

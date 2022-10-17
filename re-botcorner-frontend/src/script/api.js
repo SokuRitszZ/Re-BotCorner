@@ -178,3 +178,15 @@ export const getMembers = groupId => {
 export const resignFromGroupApi = groupId => {
   return api.post("/group/resign/", {groupId});
 };
+
+export const createContestApi = ({title, groupId, gameId, rule, time}) => {
+  return api.post("/contest/create/",{title, groupId, gameId, rule, time});
+};
+
+export const getContestsApi = groupId => {
+  return api({
+    url: "/contest/getAll",
+    method: "GET",
+    params: {groupId}
+  });
+};

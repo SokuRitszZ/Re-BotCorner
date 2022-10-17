@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 @Service
 public class UpdateServiceImpl implements UpdateService {
@@ -82,6 +83,7 @@ public class UpdateServiceImpl implements UpdateService {
     botMapper.updateById(bot);
 
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    sdf.setTimeZone(TimeZone.getTimeZone("GMT+8"));
 
     map.put("result", "success");
     map.put("modifyTime", sdf.format(bot.getModifyTime()));

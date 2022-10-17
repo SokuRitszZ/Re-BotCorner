@@ -10,10 +10,13 @@ const GAME = defineStore('GAME', {
   },
   actions: {
     init() {
-      getAllGameApi().then(gameList => {
-        this.list = gameList;
-        gameList.map(game => {
-          this.games[game.id] = game;
+      return new Promise((resolve) => {
+        getAllGameApi().then(gameList => {
+          this.list = gameList;
+          gameList.map(game => {
+            this.games[game.id] = game;
+          });
+          resolve();
         });
       });
     }

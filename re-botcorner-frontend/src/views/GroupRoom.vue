@@ -76,12 +76,13 @@
               </li>
             </ul>
             <div v-show="shownView ==='contestList'" style="height: 90%; overflow: auto;">
-              <table class="table table-striped">
+              <table v-if="showingContest === null" class="table table-striped">
                 <thead>
                 <tr>
-                  <td>ID</td><td>标题</td><td>游戏</td><td>时间</td><td>状态</td><td>参赛人数</td>
+                  <td>ID</td><td>标题</td><td>游戏</td><td>时间</td><td>状态</td>
                   <td v-if="true">
                     <Window
+                      ref="windowContestRef"
                       v-if="isCreator()"
                       button-class="btn btn-success btn-sm"
                       title="添加比赛"
@@ -93,23 +94,21 @@
                         添加比赛
                       </template>
                       <template v-slot:body>
-                        <div style="padding: 10px">
+                        <form style="padding: 10px">
                           <label class="form-label" for="contest-title">比赛标题</label>
-                          <input name="contest-title" type="text" class="form-control mb-3" />
+                          <input v-model="submittedContest.title" name="contest-title" type="text" class="form-control mb-3" />
                           <label class="form-label" for="contest-game">游戏</label>
-                          <select name="contest-game" class="form-control mb-3">
-                            <option value="盘蛇">盘蛇</option>
-                            <option value="黑白棋">黑白棋</option>
-                            <option value="西洋双陆棋">西洋双陆棋</option>
+                          <select v-model="submittedContest.gameId" name="contest-game" class="form-control mb-3">
+                            <option v-for="game in GAME().list" :value="game.id">{{game.title}}</option>
                           </select>
                           <label class="form-label" for="contest-format">赛制</label>
-                          <select name="contest-format" class="form-control mb-3">
-                            <option value="两两对局，每对三局">两两对局，每对三局</option>
+                          <select v-model="submittedContest.rule" name="contest-format" class="form-control mb-3">
+                            <option value="1">两两对局，每对三局</option>
                           </select>
                           <label class="form-label" for="contest-time">比赛时间</label>
-                          <input name="contest-time" type="datetime-local" class="form-control mb-3">
-                          <button class="btn btn-success" style="float: right">添加比赛</button>
-                        </div>
+                          <input v-model="submittedContest.time" name="contest-time" type="datetime-local" class="form-control mb-3">
+                          <button @click.prevent="submitContest" class="btn btn-success" style="float: right;">添加比赛</button>
+                        </form>
                       </template>
                     </Window>
                   </td>
@@ -118,21 +117,22 @@
                 </thead>
                 <tbody>
                 <tr v-for="contest in contests">
-                  <td>{{contest.id}}</td><td>{{contest.title}}</td><td>{{contest.game}}</td><td>{{contest.time}}</td><td>{{contest.state}}</td><td>{{contest.people}}</td>
+                  <td>{{contest.id}}</td><td>{{contest.title}}</td><td>{{contest.game}}</td><td>{{contest.time}}</td><td>{{contest.state}}</td>
                   <td>
-                    <button @click="gotoContest(contest.id)" class="btn btn-outline-secondary btn-sm">查看</button>
+                    <button @click="gotoContest(contest)" class="btn btn-outline-secondary btn-sm">查看</button>
                   </td>
                 </tr>
                 </tbody>
               </table>
+              <ContestDetail @backContestList="backContestList" class="p-3" v-else :contest="showingContest" />
             </div>
             <div v-show="shownView === 'groupMembers'" style="display: flex; flex-flow: wrap; height: 90%; overflow: auto">
-              <div v-for="member in members" style="display: block; text-align: center">
-                <img :src="member.headIcon" class="img-thumbnail" style="width: 75px; height: 75px; margin: 10px">
-                <div style="margin-top: -10px; color: gray">
-                  {{member.username}}
+                <div v-for="member in members" style="display: block; text-align: center">
+                  <img :src="member.headIcon" class="img-thumbnail" style="width: 75px; height: 75px; margin: 10px">
+                  <div style="margin-top: -10px; color: gray">
+                    {{member.username}}
+                  </div>
                 </div>
-              </div>
             </div>
           </CardBody>
         </Col>
@@ -148,12 +148,21 @@ import Container from "../components/Container.vue";
 import Row from "../components/Row.vue";
 import Col from "../components/Col.vue";
 import {onMounted, ref} from "vue";
-import fakeMaker from "../script/fakeMaker.js";
 import Window from '../components/Window.vue';
 import router from "../routes/index.js";
-import {applyGroupApi, deleteGroupApi, getGroupByIdApi, getMembers, resignFromGroupApi} from "../script/api.js";
+import {
+  applyGroupApi,
+  createContestApi,
+  deleteGroupApi, getContestsApi,
+  getGroupByIdApi,
+  getMembers,
+  resignFromGroupApi
+} from "../script/api.js";
 import USER from "../store/USER.js";
+import GAME from "../store/GAME.js";
 import alert from "../script/alert.js";
+import timeFormat from "../script/timeFormat.js";
+import ContestDetail from "./viewsChild/ContestDetail.vue";
 
 const route = useRoute();
 
@@ -164,14 +173,17 @@ const members = ref([]);
 const hasApplied = ref(false);
 const shownView = ref('contestList');
 
+const showingContest = ref(null);
+
 const submitWindowRef = ref(null);
 
-const gotoContest = id => {
-  router.push({
-    name: 'contestDetail',
-    params: { id }
-  });
+const gotoContest = contest => {
+  showingContest.value = contest;
 };
+
+const backContestList = () => {
+  showingContest.value = null;
+}
 
 const application = ref();
 
@@ -191,15 +203,25 @@ const isCreator = () => {
   return USER().getUserID == group.value.creatorId;
 };
 
+const parseContest = contest => {
+  contest.game = GAME().games[contest.gameId].name;
+  delete contest.gameId;
+  contest.time = timeFormat(new Date(contest.startTime), "yyyy-MM-dd HH:mm:ss");
+  delete contest.startTime;
+  contest.state = ["未进行", "正在进行", "已完成"][contest.state];
+  contest.rule = ["两两对局，每对三局"][contest.rule - 1];
+};
+
 const initContests = () => {
-  contests.value = fakeMaker({
-    id: { type: 'number', max: 10000 },
-    title: { type: 'word' },
-    game: { type: 'word' },
-    time: { type: 'time' },
-    state: { type: 'custom', values: ['未开始', '进行中', '已结束'] },
-    people: { type: 'number', max: 100 }
-  }, 100);
+  const id = route.params.id;
+  getContestsApi(id).then(resp => {
+    if (resp.result === "success") {
+      const data = JSON.parse(resp.data);
+      data.forEach(contest => parseContest(contest));
+      data.reverse();
+      contests.value = data;
+    }
+  });
 };
 
 const initMembers = () => {
@@ -256,9 +278,45 @@ const resignFromGroup = async () => {
   toResign.value = false;
 };
 
+const submittedContest = ref({
+  title: "",
+  gameId: 1,
+  rule: 1,
+  time: timeFormat(new Date(), "yyyy-MM-dd HH:mm:ss")
+});
+
+const windowContestRef = ref();
+
+const initContest = () => {
+  submittedContest.value = {
+    title: "",
+    gameId: 1,
+    rule: 1,
+    time: timeFormat(new Date(), "yyyy-MM-dd HH:mm:ss")
+  };
+};
+
+const submitContest = () => {
+  const data = submittedContest.value;
+  data.time = timeFormat(new Date(data.time), "yyyy-MM-dd HH:mm:ss");
+  data.groupId = route.params.id;
+  windowContestRef.value.close();
+  createContestApi(data).then(resp => {
+    initContest();
+    if (resp.result === "success") {
+      const data = JSON.parse(resp.data);
+      parseContest(data);
+      contests.value.unshift(data);
+      alert("success", "添加成功" );
+    } else {
+      alert("danger", resp.message, 2000);
+    }
+  });
+};
+
 onMounted(async () => {
   await initGroup();
-  ;;; initContests();
+  GAME().init().then(() => initContests());
   initMembers();
 });
 
