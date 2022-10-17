@@ -11,8 +11,6 @@ import {onMounted, ref} from "vue";
 const chessRef = ref(null);
 
 const move = (div, x, y, t) => {
-  console.log(div);
-  console.log(div.style.left, div.style.top);
 };
 
 onMounted(() => {

@@ -41,7 +41,7 @@ const USER = defineStore(`USER`, {
     setHeadIcon(headIcon) { this.headIcon = headIcon; },
 
     async loginByToken() {
-      if (localStorage.getItem(`token`) == null) return ;
+      if (localStorage.getItem(`token`) === "null") return ;
       this.setToken(localStorage.getItem('token'));
       this.changeIsPulling(true);
       await getInfoApi()
@@ -54,7 +54,6 @@ const USER = defineStore(`USER`, {
       })
       .catch(err => {
         this.changeIsPulling(false);
-        console.log(err);
       });
     },
     
@@ -73,7 +72,6 @@ const USER = defineStore(`USER`, {
         }
       })
       .catch(err => {
-        console.log(err);
         this.changeIsPulling(false);
         alert(`danger`, `登录失败：用户名或密码错误`);
       });
@@ -81,7 +79,7 @@ const USER = defineStore(`USER`, {
 
     logout() {
       this.changeIsLogined(false);
-      this.setToken("null");
+      this.setToken(null);
       localStorage.setItem(`token`, null);
       alert(`warning`, `注销成功`);
       router.push({ name: `home` });

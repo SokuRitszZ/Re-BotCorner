@@ -65,4 +65,10 @@ public class BGroupController {
     Integer groupId = Integer.parseInt(data.get("groupId"));
     return groupService.getMembers(groupId);
   }
+
+  @PostMapping("/resign")
+  Res resign(@RequestBody JSONObject json) {
+    Integer groupId = json.getInt("groupId");
+    return groupService.resign(groupId);
+  }
 }

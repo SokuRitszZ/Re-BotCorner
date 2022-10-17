@@ -198,6 +198,12 @@ public class BGroupServiceImpl implements BGroupService {
     return Res.ok("处理完毕");
   }
 
+  /**
+   * 获取某个组的所有组员
+   *
+   * @param groupId
+   * @return
+   */
   @Override
   public Res getMembers(Integer groupId) {
     List<BGroupMember> members = bGroupMemberMapper.selectList(new QueryWrapper<BGroupMember>().eq("group_id", groupId));
@@ -211,5 +217,20 @@ public class BGroupServiceImpl implements BGroupService {
       infos.add(json);
     });
     return Res.ok(infos);
+  }
+
+  /**
+   * 退出小组
+   *
+   * @param groupId
+   * @return
+   */
+  @Override
+  public Res resign(Integer groupId) {
+    User user = JwtAuthenticationUtil.getCurrentUser();
+    Integer userId = user.getId();
+    Integer result = bGroupMemberMapper.delete(new QueryWrapper<BGroupMember>().eq("user_id", userId).eq("group_id", groupId));
+    if (result == 0) return Res.fail("你不属于这个小组");
+    return Res.ok("成功退出小组");
   }
 }

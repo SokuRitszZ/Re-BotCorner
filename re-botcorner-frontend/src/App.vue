@@ -67,7 +67,7 @@
   <Container>
     <router-view v-slot="{ Component }">
       <transition name="page">
-        <component :is="Component"/>
+        <component style="margin-bottom: 100vh" :is="Component"/>
       </transition>
     </router-view>
   </Container>
@@ -134,9 +134,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-body {
-  background-color: rgb(228, 227, 227);
-}
 
 .page-enter-active {
   animation: fadeInZoom 0.2s;

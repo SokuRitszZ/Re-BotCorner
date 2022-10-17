@@ -5,7 +5,7 @@
         <Col col="col-8">
           <div>
             <div style="width: 100%; height: 100%; display: flex; flex-direction: column; ">
-              <div ref="groupRef" @click="showGroup(index)" class="group" v-for="(group, index) in groups" :style="{zIndex: index}">
+              <div :key="group.id" ref="groupRef" @click="showGroup" class="group" v-for="(group, index) in groups" :style="{zIndex: index}">
                 <h2 style="display: inline-block"> {{ group.title }} </h2>
                 <h3 style="display: inline-block; color: #ccc">#{{ group.id }}</h3>
                 <h5 style="display: inline-block; margin-left: 40px; float: right"> 创建者：{{ group.creatorUsername }}</h5>
@@ -19,6 +19,8 @@
           </div>
         </Col>
         <Col col="col-4">
+          <input placeholder="查找小组" @input="searchGroup" type="text" name="search-group" class="form-control mt-2" v-model="inputSearchGroup">
+          <hr>
           <Window
             ref="createGroupWindowRef"
             button-class="btn btn-success"
@@ -47,7 +49,10 @@
           >
             <template v-slot:button>申请表</template>
             <template v-slot:body>
-              <div class="p-3">
+              <div class="p-3" v-if="applications.length === 0">
+                <h3>目前没有申请加入你的小组。</h3>
+              </div>
+              <div v-else class="p-3">
                 <transition-group name="app">
                   <div :key="application" v-for="application in applications" style="font-size: 20px; overflow: hidden; background-color: #eee; height: fit-content; padding: 15px; box-sizing: border-box" class="shadow-lg application">
                     <img :src="application.applicantHeadIcon" style="width: 40px; height: 40px;" class="rounded-circle" alt="">
@@ -89,26 +94,25 @@ import CardBody from "../components/CardBody.vue";
 import Row from "../components/Row.vue";
 import Col from "../components/Col.vue";
 import Container from "../components/Container.vue";
-import {onMounted, ref} from "vue";
+import {createStaticVNode, onMounted, ref} from "vue";
 import router from "../routes/index.js";
 import Window from '../components/Window.vue';
 import Cropper from "../components/Cropper.vue";
-import api, {createGroupApi, getApplicationApi, getGroupListApi, handleApplicationApi} from "../script/api.js";
+import {createGroupApi, getApplicationApi, getGroupListApi, handleApplicationApi} from "../script/api.js";
 import alert from "../script/alert.js";
 
-const groupRef = ref(null);
+const groupRef = ref([]);
 
+const allGroups = ref([]);
 const groups = ref([]);
 const joinedGroups = ref([]);
 const cropperRef = ref();
 
-const showGroup = index => {
-  const dom = groupRef.value[index];
-  if (dom.classList.contains(`group-shown`)) {
-    dom.classList.remove(`group-shown`);
-  } else {
-    dom.classList.add(`group-shown`);
-  }
+const showGroup = e => {
+  let dom = e.target;
+  while (!dom.classList.contains("group")) dom = dom.parentNode;
+  if (dom.classList.contains(`group-shown`)) dom.classList.remove(`group-shown`);
+  else dom.classList.add(`group-shown`);
 };
 
 const gotoGroup = group => {
@@ -125,7 +129,8 @@ const initGroups = () => {
     let data = JSON.parse(resp.data);
     for (let group of data) group.createTime = new Date(group.createTime);
     groups.value = data;
-  })
+    allGroups.value = data;
+  });
 };
 
 const handleSubmitCreateGroup = () => {
@@ -191,6 +196,14 @@ const allow = app => {
   });
 };
 
+const inputSearchGroup = ref("");
+
+const searchGroup = () => {
+  const pattern = ".*" + (inputSearchGroup.value.join(".*")) + ".*";
+  const regex = new RegExp(pattern);
+  groups.value = allGroups.value.filter(group => regex.test(group.title));
+};
+
 onMounted(() => {
   initGroups();
   initApplication();
@@ -231,11 +244,25 @@ onMounted(() => {
   margin-top: 0;
 }
 
+.group-enter-action {
+  animation: flipInX 0.2s;
+}
+
 .app-enter-active {
   animation: flipInX 0.5s;
 }
 
 .app-leave-active {
   animation: flipOutX 0.5s;
+}
+
+@keyframes groupEnter {
+  from {
+    height: 0
+  }
+
+  to {
+    height: fit-content;
+  }
 }
 </style>

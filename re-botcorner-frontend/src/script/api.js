@@ -7,7 +7,8 @@ const api = axios.create({
 });
 
 const headers = () => {
-  if (USER().getToken === "null") return {};
+  const token = USER().getToken;
+  if (token === null || token.length === 0) return {};
   return {
     Authorization: `Bearer ${USER().getToken}`
   }
@@ -18,7 +19,6 @@ api.interceptors.request.use(config => {
   config.headers = newHeaders;
   return config;
 }, error => {
-  console.log(error);
   return Promise.reject(error);
 });
 
@@ -43,7 +43,7 @@ export const loginApi = (username, password) => {
 export const getInfoApi = () => {
   return api.get("/account/getInfo", {
     headers: headers()
-  });
+  }).catch(err => {});
 };
 
 export const getAllGameApi = () => {
@@ -173,4 +173,8 @@ export const getMembers = groupId => {
     method: "GET",
     params: { groupId }
   });
-}
+};
+
+export const resignFromGroupApi = groupId => {
+  return api.post("/group/resign/", {groupId});
+};

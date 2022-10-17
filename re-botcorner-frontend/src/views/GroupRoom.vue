@@ -16,6 +16,7 @@
               <div style="display: inline-block">创建者：</div><div style="display: inline-block; float: right">{{group.creatorUsername}}</div>
               <div v-show="!hasApplied">
                 <h6 v-if="isIn" style="color: green" class="text-center">你现在是这个小组的成员</h6>
+                <button v-if="isIn && !isCreator()" :disabled="toResign" @click="resignFromGroup" class="w-100 rounded-0 btn btn-danger">退出小组</button>
                 <Window
                   v-if="!isCreator() && !isIn"
                   ref="submitWindowRef"
@@ -150,7 +151,7 @@ import {onMounted, ref} from "vue";
 import fakeMaker from "../script/fakeMaker.js";
 import Window from '../components/Window.vue';
 import router from "../routes/index.js";
-import {applyGroupApi, deleteGroupApi, getGroupByIdApi, getMembers} from "../script/api.js";
+import {applyGroupApi, deleteGroupApi, getGroupByIdApi, getMembers, resignFromGroupApi} from "../script/api.js";
 import USER from "../store/USER.js";
 import alert from "../script/alert.js";
 
@@ -227,7 +228,7 @@ const initGroup = () => {
 };
 
 const toDeleteGroup = () => {
-  if (confirm(`确认删除小组\n\n${group.value.title}#${group.value.id}？`)) {
+  if (confirm(`确认解散小组\n\n${group.value.title}#${group.value.id}？`)) {
     deleteGroupApi(group.value.id).then(resp => {
       if (resp.result === "success") {
         alert("success", "成功解散小组", 2000);
@@ -239,10 +240,26 @@ const toDeleteGroup = () => {
   }
 };
 
+const toResign = ref(false);
+
+const resignFromGroup = async () => {
+  if (!confirm(`确认解散小组\n\n${group.value.title}#${group.value.id}？`)) return ;
+  toResign.value = true;
+  await resignFromGroupApi(group.value.id).then(resp => {
+    if (resp.result === "success") {
+      alert("success", "成功退出小组", 2000);
+      router.push("/group");
+    } else {
+      alert("danger", resp.message, 2000);
+    }
+  }).catch(err => {});
+  toResign.value = false;
+};
+
 onMounted(async () => {
   await initGroup();
   ;;; initContests();
-  ;;; initMembers();
+  initMembers();
 });
 
 </script>

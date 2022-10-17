@@ -20,4 +20,6 @@ public interface BGroupService {
   Res handleApplication(Integer groupId, Integer applicantId, Boolean state);
 
   Res getMembers(Integer groupId);
+
+  Res resign(Integer groupId);
 }
