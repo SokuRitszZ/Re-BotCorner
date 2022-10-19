@@ -16,14 +16,7 @@ public class Record {
   @TableId(type = IdType.AUTO)
   private Integer id;
   private String json;
-  private Integer userId0;
-  private Integer userId1;
-  private String username0;
-  private String username1;
-  private String headIcon0;
-  private String headIcon1;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
   private Date createTime;
   private Integer gameId;
-  private Integer result;
 }

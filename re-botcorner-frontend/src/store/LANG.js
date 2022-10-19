@@ -10,11 +10,14 @@ const LANG = defineStore('LANG', {
   },
   actions: {
     init() {
-      getAllLangApi().then(langList => {
-        this.list = langList;
-        this.list.map(lang => {
-          this.langs[lang.id] = lang;
+      return new Promise((resolve) => {
+        getAllLangApi().then(langList => {
+          this.list = langList;
+          this.list.map(lang => {
+            this.langs[lang.id] = lang;
+          });
         });
+        resolve();
       });
     }
   }

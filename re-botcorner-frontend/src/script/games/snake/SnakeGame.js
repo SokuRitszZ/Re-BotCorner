@@ -19,11 +19,11 @@ export default class SnakeGame {
     this.L = 0;
   }
 
-  start({ map }) {
-    this.rows = map.length;
-    this.cols = map[0].length;
+  start({ initData }) {
+    this.rows = initData.rows;
+    this.cols = initData.cols;
     this.gameMap = new GameMap(this, {
-      map: map
+      map: initData.initG
     });
     this.snakes.push(
       new Snake(this, {

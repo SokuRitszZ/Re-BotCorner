@@ -19,10 +19,10 @@
           </thead>
           <tbody>
           <tr v-for="(record, index) in recordList">
-            <td>{{ record.createTime }}</td>
-            <td> <span><img :src="record.headIcon0" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid blue" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.username0 }}</div> </td>
-            <td> <span><img :src="record.headIcon1" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid red" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.username1 }}</div></td>
-            <td :style="{ color: record.result == -1 ? 'black' : record.result == 0 ? 'blue' : 'red', lineHeight: '45px' }">{{ record.result == -1 ? "平局" : record.result == 0 ? "蓝方" : "红方" }}</td>
+            <td>{{ timeFormat(new Date(record.createTime), "yyyy-MM-dd HH:mm:ss") }}</td>
+            <td> <span><img :src="record.infos[0].headIcon" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid blue" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.infos[0].username }}</div> </td>
+            <td> <span><img :src="record.infos[1].headIcon" style="width: 45px; border-radius: 50%; padding: 1px; border: 1px solid red" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.infos[1].username }}</div></td>
+            <td>{{record.result}}</td>
             <td>
               <button @click="playRecord(record)" class="btn btn-primary" style="width: fit-content;">
                 <i class="bi bi-play-circle" style="font-size: 20px"></i>
@@ -58,6 +58,7 @@ import {onMounted, ref} from "vue";
 import alert from "../../script/alert.js";
 import {getRecordListApi} from "../../script/api.js";
 import Collapse from "../../components/Collapse.vue";
+import timeFormat from "../../script/timeFormat.js";
 
 const hasInitRecordList = ref(false);
 const recordList = ref([]);
@@ -66,15 +67,16 @@ const pagePtr = ref(0);
 
 const initRecordList = () => {
   hasInitRecordList.value = true;
-  getRecordListApi(1).then(list => {
+  getRecordListApi(1).then(resp => {
+    const list = JSON.parse(resp.data);
     allRecordList.value = list.reverse();
     turnRecordPage(0);
     hasInitRecordList.value = false;
   })
-    .catch(err => {
-      alert(`danger`, `获取录像失败`, 1000);
-      hasInitRecordList.value = false;
-    });
+  .catch(err => {
+    alert(`danger`, `获取录像失败`, 1000);
+    hasInitRecordList.value = false;
+  });
 };
 
 const turnRecordPage = idx => {

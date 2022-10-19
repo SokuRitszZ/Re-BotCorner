@@ -200,7 +200,6 @@ public class ReversiWebSocketServer {
     List<String> steps = Arrays.asList(stringifiedSteps.split(" "));
     reversiGame = new ReversiGame("record", rows, cols, this, this, null, null);
     reversiGame.setSteps(steps);
-    reversiGame.setGameResult(record.getResult());
     reversiGame.setReason(reason);
     JSONObject backJson = reversiGame.parseData();
     backJson.put("action", "playRecord");

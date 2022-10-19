@@ -193,11 +193,7 @@ public class SnakeGame extends Thread {
   }
 
   public void createMap() {
-    for (int i = 0; i < 1000; ++i) {
-      if (draw()) {
-        break;
-      }
-    }
+    for (int i = 0; i < 1000; ++i) if (draw()) break;
     initG = new int[rows][cols];
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; ++j) {
@@ -229,8 +225,6 @@ public class SnakeGame extends Thread {
     Integer d0 = direction0;
     Integer d1 = direction1;
     int[] oneStep = new int[]{ d0, d1 };
-    if (!"record".equals(mode))
-      steps.add(oneStep);
     setDirection0(-1);
     setDirection1(-1);
     Pair first0 = snake0.getFirst();
@@ -369,15 +363,8 @@ public class SnakeGame extends Thread {
       RecordDAO.add(newRecord = new Record(
         id,
         jsonString,
-        userId0,
-        userId1,
-        username0,
-        username1,
-        headIcon0,
-        headIcon1,
         createTime,
-        gameId,
-        result
+        1
       ));
       json.put("id", newRecord.getId());
     }
@@ -392,7 +379,6 @@ public class SnakeGame extends Thread {
         map.append(g[i][j]);
       }
     }
-
     StringBuilder data = new StringBuilder();
     data.append(String.valueOf(rows) + " ");
     data.append(String.valueOf(cols) + " ");

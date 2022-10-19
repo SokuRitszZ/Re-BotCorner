@@ -22,7 +22,14 @@ const SOCKET = defineStore('SOCKET', {
       this.socket.close();
     },
     sendMessage(messageObject) {
-      this.socket.send(JSON.stringify(messageObject));
+      return new Promise((resolve, reject) => {
+        try {
+          this.socket.send(JSON.stringify(messageObject));
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      });
     }
   }
 });

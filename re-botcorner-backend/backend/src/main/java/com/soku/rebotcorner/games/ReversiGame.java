@@ -302,27 +302,13 @@ public class ReversiGame extends Thread {
     Record record = new Record(
       null,
       json.toJSONString(),
-      userId0,
-      userId1,
-      username0,
-      username1,
-      headIcon0,
-      headIcon1,
       new Date(),
-      2,
-      gameResult
+      2
     );
     RecordDAO.add(record);
     data.put("saveResult", "ok");
     data.put("id", record.getId());
     data.put("createTime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-    data.put("userId0", record.getUserId0());
-    data.put("userId1", record.getUserId1());
-    data.put("username0", record.getUsername0());
-    data.put("username1", record.getUsername1());
-    data.put("headIcon0", record.getHeadIcon0());
-    data.put("headIcon1", record.getHeadIcon1());
-    data.put("result", record.getResult().toString());
     return data;
   }
 

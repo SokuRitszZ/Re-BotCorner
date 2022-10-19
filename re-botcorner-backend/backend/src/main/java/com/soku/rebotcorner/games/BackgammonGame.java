@@ -471,15 +471,8 @@ public class BackgammonGame extends Thread {
     Record record = new Record(
       null,
       jsonString,
-      userId0,
-      userId1,
-      username0,
-      username1,
-      null,
-      null,
       new Date(),
-      3,
-      winner
+      3
     );
     try {
       RecordDAO.add(record);

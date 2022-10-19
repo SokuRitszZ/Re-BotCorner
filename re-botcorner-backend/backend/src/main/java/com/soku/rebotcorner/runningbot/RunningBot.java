@@ -25,21 +25,18 @@ public class RunningBot {
   private final static String runUrl = String.format("%s/runbot/run/", URL);
   private final static String stopUrl = String.format("%s/runbot/stop/", URL);
 
-  private static ConcurrentHashMap<UUID, RunningBot> bots = new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<String, RunningBot> bots = new ConcurrentHashMap<>();
   private Bot bot;
-  private UUID uuid;
+  private String uuid;
 
   public RunningBot() {
-    this.uuid = UUID.randomUUID();
   }
 
   public RunningBot(Integer id) {
-    this.uuid = UUID.randomUUID();
     this.bot = CacheClient.queryWithPassThrough(CACHE_BOT_KEY, id, Bot.class, BotDAO::selectById, 10L, TimeUnit.MINUTES);
-    bots.put(uuid, this);
   }
 
-  public UUID getUuid() {
+  public String getUuid() {
     return this.uuid;
   }
 
@@ -52,6 +49,8 @@ public class RunningBot {
   }
 
   public void start() {
+    this.uuid = UUID.randomUUID().toString().replaceAll("-", "");
+    bots.put(uuid, this);
     MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
     data.add("uuid", uuid.toString());
     data.add("code", bot.getCode());
@@ -84,5 +83,6 @@ public class RunningBot {
       data.add("uuid", uuid.toString());
       RT.POST(stopUrl, data);
     }).start();
+    bots.remove(this.uuid);
   }
 }

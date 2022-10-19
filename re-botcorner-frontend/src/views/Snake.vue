@@ -52,14 +52,18 @@
               <hr>
               <template v-if="isSingleMode">
                 <!-- 选择单人模式 -->
-                <input v-model="singleBotId[0]" type="number" class="form-control mb-2" placeholder="选择蓝方的BotID（不填则为亲自出马）" :disabled="hasStartSingleGaming">
-                <input v-model="singleBotId[1]" type="number" class="form-control mb-2" placeholder="选择红方的BotID（不填则为亲自出马）" :disabled="hasStartSingleGaming">
-                <button @click="startSingleGaming" style="width: 100%; border-radius: 0;"
-                        class="btn btn-success" :disabled="hasStartSingleGaming">游戏开始</button>
-                <div v-if="hasStartSingleGaming" style="width: 100%; text-align: center;">
-                  <span class="spinner-border spinner-border-sm text-warning" role="status" aria-hidden="true"></span>
-                  <span class="text-warning" style="font-size: small">等待Bot编译完成...</span>
-                </div>
+                <transition name="all-ok">
+                  <div v-if="gameState === 'init'" style="width: 100%; text-align: center;">
+                    <input v-model="botIds[0]" type="number" class="form-control mb-2" placeholder="选择蓝方的BotID（不填则为亲自出马）" :disabled="hasStartSingleGaming">
+                    <input v-model="botIds[1]" type="number" class="form-control mb-2" placeholder="选择红方的BotID（不填则为亲自出马）" :disabled="hasStartSingleGaming">
+                    <button @click="startSingleGaming" style="width: 100%; border-radius: 0;"
+                            class="btn btn-success" :disabled="gameState === 'starting'">游戏开始</button>
+                  </div>
+                  <div v-else class="text-center">
+                    <div class="m-auto spinner-border" style="width: 3rem; height: 3rem;" role="status"></div>
+                    <div>等待Bot编译完成...</div>
+                  </div>
+                </transition>
               </template>
               <template v-else>
                 <select class="form-select mb-2" v-model="myBotId" :disabled="state !== 'toMatch'">
@@ -69,22 +73,27 @@
                 <!-- 选择多人模式 -->
                 <template v-if="state === 'toMatch'">
                   <!-- 未开始匹配 -->
-                  <div @click="startMatching" class="btn btn-warning">开始匹配</div>
+                  <button :disabled="hasClickMatching"  @click="startMatching" class="btn btn-warning">开始匹配</button>
                 </template>
+                <!-- 正在匹配 -->
                 <template v-else-if="state === 'matching'">
-                  <div class="btn btn-danger mb-3" @click="cancelMatching">取消</div>
-                  <h3 style="text-align: center;">
-                    {{ matchingBoard }}
-                  </h3>
-                  <!-- 正在匹配 -->
+                  <div class="btn btn-danger" @click="cancelMatching">取消匹配</div>
+                  <div>
+                    <hr>
+                    <div class="text-center">
+                      <span class="spinner-border spinner-border-sm" role="status"></span> 寻找对手中...
+                    </div>
+                  </div>
                 </template>
                 <template v-else-if="state === 'matched'">
                   <!-- 匹配成功 -->
                   <transition name="all-ok">
                     <div v-if="!allOk()" class="d-flex flex-row justify-content-around">
-                      <div :class="{active: isOk[index]}" class="w-50 m-1 p-1 text-center" style="transition: 0.5s" v-for="(info, index) in infos">
-                        <img :src="info.headIcon" class="w-100">
-                        <div>
+                      <div :class="{active: matchIsOk[index]}" class="w-50 m-1 p-1 text-center" style="transition: 0.5s" v-for="(info, index) in infos">
+                        <img :style="{
+                          border: `10px solid ${index === 0 ? 'blue' : 'red'}`
+                        }" :src="info.headIcon" class="w-100">
+                        <div :class="{'text-decoration-underline': info.id === USER().getUserID}">
                           {{info.username}}
                           <span style="color: gray"> #{{info.id}} </span>
                         </div>
@@ -98,9 +107,14 @@
                   <hr>
                   <button
                     @click="toggleMatch"
-                    :class="{'btn-outline-success': !isOk[getMe()], 'btn-success': isOk[getMe()]}" class="btn w-100 rounded-0"
+                    :disabled="allOk()"
+                    :class="{'btn-outline-success': !matchIsOk[getMe()], 'btn-success': matchIsOk[getMe()]}" class="btn w-100 rounded-0"
                   >准备</button>
-                  <button class="btn btn-danger w-100 rounded-0 mt-3">退出</button>
+                  <button
+                    @click="exitMatching"
+                    :disabled="allOk()"
+                    class="btn btn-danger w-100 rounded-0 mt-3"
+                  >退出</button>
                 </template>
               </template>
             </template>
@@ -109,7 +123,7 @@
                 <Row>
                   <!-- 0号输入口 -->
                   <!-- 游戏还没结束并且还没准备好输出 -->
-                  <template v-if="state !== 'gameOver' && !ok0">
+                  <template v-if="state !== 'gameOver'">
                     <!-- 播放录像的时候 显示决策 -->
                     <template v-if="gameMode === 'record'">
                       <h4 style="text-align: center; color: blue">
@@ -117,75 +131,27 @@
                       </h4>
                     </template>
                     <!-- 不选择机器人 且 单人模式/多人模式下是自己的时候 显示键盘 -->
-                    <div v-else-if="gameMode === 'single' && singleBotId[0] === 0 || gameMode === 'multi' && getMe() === 0 && selectedBotId === -1">
-                      <div class="btn-group" role="group" style="font-family: monospace">
-                        <Container>
-                          <Row>
-                            <Col> </Col>
-                            <Col>
-                              <input type="radio" class="btn-check" v-model="choose0" value="0" id="choose00"
-                                     autocomplete="off" checked>
-                              <label class="btn btn-outline-primary" for="choose00">
-                                <i class="bi bi-chevron-up"></i>
-                              </label>
-                            </Col>
-                            <Col> </Col>
-                          </Row>
-                          <div class="mb-3"></div>
-                          <Row>
-                            <Col>
-                              <input type="radio" class="btn-check" v-model="choose0" value="3" id="choose03"
-                                     autocomplete="off">
-                              <label class="btn btn-outline-primary" for="choose03">
-                                <i class="bi bi-chevron-left"></i>
-                              </label>
-                            </Col>
-                            <Col>
-                              <button class="btn btn-success" @click="sendChoose0">
-                                <i class="bi bi-check-square"></i>
-                              </button>
-                            </Col>
-                            <Col>
-                              <input type="radio" class="btn-check" v-model="choose0" value="1" id="choose01"
-                                     autocomplete="off">
-                              <label class="btn btn-outline-primary" for="choose01">
-                                <i class="bi bi-chevron-right"></i>
-                              </label>
-                            </Col>
-                          </Row>
-                          <div class="mb-3"></div>
-                          <Row>
-                            <Col> </Col>
-                            <Col>
-                              <input type="radio" class="btn-check" v-model="choose0" value="2" id="choose02"
-                                     autocomplete="off">
-                              <label class="btn btn-outline-primary" for="choose02">
-                                <i class="bi bi-chevron-down"></i>
-                              </label>
-                            </Col>
-                            <Col> </Col>
-                          </Row>
-                        </Container>
-                      </div>
+                    <div v-else class="text-md-center" style="font-size: 2.5rem">
+                      <span v-if="getMe() === 0 && gameMode === 'multi'">·</span> <span class="text-primary"> {{ inputOk[0] ? "已就绪" : "未就绪" }} </span>
+                      <DirectionKeyBoard
+                        :disabled="inputOk[0] || botIds[0] !== 0 || (gameMode === 'multi' && getMe() !== 0)"
+                        id="0"
+                        :class-name="{'btn-outline-primary': true}"
+                        @submit="setStep"
+                      />
                     </div>
                     <!-- 选择了机器人之后 || 不是自己的时候 显示是否已经就绪 -->
-                    <template v-else>
-                      <h4 style="text-align: center; color: blue">
-                        <!-- 是自己的时候标记自己是哪一方的 -->
-                        <span v-if="getMe() === 0 && gameMode === 'multi'">·</span> <span> {{ ok0 ? "已就绪" : "未就绪" }} </span>
-                      </h4>
-                    </template>
                   </template>
                   <!-- 游戏还没结束 但输出已经准备好了 -->
                   <template v-else-if="state !== 'gameOver'">
                     <h4 style="text-align: center; color: blue">
-                      <span v-if="getMe() === 0 && gameMode === 'multi'">·</span> <span>{{ ok0 ? "已就绪" : "未就绪" }}</span>
+                      <span v-if="getMe() === 0 && gameMode === 'multi'">·</span> <span>{{ inputOk[0] ? "已就绪" : "未就绪" }}</span>
                     </h4>
                   </template>
                   <!-- 游戏结束 -->
                   <template v-else>
-                    <h4 style="text-align: center; color: blue">
-                      <span v-if="getMe() === 0 && gameMode === 'multi'">·</span> <span> {{ end0 }} </span>
+                    <h4 class="text-center" style="color: blue">
+                      {{reasons[0]}}
                     </h4>
                   </template>
                 </Row>
@@ -195,7 +161,7 @@
                 <Row>
                   <!-- 1号输入口 -->
                   <!-- 游戏还没结束并且还没准备好输出 -->
-                  <template v-if="state !== 'gameOver' && !ok1">
+                  <template v-if="state !== 'gameOver'">
                     <!-- 播放录像的时候 显示决策 -->
                     <template v-if="gameMode === 'record'">
                       <h4 style="text-align: center; color: red">
@@ -203,86 +169,33 @@
                       </h4>
                     </template>
                     <!-- 不选择机器人 且 单人模式/多人模式下是自己的时候 显示键盘 -->
-                    <div v-else-if="gameMode === 'single' && singleBotId[1] === 0 || gameMode === 'multi' && getMe() === 1 && selectedBotId === -1">
-                      <div class="btn-group" role="group" style="font-family: monospace">
-                        <Container>
-                          <Row>
-                            <Col> </Col>
-                            <Col>
-                              <input type="radio" class="btn-check" v-model="choose1" value="0" id="choose10"
-                                     autocomplete="off" checked>
-                              <label class="btn btn-outline-danger" for="choose10">
-                                <i class="bi bi-chevron-up"></i>
-                              </label>
-                            </Col>
-                            <Col> </Col>
-                          </Row>
-                          <div class="mb-3"></div>
-                          <Row>
-                            <Col>
-                              <input type="radio" class="btn-check" v-model="choose1" value="3" id="choose13"
-                                     autocomplete="off">
-                              <label class="btn btn-outline-danger" for="choose13">
-                                <i class="bi bi-chevron-left"></i>
-                              </label>
-                            </Col>
-                            <Col>
-                              <button class="btn btn-success" @click="sendChoose1">
-                                <i class="bi bi-check-square"></i>
-                              </button>
-                            </Col>
-                            <Col>
-                              <input type="radio" class="btn-check" v-model="choose1" value="1" id="choose11"
-                                     autocomplete="off">
-                              <label class="btn btn-outline-danger" for="choose11">
-                                <i class="bi bi-chevron-right"></i>
-                              </label>
-                            </Col>
-                          </Row>
-                          <div class="mb-3"></div>
-                          <Row>
-                            <Col> </Col>
-                            <Col>
-                              <input type="radio" class="btn-check" v-model="choose1" value="2" id="choose12"
-                                     autocomplete="off">
-                              <label class="btn btn-outline-danger" for="choose12">
-                                <i class="bi bi-chevron-down"></i>
-                              </label>
-                            </Col>
-                            <Col> </Col>
-                          </Row>
-                        </Container>
-                      </div>
+                    <div v-else class="text-md-center" style="font-size: 2.5rem">
+                      <span v-if="getMe() === 1 && gameMode === 'multi'">·</span> <span class="text-danger"> {{ inputOk[1] ? "已就绪" : "未就绪" }} </span>
+                      <DirectionKeyBoard
+                        :disabled="inputOk[1] || botIds[1] !== 0 || (gameMode === 'multi' && getMe() !== 1)"
+                        id="1"
+                        :class-name="{'btn-outline-danger': true}"
+                        @submit="setStep"
+                      />
                     </div>
-                    <!-- 选择了机器人 || 不是自己的时候 显示是否已经就绪 -->
-                    <template v-else>
-                      <h4 style="text-align: center; color: red">
-                        <!-- 是自己的时候标记自己是哪一方的 -->
-                        <span v-if="getMe() === 1 && gameMode === 'multi'">·</span> <span> {{ ok1 ? "已就绪" : "未就绪" }} </span>
-                      </h4>
-                    </template>
                   </template>
                   <!-- 游戏还没结束 但输出已经准备好了 -->
                   <template v-else-if="state !== 'gameOver'">
                     <h4 style="text-align: center; color: red">
-                      <span v-if="getMe() === 1 && gameMode === 'multi'">·</span> <span>{{ ok1 ? "已就绪" : "未就绪" }}</span>
+                      <span v-if="getMe() === 1 && gameMode === 'multi'">·</span> <span>{{ inputOk[1] ? "已就绪" : "未就绪" }}</span>
                     </h4>
                   </template>
                   <!-- 游戏结束 -->
                   <template v-else>
-                    <h4 style="text-align: center; color: red">
-                      <span v-if="getMe() === 1 && gameMode === 'multi'">·</span> <span>{{ end1 }}</span>
+                    <h4 class="text-center" style="color: red">
+                      {{reasons[1]}}
                     </h4>
                   </template>
                 </Row>
               </Container>
               <template v-if="state === 'gameOver'">
-                <template v-if="gameMode !== 'record'">
-                  <hr>
-                  <button @click="saveRecord" class="btn btn-success">保存录像</button>
-                </template>
                 <hr>
-                <button @click="remake" class="btn btn-secondary">继续</button>
+                <button @click="remake" class="btn btn-secondary w-100">继续</button>
               </template>
             </template>
           </template>
@@ -335,75 +248,104 @@ import Window from '../components/Window.vue';
 import ChatRoom from '../components/ChatRoom.vue';
 import timeFormat from '../script/timeFormat';
 import SnakeRecordList from "./viewsChild/SnakeRecordList.vue";
+import DirectionKeyBoard from "../components/DirectionKeyBoard.vue";
 
 const parentRef = ref(null);
 const canvasRef = ref(null);
 const chatroomRef = ref(null);
 
-const singleBotId = ref([ null, null ]);
+const botIds = ref([ null, null ]);
 const hasStartSingleGaming = ref(false);
 
 const game = ref(null);
 const checker = ref(null);
 const isSingleMode = ref(true);
 const state = ref("toMatch");
-const gameMode = ref('');
-const choose0 = ref(0);
-const choose1 = ref(0);
-const ok0 = ref(false);
-const ok1 = ref(false);
-const end0 = ref('');
-const end1 = ref('');
-const userId0 = ref(0);
-const userId1 = ref(0);
-const matchOk0 = ref(false);
-const matchOk1 = ref(false);
-const matchingBoard = ref('');
+const gameMode = ref("");
 
-const lastStep0 = ref(4);
-const lastStep1 = ref(4);
 const myBotList = ref([]);
 const myBotId = ref(0);
 const hasClickMatching = ref(false);
 
+/**
+ * 初始化游戏状态
+ */
 const initGameState = () => {
   game.value = null;
   checker.value = null;
   isSingleMode.value = true;
   state.value = 'toMatch';
+  gameState.value = "init";
   gameMode.value = '';
+
+  myBotId.value = 0;
+  infos.value = [];
+  botIds.value = [0, 0];
+
+  inputOk.value = [false, false];
+  matchIsOk.value = [false, false];
 };
 
+/**
+ * 选择单人模式
+ */
 const chooseSingleMode = () => {
-  if (state.value === "matching") {
-    cancelMatching();
-  } else if (state.value === "matched") {
-    exitMatching();
-  }
+  if (state.value === "matching")  cancelMatching();
+  else if (state.value === "matched") exitMatching();
   isSingleMode.value = true;
 };
 
+/**
+ * 选择多人模式
+ */
 const chooseMultiMode = () => {
   isSingleMode.value = false;
 };
 
+const choose = ref([0, 0]);
+const inputOk = ref([false, false]);
+const reasons = ref([]);
+/**
+ * 游戏状态
+ * init 还没开始
+ * starting 正在创建
+ * pending 正在进行
+ * end 结束
+ *
+ * @type {Ref<UnwrapRef<string>>}
+ */
+const gameState = ref("init");
+
+/**
+ * 初始化游戏（正在创建游戏）
+ *
+ * @param mode
+ * @param initData
+ */
+const initGame = (mode, initData) => {
+  game.value = new SnakeGame({
+    parent: parentRef.value,
+    context: canvasRef.value.getContext('2d')
+  });
+  game.value.start({ initData });
+  state.value = "waitingInput";
+  gameMode.value = mode;
+  checker.value = game.value.getChecker();
+};
+
 const startSingleGaming = () => {
-  hasStartSingleGaming.value = true;
-  hasClickMatching.value = true;
+  gameState.value = "starting";
   myBotId.value = 0;
-  let singleBotId0 = 0;
-  let singleBotId1 = 0;
-  if (singleBotId.value[0] !== undefined || singleBotId.value[0] !== null) {
-    singleBotId0 = Math.max(singleBotId.value[0], 0);
-  }
-  if (singleBotId.value[1] !== undefined || singleBotId.value[1] !== null) {
-    singleBotId1 = Math.max(singleBotId.value[1], 0);
-  }
-  singleBotId.value = [ singleBotId0, singleBotId1 ];
+  let botIds0 = 0;
+  let botIds1 = 0;
+  if (botIds.value[0] !== undefined || botIds.value[0] !== null)
+    botIds0 = Math.max(botIds.value[0], 0);
+  if (botIds.value[1] !== undefined || botIds.value[1] !== null)
+    botIds1 = Math.max(botIds.value[1], 0);
+  botIds.value = [ botIds0, botIds1 ];
   SOCKET().sendMessage({
     action: 'startSingleGaming',
-    singleBotId0,
-    singleBotId1
+    botIds: [ botIds0, botIds1 ]
   });
 };
 
@@ -413,12 +355,25 @@ const startMatching = () => {
   SOCKET().sendMessage({
     action: 'startMatching',
     botId: myBotId.value
+  }).then(() => {}, error => {
+    hasClickMatching.value = false;
   });
 };
 
 const cancelMatching = () => {
   SOCKET().sendMessage({
     action: 'cancelMatching'
+  });
+  hasClickMatching.value = false;
+};
+
+const setStep = (id, direction) => {
+  SOCKET().sendMessage({
+    action: "setStep",
+    step: {
+      id: parseInt(id),
+      direction
+    }
   });
 };
 
@@ -432,10 +387,8 @@ const playRecord = record => {
     parent: parentRef.value,
     context: canvasRef.value.getContext('2d')
   });
-  const map = recordJson.map;
-  game.value.start({
-    map
-  });
+  const initData = recordJson.initData;
+  game.value.start({initData});
   checker.value = game.value.getChecker();
   const steps = recordJson.steps;
   let ptr = 0;
@@ -445,20 +398,20 @@ const playRecord = record => {
       clearInterval(playingRecordId.value);
       return ;
     }
-    const step = steps[ptr++];
     checker.value.moveSnake({
       id: 0,
-      direction: step[0]
+      direction: parseInt(steps[ptr++])
     });
     checker.value.moveSnake({
       id: 1,
-      direction: step[1]
+      direction: parseInt(steps[ptr++])
     });
-  }, 750);
+  }, 250);
 };
 
 const toggleMatch = () => {
-  if (isOk.value[getMe()]) matchNot();
+  console.log(getMe());
+  if (matchIsOk.value[getMe()]) matchNot();
   else matchOk();
 };
 
@@ -469,7 +422,7 @@ const matchOk = () => {
 };
 
 const allOk = () => {
-  for (let ok of isOk.value) if (!ok) return false;
+  for (let ok of matchIsOk.value) if (!ok) return false;
   return true;
 };
 
@@ -484,12 +437,7 @@ const exitMatching = () => {
   SOCKET().sendMessage({
     action: 'exitMatching'
   });
-};
-
-const saveRecord = () => {
-  SOCKET().sendMessage({
-    action: 'saveRecord'
-  });
+  hasClickMatching.value = false;
 };
 
 const remake = () => {
@@ -527,10 +475,11 @@ const initSocket = () => {
     hasLinkWebSocket.value = false;
   };
   const onMessage = message => {
-    let data = JSON.parse(message.data);
-    data = JSON.parse(data.data);
-    console.log(data);
-    websocketRoute(data);
+    message = JSON.parse(message.data);
+    if (message.result === "success" && message.data) {
+      let data = JSON.parse(message.data);
+      websocketRoute(data);
+    }
   };
   const onError = error => {
     console.log(error);
@@ -546,77 +495,50 @@ const initSocket = () => {
   });
 };
 
-const initGame = (mode, map, _userId0, _userId1) => {
-  game.value = new SnakeGame({
-    parent: parentRef.value,
-    context: canvasRef.value.getContext('2d')
-  });
-  game.value.start({
-    map,
-  });
-  userId0.value = _userId0;
-  userId1.value = _userId1;
-  state.value = "waitingInput";
-  gameMode.value = mode;
-  checker.value = game.value.getChecker();
-};
-
 const recordListRef = ref();
 
-const infos = ref();
-const me = ref(null);
+const infos = ref([]);
 
 const getMe = () => {
-  if (me.value !== null) return me.value;
   for (let index in infos.value) {
     const info = infos.value[index];
-    if (info.id === USER().getUserID) {
-      me.value = parseInt(index);
-      return me.value;
-    }
+    if (info.id === USER().getUserID) return parseInt(index);
   }
   return -1;
 };
 
-const isOk = ref([]);
+const matchIsOk = ref([]);
 
 const websocketRoute = json => {
-  console.log(json.action);
   const wsRoutes = {
     startSingleGaming(json) {
       hasStartSingleGaming.value = false;
-      if (json.result != 'ok') {
-        alert(`danger`, json.result);
-      } else {
-        singleBotId.value = [json.singleBotId0, json.singleBotId1];
-        const userId = USER().getUserID;
-        initGame(`single`, json.map, userId, userId);
-      }
+      gameState.value = "pending";
+      botIds.value = json.botIds;
+      gameMode.value = "single";
+      initGame("single", json.initData);
+    },
+    setStep(json) {
+      const step = json.step;
+      const id = step.id;
+      inputOk.value[id] = true;
     },
     moveSnake(json) {
-      const direction0 = json.direction0;
-      const direction1 = json.direction1;
+      const state = json.state;
+      const directions = json.directions;
       const isIncreasing = json.isIncreasing;
-      const status0 = json.status0;
-      const status1 = json.status1;
-      checker.value.moveSnake({
-        id: 0,
-        direction: direction0,
-        status: status0,
-        isIncreasing
-      });
-      checker.value.moveSnake({
-        id: 1,
-        direction: direction1,
-        status: status1,
-        isIncreasing
-      });
+      for (let i = 0; i < 2; ++i) {
+        checker.value.moveSnake({
+          id: i,
+          direction: directions[i]
+        });
+      }
+      inputOk.value[0] = false;
+      inputOk.value[1] = false;
       if (gameMode.value === "record") {
         lastStep0.value = direction0;
         lastStep1.value = direction1;
       }
-      ok0.value = false;
-      ok1.value = false;
     },
     startMatching(json) {
       hasClickMatching.value = false;
@@ -635,130 +557,64 @@ const websocketRoute = json => {
         };
         chatroomRef.value.addTalk("enter", message);
       });
-      isOk.value = new Array(infos.value.length);
-      isOk.value.fill(false, 0);
-      console.log(isOk.value);
+      matchIsOk.value = new Array(infos.value.length);
+      matchIsOk.value.fill(false, 0);
     },
     cancelMatching(json) {
       state.value = 'toMatch';
     },
     matchOk(json) {
-      isOk.value[json.id] = true;
+      matchIsOk.value[json.id] = true;
     },
     matchNot(json) {
-      isOk.value[json.id] = false;
+      matchIsOk.value[json.id] = false;
     },
     exitMatching(json) {
-      if (userId0.value === USER().getUserID && json.id === 0 || userId1.value === USER().getUserID && json.id === 1) {
-        state.value = 'toMatch';
-      } else {
-        state.value = 'matching';
+      const myId = getMe();
+      const id = json.id;
+      // 如果是自己退出的那就是回到toMatch状态
+      if (myId === id) state.value = "toMatch";
+      // 否则回到matching状态
+      else state.value = "matching";
+      // 聊天窗口中通知
+      infos.value.forEach(info => {
         const message = {
           id: randomId(),
-          username: opponentUsername.value,
-          userId: opponentUserId.value,
-          time: timeFormat(new Date(), `yyyy-MM-dd HH:mm`)
+          username: info.username,
+          userId: info.id,
+          time: timeFormat(new Date(), "yyyy-MM-dd HH:mm")
         };
-        chatroomRef.value.addTalk(`exit`, message);
-        alert(`warning`, `对方退出了房间`);
-      }
-      userId0.value = userId1.value = 0;
-      opponentHeadIcon.value = opponentUsername.value = '';
-      opponentUserId.value = 0;
-      matchOk0.value = matchOk1.value = false;
+        chatroomRef.value.addTalk("exit", message);
+      });
+      // 清除信息
+      infos.value = [];
+      // 通知
+      alert("info", "有人退出了匹配");
     },
     startMultiGaming(json) {
-      initGame(`multi`, json.map, json.userId0, json.userId1);
       state.value = "waitingInput";
-      checker.value = game.value.getChecker();
-    },
-    setDirection(json) {
-      if (json.id == 0) {
-        ok0.value = true;
-      } else {
-        ok1.value = true;
-      }
-    },
-    saveRecord(json) {
-      if (json.hasSaved) alert(`warning`, `已保存该录像`);
-      else {
-        alert(`success`, `保存录像成功`);
-        const record = {
-          id: json.id,
-          createTime: json.createTime,
-          json: json.json,
-          userId0: json.userId0,
-          userId1: json.userId1,
-          username0: json.username0,
-          username1: json.username1,
-          headIcon0: json.headIcon0,
-          headIcon1: json.headIcon1,
-          result: json.result
-        };
-        recordListRef.value.addRecord(record);
-        recordListRef.value.flush();
-      }
+      botIds.value = json.botIds;
+      gameMode.value = "multi";
+      gameState.value = "pending";
+      initGame("multi", json.initData);
     },
     tellResult(json) {
-      end0.value = json.result === 0 ? "WIN" : json.result === 1 ? "LOSE" : "DRAW";
-      end1.value = json.result === 1 ? "WIN" : json.result === 0 ? "LOSE" : "DRAW";
-      switch (json.result) {
-        case 0:
-          checker.value.setStatus(1, 'die');
-          checker.value.setStatus(0, 'idle');
-          break;
-        case 1:
-          checker.value.setStatus(0, 'die');
-          checker.value.setStatus(1, 'idle');
-          break;
-        case -1:
-          checker.value.setStatus(0, 'die');
-          checker.value.setStatus(1, 'die');
-          break;
-      }
       state.value = "gameOver";
-      let reason0 = json.reason0;
-      let reason1 = json.reason1;
-      let reason = (reason0 || '') + (reason0 != null && reason1 != null ? '\n' : '') + (reason1 || '');
-      if (gameMode.value === 'multi') {
-        switch (json.result) {
-          case getMe():
-            alert(`success`, `胜利！Rating +${json.score}\n战败原因: \n${reason}`, 5000);
-            break;
-          case 1 - getMe():
-            alert(`danger`, `战败... Rating -${json.score}\n战败原因: \n${reason}`, 5000);
-            break;
-          case -1:
-            alert(`warning`, `平局 原因: \n${reason}`, 5000);
-            break;
-        }
-      } else {
-        switch (json.result) {
-          case 0:
-            alert(`primary`, `蓝方获胜！`, 5000);
-            break;
-          case 1:
-            alert(`danger`, `红方获胜！`, 5000);
-            break;
-          case -1:
-            alert(`warning`, `平局`, 5000);
-        }
-      }
-      selectedBotId.value = -1;
+      const result = json.result;
+      alert("success", `游戏结束！${result}`, 1000);
+      const _reasons = json.reason.split("\n");
+      reasons.value = _reasons;
+      gameState.value = "gameOver";
     },
     sendTalk(json) {
-      if (json.result === "ok") {
-        let message = {
-          id: randomId(),
-          userId: json.userId,
-          username: json.username,
-          content: json.content,
-          time: json.time
-        };
-        chatroomRef.value.addTalk(`msg`, message);
-      } else {
-        alert('danger', json.result);
-      }
+      let message = {
+        id: randomId(),
+        userId: json.userId,
+        username: json.username,
+        content: json.content,
+        time: json.time
+      };
+      chatroomRef.value.addTalk(`msg`, message);
     },
   };
   wsRoutes[json.action](json);
@@ -781,12 +637,6 @@ onMounted(() => {
     parent: parentRef.value,
     context: canvasRef.value.getContext('2d')
   });
-  let matchingBoardList = ["匹配中·", "匹配中··", "匹配中···"];
-  let i = 0;
-  setInterval(() => {
-    i = (i + 1) % 3;
-    matchingBoard.value = matchingBoardList[i];
-  }, 1000);
 });
 
 onUnmounted(() => {

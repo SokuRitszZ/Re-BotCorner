@@ -354,7 +354,6 @@ public class SnakeWebSocketServer {
     }
     snakeGame = new SnakeGame("record", map.length, map[0].length, 0, this, this, null, null);
     snakeGame.setG(map);
-    snakeGame.setResult(record.getResult());
     snakeMatch = new SnakeMatch(this, this);
     snakeMatch.sockets[0].snakeGame = snakeGame;
     snakeMatch.sockets[1].snakeGame = snakeGame;

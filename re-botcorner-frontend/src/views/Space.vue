@@ -51,9 +51,10 @@ import BotList from './viewsChild/BotList.vue';
 import {getAllBotApi, updateHeadIconApi} from '../script/api';
 import Window from "../components/Window.vue";
 import Cropper from "../components/Cropper.vue";
+import LANG from "../store/LANG.js";
 
 const route = useRoute();
-const userId = ref(route.params.userId);
+const userId = ref(parseInt(route.params.userId));
 const bots = ref([]);
 const cropperRef = ref();
 
@@ -73,13 +74,15 @@ const updateHeadIcon = file => {
 };
 
 onMounted(() => {
-  getAllBotApi()
-  .then(botList => {
-    bots.value = botList; 
-    bots.value.map(bot => {
-      bot.createTime = new Date(bot.createTime);
-      bot.modifyTime = new Date(bot.modifyTime);
-    });
+  LANG().init().then(() => {
+    getAllBotApi()
+      .then(botList => {
+        bots.value = botList;
+        bots.value.map(bot => {
+          bot.createTime = new Date(bot.createTime);
+          bot.modifyTime = new Date(bot.modifyTime);
+        });
+      });
   });
 });
 

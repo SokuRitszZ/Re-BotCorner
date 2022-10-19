@@ -117,7 +117,7 @@ import Container from '../../components/Container.vue';
 import Row from '../../components/Row.vue';
 import Col from '../../components/Col.vue';
 import CardBody from '../../components/CardBody.vue';
-import { nextTick, ref } from 'vue';
+import {nextTick, onMounted, ref} from 'vue';
 import Modal from '../../components/Modal.vue';
 import timeFormat from '../../script/timeFormat.js';
 import GAME from '../../store/GAME.js';
@@ -299,6 +299,9 @@ const changeLang = () => {
   const lang = LANG().langs[addBotLang.value].lang;
   addBotEditorRef.value.setLang(lang);
 };
+
+onMounted(() => {
+});
 
 </script>
 
