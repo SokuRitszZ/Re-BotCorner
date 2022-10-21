@@ -2,6 +2,7 @@ package com.soku.rebotcorner.games;
 
 import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.consumer.match.GameMatch;
+import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.pojo.Record;
 import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.utils.RecordDAO;
@@ -12,17 +13,36 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * 游戏抽象类
  */
 @Data
 public abstract class AbsGame {
+  private String mode;
   private GameMatch match;
   private List<RunningBot> bots;
   private JSONObject record;
   private String[] reason;
   private String result;
+  private Integer gameId;
+  private boolean hasOver;
+  private StringBuilder steps;
+  private boolean hasStart;
+
+  public AbsGame(String mode, GameMatch match, List<RunningBot> bots) {
+    this.setMode(mode);
+    this.setMatch(match);
+    this.setBots(bots);
+
+    // init reason
+    this.setReason(new String[2]);
+
+    // init record
+    this.setRecord(new JSONObject());
+    this.setSteps(new StringBuilder());
+  }
 
   /**
    * 设置原因
@@ -73,13 +93,22 @@ public abstract class AbsGame {
    * @return
    */
   public void saveRecord() {
-    Record record = new Record(
-      null,
-      this.record.toString(),
-      new Date(),
-      1
-    );
-    RecordDAO.add(record);
+    try {
+      Record record = new Record(
+        null,
+        this.record.toString(),
+        new Date(),
+        this.gameId
+      );
+      RecordDAO.add(record);
+    } catch (Exception e) {
+      try {
+        Thread.sleep(3000);
+      } catch (InterruptedException ex) {
+        throw new RuntimeException(ex);
+      }
+      this.getMatch().broadCast(Res.fail("录像文件太大，无法保存"));
+    }
   }
 
   /**
@@ -118,7 +147,7 @@ public abstract class AbsGame {
    * 初始化录像
    */
   public void initRecord() {
-    this.record.set("userIds", this.match.getUserIds());
+    this.record.set("userIds", this.getUserIds());
     this.record.set("botIds", this.getBotIds());
     this.record.set("reason", this.reason);
   }
@@ -156,5 +185,35 @@ public abstract class AbsGame {
   /**
    * 结束游戏
    */
-  public abstract void gameOver();
+  public void gameOver() {
+    if (this.hasOver) return ;
+    this.hasOver = true;
+
+    this.setResultToRecord();
+    this.getRecord().set("steps", this.steps);
+    this.initRecord();
+
+    this.tellResult();
+    this.stopBots();
+
+    this.saveRecord();
+  }
+
+  protected abstract void setResultToRecord();
+
+  public List<Integer> getUserIds() {
+    List<Integer> list = new ArrayList<>();
+    int n = getPlayerCount();
+    for (int i = 0; i < n; ++i) {
+      RunningBot runningBot = this.getBots().get(i);
+      if (runningBot == null) {
+        int j = i >= this.match.getSockets().size() ? this.match.getSockets().size() - 1 : i;
+        list.add(this.match.getSockets().get(j).getUser().getId());
+      } else {
+        Bot bot = runningBot.getBot();
+        list.add(bot.getUserId());
+      }
+    }
+    return list;
+  }
 }

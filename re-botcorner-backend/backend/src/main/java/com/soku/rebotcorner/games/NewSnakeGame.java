@@ -17,19 +17,15 @@ public class NewSnakeGame extends AbsGame {
 
   private int rows;
   private int cols;
-  private String mode;
-  private GameMatch match;
   private int innerWallsCount;
   private Deque<Pair>[] snakes;
   private int[][] g;
   private int[][] initG;
   private int[] directions;
   private String[] state;
-  private StringBuilder steps;
-
   private ReentrantLock lock;
+
   private int step;
-  private boolean hasOver;
 
   /**
    * 构造函数
@@ -43,12 +39,9 @@ public class NewSnakeGame extends AbsGame {
     GameMatch match,
     List<RunningBot> bots
   ) {
-    this.mode = mode;
-    this.match = match;
-    this.setBots(bots);
+    super(mode, match, bots);
 
-    // init record
-    this.setRecord(new JSONObject());
+    this.setGameId(1);
 
     // init grid
     this.rows = 12;
@@ -66,13 +59,10 @@ public class NewSnakeGame extends AbsGame {
     this.state = new String[2];
 
     // init operations
-    this.steps = new StringBuilder();
-    this.setReason(new String[2]);
     this.lock = new ReentrantLock();
     this.directions = new int[2];
     directions[0] = directions[1] = -1;
   }
-
 
   /**
    * 获取玩家数
@@ -107,13 +97,14 @@ public class NewSnakeGame extends AbsGame {
    */
   @Override
   public void setStep(JSONObject json) {
+    if (!isHasStart()) return ;
     Integer id = json.getInt("id");
     Integer direction = json.getInt("direction");
     this.setDirectionAndCheckMove(id, direction);
     JSONObject returnJson = new JSONObject();
     returnJson.set("action", "setStep");
     returnJson.set("step", json);
-    this.match.broadCast(Res.ok(returnJson));
+    this.getMatch().broadCast(Res.ok(returnJson));
   }
 
   /**
@@ -140,7 +131,7 @@ public class NewSnakeGame extends AbsGame {
     }
 
     // 保存在steps
-    this.steps.append("" + this.directions[0] + this.directions[1]);
+    this.getSteps().append("" + this.directions[0] + this.directions[1]);
 
     // 发送信息
     JSONObject json = new JSONObject();
@@ -148,7 +139,7 @@ public class NewSnakeGame extends AbsGame {
     json.set("directions", this.directions);
     json.set("isIncreasing", isIncreasing);
     json.set("state", this.state);
-    this.match.broadCast(Res.ok(json));
+    this.getMatch().broadCast(Res.ok(json));
 
     // 清空保存的操作
     this.directions[0] = this.directions[1] = -1;
@@ -203,15 +194,15 @@ public class NewSnakeGame extends AbsGame {
           String result = json.getStr("data");
           String check = this.checkResult(result);
           // 检查结果是否合法
-          if (!check.equals(result)) this.setReason(fi, check);
-          else {
+          if (!check.equals(result)) {
+            this.setReason(fi, check);
+          } else {
             json = new JSONObject();
             json.set("action", "setStep");
             json.set("id", fi);
             json.set("direction", Integer.parseInt(result));
             this.setStep(json);
           }
-
           runOk.incrementAndGet();
         }).start();
       else runOk.incrementAndGet();
@@ -245,33 +236,16 @@ public class NewSnakeGame extends AbsGame {
   }
 
   /**
-   * 游戏结束
-   */
-  @Override
-  public void gameOver() {
-    if (this.hasOver) return ;
-    this.hasOver = true;
-    // set record
-    this.setResultToRecord();
-    this.getRecord().set("steps", steps);
-    this.initRecord();
-
-    this.tellResult();
-    this.stopBots();
-
-    this.saveRecord();
-  }
-
-  /**
    * 将结果保存在录像中
    */
-  private void setResultToRecord() {
+  @Override
+  public void setResultToRecord() {
     String result = "";
     if (isDie(0) && isDie(1)) result = "平局";
     else if (isDie(0)) result = "红蛇胜利";
     else result = "蓝蛇胜利";
-    this.getRecord().set("result", result);
     this.setResult(result);
+    this.getRecord().set("result", result);
   }
 
   /**
@@ -337,6 +311,7 @@ public class NewSnakeGame extends AbsGame {
    */
   @Override
   public void start() {
+    this.setHasStart(true);
     this.g[this.rows - 2][1] = this.g[1][this.cols - 2] = 1;
     this.nextStep();
   }

@@ -2,19 +2,13 @@ import G from "../../G";
 import GameObject from "../../GameObject";
 
 export default class Checker extends GameObject {
-  static {
-    Checker.prototype.dx = [ -1, -1, 0, 1, 1, 1, 0, -1 ];
-    Checker.prototype.dy = [ 0, 1, 1, 1, 0, -1, -1, -1 ];
-  }
-  
-  constructor(parent, { putChessCallback }) {
+  static dx = [ -1, -1, 0, 1, 1, 1, 0, -1 ];
+  static dy = [ 0, 1, 1, 1, 0, -1, -1, -1 ];
+
+  constructor(parent) {
     super(parent);
     
     this.chess = parent.chess;
-    this.putChessCallback = putChessCallback;
-
-    this.cnt0 = 0;
-    this.cnt1 = 0;
     this.curId = 0;
   }
 
@@ -23,8 +17,8 @@ export default class Checker extends GameObject {
   }
 
   isValidDir(r, c, i, id) {
-    const dx = Checker.prototype.dx;
-    const dy = Checker.prototype.dy;
+    const dx = Checker.dx;
+    const dy = Checker.dy;
     let nr = r + dx[i];
     let nc = c + dy[i];
     let cnt = 0;
@@ -38,8 +32,8 @@ export default class Checker extends GameObject {
 
   putChess(r, c, id) {
     this.chess[r][c] = id;
-    const dx = Checker.prototype.dx;
-    const dy = Checker.prototype.dy;
+    const dx = Checker.dx;
+    const dy = Checker.dy;
     for (let i = 0; i < 8; ++i) {
       if (this.isValidDir(r, c, i, id)) {
         let nr = r + dx[i];
@@ -51,6 +45,11 @@ export default class Checker extends GameObject {
         }
       }
     }
+    this.curId ^= 1;
+  }
+
+  pass() {
+    this.curId ^= 1;
   }
 
   getPosition(ex, ey) {
@@ -68,36 +67,19 @@ export default class Checker extends GameObject {
     };
   }
 
-  get0() {
+  cnt(id) {
     let result = 0;
-    for (let i = 0; i < this.parent.rows; ++i) {
-      for (let j = 0; j < this.parent.cols; ++j) {
+    for (let i = 0; i < this.parent.rows; ++i)
+      for (let j = 0; j < this.parent.cols; ++j)
         result += this.parent.chess[i][j] == 0 ? 1 : 0;
-      }
-    }
-    this.cnt0 = result;
+    return result;
   }
-  get1() {
-    let result = 0;
-    for (let i = 0; i < this.parent.rows; ++i) {
-      for (let j = 0; j < this.parent.cols; ++j) {
-        result += this.parent.chess[i][j] == 1 ? 1 : 0;
-      }
-    }
-    this.cnt1 = result;
-  }
-  onStart() { 
+
+  onStart() {
 
   }
 
   update() {
-    const updateCount = () => {
-      this.get0();
-      this.get1();
-    };
-
-    updateCount();
-
     this.render();
   }
 
@@ -130,14 +112,5 @@ export default class Checker extends GameObject {
     renderChess();
   }
 
-  onDestroy() {
-    const onDestroyRemoveListener = () => {
-      // const context: CanvasRenderingContext2D = this.parent.context;
-      const context = this.parent.context;
-      const canvas = context.canvas;
-      canvas.removeEventListener('click', this.handleClick, false);
-    }
-
-    onDestroyRemoveListener();
-  }
+  onDestroy() { }
 }

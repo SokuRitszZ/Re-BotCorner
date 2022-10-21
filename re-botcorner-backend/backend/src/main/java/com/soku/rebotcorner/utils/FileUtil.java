@@ -1,12 +1,12 @@
 package com.soku.rebotcorner.utils;
 
 import cn.hutool.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+
+import static com.soku.rebotcorner.utils.Constancts.MODE;
 
 @Component
 public class FileUtil {
@@ -28,7 +28,7 @@ public class FileUtil {
     }
     String[] url = new String[]{"http://localhost:8080/static/profile", "https://app3495.acapp.acwing.com.cn/static/profile"};
     result.put("result", "success");
-    result.put("newUrl", url[0] + path + "/" + filename);
+    result.put("newUrl", url[MODE] + path + "/" + filename);
 
     return result;
   }

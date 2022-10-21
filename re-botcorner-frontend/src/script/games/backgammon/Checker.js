@@ -48,6 +48,7 @@ export default class Checker extends GameObject {
   setCurId(curId) {
     this.curId = curId;
   }
+
   getSelectedId(pos) {
     const { x, y } = pos;
     if (x < 5) {

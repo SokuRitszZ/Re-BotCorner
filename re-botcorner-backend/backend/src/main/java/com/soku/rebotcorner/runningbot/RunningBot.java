@@ -14,11 +14,12 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import static com.soku.rebotcorner.utils.Constancts.MODE;
 import static com.soku.rebotcorner.utils.RedisConstants.CACHE_BOT_KEY;
 import static com.soku.rebotcorner.utils.RedisConstants.CACHE_BOT_TTL;
 
 public class RunningBot {
-  private final static String URL = "http://103.52.153.224:8000/api";
+  private final static String URL = new String[]{"http://103.52.153.224:8000/api", "http://localhost:8000/api"}[0];
   private final static String startBotUrl = String.format("%s/runbot/start/", URL);
   private final static String compileUrl = String.format("%s/runbot/compile/", URL);
   private final static String prepareDataUrl = String.format("%s/runbot/prepare/", URL);

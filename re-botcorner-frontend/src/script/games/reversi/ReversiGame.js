@@ -15,37 +15,23 @@ export default class ReversiGame {
     this.checker = null;
     
     this.L = 0;
-    this.hasAddListener = false;
   }
   
-  start({ mode, rows, cols, userId0, userId1, putChessCallback }) {
+  start({ mode, initData, putChessCallback }) {
     this.mode = mode;
-    this.rows = rows;
-    this.cols = cols;
-    for (let i = 0, k = 0; i < rows; ++i) {
-      this.chess[i] = [];
-      for (let j = 0; j < cols; ++j) {
-        this.chess[i][j] = 2;
+    this.chess = initData.initChess;
+    this.rows = this.chess.length;
+    this.cols = this.chess[0].length;
+    this.gameMap = new GameMap(this, { rows: this.rows, cols: this.cols });
+    this.checker = new Checker(this);
+    const context = this.context;
+    context.canvas.addEventListener('click', e => {
+      if (this.mode !== 'record') {
+        const pos = this.checker.getPosition(e.clientX, e.clientY);
+        const rc = this.checker.getRowCol(pos.x, pos.y);
+        putChessCallback(rc.r, rc.c);
       }
-    }
-    const midRow = rows >> 1;
-    const midCol = cols >> 1;
-    this.chess[midRow][midCol] = this.chess[midRow - 1][midCol - 1] = 1;
-    this.chess[midRow][midCol - 1] = this.chess[midRow - 1][midCol] = 0;
-    this.gameMap = new GameMap(this, { map: this.chess, rows, cols });
-    this.checker = new Checker(this, { putChessCallback });
-    
-    if (!this.hasAddListener) {
-      this.hasAddListener = true;
-      const context = this.context;
-      context.canvas.addEventListener('click', e => {
-        if (this.mode !== 'record') {
-          const pos = this.checker.getPosition(e.clientX, e.clientY);
-          const rc = this.checker.getRowCol(pos.x, pos.y);
-          this.checker.putChessCallback(rc.r, rc.c);
-        }
-      });
-    }
+    });
 
     this.startEngine();
   }

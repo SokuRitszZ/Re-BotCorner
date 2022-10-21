@@ -7,33 +7,15 @@ import com.soku.rebotcorner.games.AbsGame;
 import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.utils.Res;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class GameMatch {
   private List<GameSocketServer> sockets;
   private AbsGame game;
   private boolean[] isOk;
-
-  /**
-   * game getter
-   *
-   * @return
-   */
-  public AbsGame getGame() {
-    return game;
-  }
-
-  /**
-   * game setter
-   *
-   * @param game
-   */
-  public void setGame(AbsGame game) {
-    this.game = game;
-  }
+  private boolean[] canStartGame;
+  private ReentrantLock lock;
 
   /**
    * 构造函数
@@ -42,12 +24,12 @@ public class GameMatch {
    */
   public GameMatch(List<GameSocketServer> sockets) {
     this.sockets = sockets;
-    isOk = new boolean[sockets.size()];
-    for (GameSocketServer socket : sockets) {
-      if (socket != null) {
+    this.isOk = new boolean[sockets.size()];
+    this.canStartGame = new boolean[sockets.size()];
+    for (GameSocketServer socket : sockets)
+      if (socket != null)
         socket.setMatch(this);
-      }
-    }
+    this.lock = new ReentrantLock();
   }
 
   /**
@@ -116,20 +98,6 @@ public class GameMatch {
   }
 
   /**
-   * 获取所有userId
-   * @return
-   */
-  public List<Integer> getUserIds() {
-    List<Integer> list = new ArrayList<>();
-    for (GameSocketServer socket : this.sockets)
-      if (socket != null)
-        list.add(socket.getUser().getId());
-      else
-        list.add(list.get(list.size() - 1));
-    return list;
-  }
-
-  /**
    * 获取所有玩家的Bot
    *
    * @return
@@ -139,5 +107,44 @@ public class GameMatch {
     for (GameSocketServer socket : this.sockets)
       list.add(socket.getBot());
     return list;
+  }
+
+  /**
+   * 只发给特定的人
+   *
+   * @param id
+   * @param res
+   */
+  public void sendOne(int id, Res res) {
+    this.sockets.get(id).sendMessage(JSONUtil.parseObj(res));
+  }
+
+  public void setStartGame(GameSocketServer socket) {
+    lock.lock();
+    int me = getMe(socket);
+    canStartGame[me] = true;
+    if (isAllReady()) {
+      this.game.start();
+    }
+    lock.unlock();
+  }
+
+  public boolean isAllReady() {
+    for (boolean b : canStartGame)
+      if (!b)
+        return false;
+    return true;
+  }
+
+  public List<GameSocketServer> getSockets() {
+    return this.sockets;
+  }
+
+  public AbsGame getGame() {
+    return this.game;
+  }
+
+  public void setGame(AbsGame game) {
+    this.game = game;
   }
 }

@@ -56,7 +56,7 @@ export default class Snake extends GameObject {
         flag |= (r === cell.r && c === cell.c);
       });
     });
-    flag |= (map[r][c] === 1);
+    flag |= (map[r][c] === 1 && this.isIncreasing);
     return flag ? "die" : "move";
   }
 
@@ -64,12 +64,12 @@ export default class Snake extends GameObject {
     if (this.status === 'die') return ;
     this.nextCell = new Cell(this.cells[0].r + this.dx[d], this.cells[0].c + this.dy[d]);
     this.eyeDirection = d;
-    this.setStatus(this.checkStatus());
-    this.isIncreasing = this.checkIncreasing();
-    this.step++;
 
     const n = this.cells.length;
     for (let i = n; i; --i) this.cells[i] = new Cell(this.cells[i - 1].r, this.cells[i - 1].c);
+
+    this.isIncreasing = this.checkIncreasing();
+    this.step++;
   }
 
   setStatus(status) {

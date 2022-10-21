@@ -17,18 +17,7 @@ public class StartGameServiceImpl implements StartGameService {
 
   @Override
   public String startGame(String game, Integer userId0, Integer userId1) {
-    switch (game) {
-      case "snake":
-//        SnakeWebSocketServer.makeMatching(userId0, userId1);
-        this.startGame(Arrays.asList(new Integer[]{userId0, userId1}));
-        break;
-      case "reversi":
-        ReversiWebSocketServer.makeMatching(userId0, userId1);
-        break;
-      case "backgammon":
-        BackgammonWebSocketServer.makeMatching(userId0, userId1);
-        break;
-    }
+    this.startGame(Arrays.asList(new Integer[]{userId0, userId1}));
     return "Match OK";
   }
 

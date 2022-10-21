@@ -194,8 +194,7 @@ public class ReversiGame extends Thread {
       for (int j = 0; j < cols; ++j) {
         if (chess[i][j] == id) {
           flag = false;
-          break;
-        }
+       }
       }
     }
     if (flag) {

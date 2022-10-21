@@ -2,13 +2,12 @@ import G from "../../G";
 import GameObject from "../../GameObject";
 
 export default class GameMap extends GameObject {
-  constructor(parent, { rows, cols, map }) {
+  constructor(parent, { rows, cols }) {
     super(parent);
 
     this.rows = rows;
     this.cols = cols;
-    this.map = map;
-    
+
     this.L = 0;
   }
 

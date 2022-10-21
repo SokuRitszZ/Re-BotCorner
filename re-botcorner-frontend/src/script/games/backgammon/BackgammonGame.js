@@ -22,14 +22,14 @@ export default class BackgammonGame {
   }
 
 
-  start({ mode, stringifiedChess, moveChessCallback }) {
+  start({ initData, moveChessCallback }) {
     this.startEngine();
-    this.startGame(mode, stringifiedChess);
+    this.startGame({initData});
     this.moveChessCallback = moveChessCallback;
     if (!this.hasAddListener) this.startAddListener();
   }
 
-  startGame(mode, stringifiedChess, curId) {
+  startGame({initData}) {
     this.gameObjects = [];
     this.chess = [];
     this.inHome = [0, 0];
@@ -37,29 +37,25 @@ export default class BackgammonGame {
 
     this.gameMap = new GameMap(this);
     this.checker = new Checker(this);
-    this.checker.setCurId(curId);
+    this.checker.setCurId(initData.initStart);
 
-    this.mode = mode;
     for (let i = 0; i < 26; ++i) {
       this.chess[i] = [2, []];
     }
     this.gameMap.update();
     const L = this.L;
-    stringifiedChess.split(' ').map((item, index) => {
-      if (index >= 52) return ;
-      const i = Math.floor(index / 2);
-      if (index % 2 === 0) {
-        this.chess[i][0] = parseInt(item);
-      } else {
-        const count = parseInt(item);
-        for (let j = 0; j < count; ++j) {
-          const pos = this.checker.getChessPosition(i, j + 1);
-          this.chess[i][1].push(new Chess(this, {
-            id: this.chess[i][0],
-            x: pos.x,
-            y: pos.y
-          }));
-        }
+
+    initData.initChess.forEach((chess, i) => {
+      i = parseInt(i);
+      this.chess[i][0] = chess.type;
+      const n = chess.count;
+      for (let j = 0; j < n; ++j) {
+        const pos = this.checker.getChessPosition(i, j + 1);
+        this.chess[i][1].push(new Chess(this, {
+          id: this.chess[i][0],
+          x: pos.x,
+          y: pos.y
+        }));
       }
     });
   }

@@ -13,7 +13,6 @@ import com.soku.rebotcorner.utils.UserDAO;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 public class BackgammonGame extends Thread {
@@ -244,7 +243,7 @@ public class BackgammonGame extends Thread {
     data += dice.size() + " ";
     for (Integer d: dice)
       data += d + " ";
-    return data.trim();
+    return data;
   }
 
   public boolean checkMoveChess(int id, int from, int to) {

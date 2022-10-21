@@ -7,13 +7,12 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 public class ReversiPool extends Thread implements MatchPool {
-  private static List<Player> players = new ArrayList<>();
+  private static Map<Integer, Player> players = new HashMap();
   private ReentrantLock lock = new ReentrantLock();
   private static RestTemplate restTemplate;
   private final static String startGameUrl = "http://localhost:8080/api/game/startgame/";
@@ -26,7 +25,7 @@ public class ReversiPool extends Thread implements MatchPool {
   public void addPlayer(Integer userId, Integer rating) {
     lock.lock();
     try {
-      players.add(new Player(userId, rating, 0));
+      players.put(userId, new Player(userId, rating, 0));
     } finally {
       lock.unlock();
     }
@@ -35,30 +34,20 @@ public class ReversiPool extends Thread implements MatchPool {
     }
     display();
   }
-
   public void removePlayer(Integer userId) {
     lock.lock();
     try {
-      List<Player> newPlayers = new ArrayList<>();
-      for (Player player: players) {
-        if (!player.getUserId().equals(userId)) {
-          newPlayers.add(player);
-        }
-      }
-      players = newPlayers;
+      players.remove(userId);
     } finally {
       lock.unlock();
     }
-    if (!this.isAlive()) {
-      this.start();
-    }
+    if (!this.isAlive()) this.start();
     display();
   }
 
   private void increaseWaitingTime() {
-    for (Player player: players) {
+    for (Player player: players.values())
       player.setWatingTime(player.getWatingTime() + 1);
-    }
   }
 
   private boolean checkMatched(Player a, Player b) {
@@ -68,27 +57,22 @@ public class ReversiPool extends Thread implements MatchPool {
   }
 
   private void match() {
-    boolean[] used = new boolean[players.size()];
-    for (int i = 0; i < players.size(); ++i) {
-      if (used[i]) continue;
-      Player p0 = players.get(i);
-      for (int j = i + 1; j < players.size(); ++j) {
-        if (used[j]) continue;
-        Player p1 = players.get(j);
-        if (checkMatched(p0, p1)) {
-          used[i] = used[j] = true;
-          sendResult(p0, p1);
-          break;
-        }
+    Collection<Player> values = players.values();
+    List<Player> list = new ArrayList<>();
+    for (Player current : values) {
+      boolean ok = false;
+      for (Player before : list) if (checkMatched(before, current)) {
+        Integer beforeId = before.getUserId();
+        Integer currentId = current.getUserId();
+        players.remove(beforeId);
+        players.remove(currentId);
+        list.remove(before);
+        sendResult(before, current);
+        ok = true;
+        break;
       }
+      if (!ok) list.add(current);
     }
-    List<Player> newPlayers = new ArrayList<>();
-    for (int i = 0; i < players.size(); ++i) {
-      if (!used[i]) {
-        newPlayers.add(players.get(i));
-      }
-    }
-    players = newPlayers;
   }
 
   private void sendResult(Player a, Player b) {
@@ -101,7 +85,7 @@ public class ReversiPool extends Thread implements MatchPool {
 
   public void display() {
     System.out.print("Reversi Pool: [ ");
-    for (Player player: players) {
+    for (Player player: players.values()) {
       System.out.print(player.getUserId() + " ");
     }
     System.out.print("]");

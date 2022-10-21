@@ -1,28 +1,36 @@
 <template>
-  <Collapse button-style="width: 100%; border-radius: 0;" collapse-id="recent-match" otherStyle="height: 30vh; overflow: auto">
+  <Collapse
+    collapse-id="record-list"
+    button-style="width: 100%; border-radius: 0"
+  >
     <template v-slot:button>
       最近比赛
     </template>
     <template v-slot:content>
-      <div style="height: 600px; width: 100%; overflow: auto">
+      <div style="height: 300px; width: 100%; overflow: auto">
         <table class="table table-striped">
           <thead>
           <tr>
             <td>时间</td>
-            <td>蓝方</td>
+            <td>白方</td>
             <td>红方</td>
             <td>胜者</td>
             <td>
-              <button :disabled="hasInitRecordList" @click="initRecordList" class="btn btn-secondary" style="padding: 0; width: 25px; line-height: 25px; border-radius: 5px;"><i class="bi bi-arrow-repeat"></i></button>
+              <button @click="initRecordList" class="btn btn-secondary" style="padding: 0; width: 25px; line-height: 25px; border-radius: 5px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16">
+                  <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/>
+                  <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/>
+                </svg>
+              </button>
             </td>
           </tr>
           </thead>
           <tbody>
-          <tr v-for="(record, index) in recordList">
-            <td>{{ timeFormat(new Date(record.createTime), "yyyy-MM-dd HH:mm:ss") }}</td>
-            <td> <span><img :src="record.infos[0].headIcon" style="width: 30px; border-radius: 50%; padding: 1px; border: 1px solid blue" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.infos[0].username }}</div></td>
-            <td> <span><img :src="record.infos[1].headIcon" style="width: 30px; border-radius: 50%; padding: 1px; border: 1px solid red" alt=""></span><div style="display: inline-block; margin-left: 5px;">{{ record.infos[1].username }}</div></td>
-            <td>{{record.result}}</td>
+          <tr v-for="record in recordList">
+            <td>{{timeFormat(new Date(record.createTime), 'yyyy-MM-dd HH:mm:ss')}}</td>
+            <td> <span><img :src="record.infos[0].headIcon" style="width: 30px; border-radius: 50%; padding: 1px; border: 1px solid #ccc" alt=""></span><div style="display: inline-block;">{{ record.infos[0].username }}</div></td>
+            <td> <span><img :src="record.infos[1].headIcon" style="width: 30px; border-radius: 50%; padding: 1px; border: 1px solid #900" alt=""></span><div style="display: inline-block;">{{ record.infos[1].username }}</div></td>
+            <td style="line-height: 30px"> {{record.result}} </td>
             <td>
               <button @click="playRecord(record)" class="btn btn-primary text-center p-0" style="width: 30px; height: 30px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-fill" viewBox="0 0 16 16">
@@ -69,7 +77,7 @@ const pagePtr = ref(0);
 
 const initRecordList = () => {
   hasInitRecordList.value = true;
-  getRecordListApi(1).then(resp => {
+  getRecordListApi(3).then(resp => {
     const list = JSON.parse(resp.data);
     allRecordList.value = list.reverse();
     turnRecordPage(0);
