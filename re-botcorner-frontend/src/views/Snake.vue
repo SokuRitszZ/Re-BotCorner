@@ -7,7 +7,7 @@
         </div>
         <hr>
         <SnakeRecordList
-          ref="recordListRef"
+          ref="$recordList"
           @play-record="playRecord"
         />
       </Col>
@@ -133,6 +133,7 @@ const parentRef = ref(null);
 const canvasRef = ref(null);
 const chatroomRef = ref(null);
 const $matchBoard = ref();
+const $recordList = ref();
 
 const botIds = ref([null, null]);
 
@@ -145,12 +146,6 @@ const choose = ref([0, 0]);
 const inputOk = ref([false, false]);
 const reasons = ref([]);
 
-/**
- * 初始化游戏（正在创建游戏）
- *
- * @param mode
- * @param initData
- */
 const initGame = (mode, initData) => {
   canvasRef.value.remove();
   canvasRef.value = document.createElement("canvas");
@@ -255,7 +250,7 @@ const initSocket = () => {
     hasClickedInitSocket.value = false;
   };
   SOCKET().connect({
-    game: `test/snake`,
+    game: `snake`,
     onOpen,
     onClose,
     onMessage,
@@ -263,13 +258,16 @@ const initSocket = () => {
   });
 };
 
-const recordListRef = ref();
-
 const infos = ref([]);
 
 const websocketRoute = json => {
   const wsRoutes = {
     startSingleGaming(json) {
+      if (json.errorMessage) {
+        alert("danger", json.errorMessage, 2000);
+        $matchBoard.value.initState();
+        return ;
+      }
       botIds.value = json.botIds;
       initGame("single", json.initData);
       $matchBoard.value.receivedStartSingleGaming();

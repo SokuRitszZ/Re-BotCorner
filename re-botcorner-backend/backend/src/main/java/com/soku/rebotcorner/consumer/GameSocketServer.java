@@ -5,9 +5,9 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.consumer.match.GameMatch;
 import com.soku.rebotcorner.games.AbsGame;
-import com.soku.rebotcorner.games.NewBackgammonGame;
-import com.soku.rebotcorner.games.NewReversiGame;
-import com.soku.rebotcorner.games.NewSnakeGame;
+import com.soku.rebotcorner.games.BackgammonGamen;
+import com.soku.rebotcorner.games.ReversiGame;
+import com.soku.rebotcorner.games.SnakeGame;
 import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.pojo.SnakeRating;
 import com.soku.rebotcorner.pojo.User;
@@ -31,7 +31,7 @@ import java.util.concurrent.Executors;
 
 @Data
 @Component
-@ServerEndpoint("/websocket/test/{game}/{token}")  // 注意不要以'/'结尾
+@ServerEndpoint("/websocket/{game}/{token}")  // 注意不要以'/'结尾
 public class GameSocketServer {
   private final static String addUrl = "http://localhost:8081/api/matching/add/";
   private final static String removeUrl = "http://localhost:8081/api/matching/remove/";
@@ -79,9 +79,9 @@ public class GameSocketServer {
 
   AbsGame createGameObject(String mode, GameMatch match, List<RunningBot> bots) {
     switch (this.gameClass) {
-      case "snake": return new NewSnakeGame(mode, match, bots);
-      case "reversi": return new NewReversiGame(mode, match, bots);
-      case "backgammon": return new NewBackgammonGame(mode, match, bots);
+      case "snake": return new SnakeGame(mode, match, bots);
+      case "reversi": return new ReversiGame(mode, match, bots);
+      case "backgammon": return new BackgammonGamen(mode, match, bots);
     }
     return null;
   }
@@ -297,8 +297,10 @@ public class GameSocketServer {
     List<RunningBot> bots = new ArrayList<>();
     for (Integer botId : botIds) {
       if (botId != null && botId > 0) {
-        if (!this.findBot(botId)) return Res.fail(String.format("不存在%d号Bot", botId));
-        else bots.add(new RunningBot(botId));
+        if (!this.findBot(botId)) {
+          json.set("errorMessage", "不存在此编号的Bot");
+          return Res.ok(json);
+        } else bots.add(new RunningBot(botId));
       } else bots.add(null);
     }
 

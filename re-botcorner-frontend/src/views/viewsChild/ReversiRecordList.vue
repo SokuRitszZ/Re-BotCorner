@@ -19,7 +19,7 @@
           </tr>
           </thead>
           <tbody>
-          <tr v-for="(record, index) in recordList">
+          <tr v-for="record in recordList">
             <td>{{ timeFormat(new Date(record.createTime), "yyyy-MM-dd HH:mm:ss") }}</td>
             <td> <span><img :src="record.infos[0].headIcon" style="width: 30px; border-radius: 50%; padding: 1px; border: 1px solid black" alt=""></span><div style="display: inline-block;">{{ record.infos[0].username }}</div> </td>
             <td> <span><img :src="record.infos[1].headIcon" style="width: 30px; border-radius: 50%; padding: 1px; border: 1px solid white" alt=""></span><div style="display: inline-block;">{{ record.infos[1].username }}</div></td>

@@ -209,6 +209,11 @@ const websocketRoute = json => {
   console.log(json.action);
   const wsRoutes = {
     startSingleGaming(json) {
+      if (json.errorMessage) {
+        $matchBoard.value.initState();
+        alert("danger", json.errorMessage, 2000);
+        return ;
+      }
       botIds.value = json.botIds;
       const putChessCallback = (r, c) => {
         SOCKET().sendMessage({
@@ -355,7 +360,7 @@ const initSocket = () => {
   };
   
   SOCKET().connect({
-    game: "test/reversi",
+    game: "reversi",
     onOpen,
     onClose,
     onMessage,

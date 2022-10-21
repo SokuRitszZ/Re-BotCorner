@@ -139,7 +139,7 @@ const routes = ref({});
 const initSocket = () => {
   hasClickedInitSocket.value = true;
   SOCKET().connect({
-    game: "test/backgammon",
+    game: "backgammon",
     onOpen() {
       hasLinkWebSocket.value = true;
       hasClickedInitSocket.value = false;
@@ -171,6 +171,11 @@ const initSocket = () => {
 const initRoutes = () => {
   const wsRoutes = {
     startSingleGaming(json) {
+      if (json.errorMessage) {
+        $matchBoard.value.initState();
+        alert("danger", json.errorMessage, 2000);
+        return ;
+      }
       botIds.value = json.botIds;
       initGame("single", json.initData)
       $matchBoard.value.receivedStartSingleGaming();

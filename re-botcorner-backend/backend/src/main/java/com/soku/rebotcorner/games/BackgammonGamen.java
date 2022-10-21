@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 import static com.soku.rebotcorner.utils.ScaleUtil.transform;
 
-public class NewBackgammonGame extends AbsGame {
+public class BackgammonGamen extends AbsGame {
   private final static Random random = new Random();
 
   private ReentrantLock lock;
@@ -37,7 +37,7 @@ public class NewBackgammonGame extends AbsGame {
    * @param match
    * @param bots
    */
-  public NewBackgammonGame(
+  public BackgammonGamen(
     String mode,
     GameMatch match,
     List<RunningBot> bots

@@ -1,11 +1,6 @@
 package com.soku.rebotcorner.service.impl.game;
 
-import com.soku.rebotcorner.consumer.BackgammonWebSocketServer;
 import com.soku.rebotcorner.consumer.GameSocketServer;
-import com.soku.rebotcorner.consumer.ReversiWebSocketServer;
-import com.soku.rebotcorner.consumer.SnakeWebSocketServer;
-import com.soku.rebotcorner.pojo.Game;
-import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.service.game.StartGameService;
 import org.springframework.stereotype.Service;
 
