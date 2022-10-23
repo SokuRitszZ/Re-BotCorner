@@ -22,4 +22,10 @@ const alert = (type, content, remain) => {
   }, (remain || 1000) + 500);
 };
 
+export const removeAlert = () => {
+  const dom = document.querySelector(".alert");
+  if (dom !== null)
+    dom.remove();
+};
+
 export default alert;

@@ -58,6 +58,16 @@
               <div @click="gameSocketTest" class="m-1 btn btn-primary">测试一下WebSocket捏</div>
               <div @click="startSingleGaming" class="btn btn-success">测试一下捏</div>
             </div>
+            <hr>
+            <div>
+              <Progress
+                :max="10"
+                :value="inputValue"
+                @change="changeValue"
+                animated
+              />
+              <input class="form-control mt-3" name="inputValue" v-model="inputValue" type="number">
+            </div>
           </h1>
         </div>
       </Col>
@@ -77,13 +87,17 @@ import Window from '../components/Window.vue';
 import ChatRoom from '../components/ChatRoom.vue';
 import Chessboard from "../components/Chessboard.vue";
 import {phoneAuthApi, phoneLoginApi} from "../script/api.js";
-import {onMounted, onUnmounted, ref} from "vue";
+import {computed, nextTick, onMounted, onUnmounted, ref} from "vue";
 import { mode } from "../config.json";
 import SOCKET from "../store/SOCKET.js";
-import USER from "../store/USER.js";
 
 const phone = ref();
 const auth = ref();
+const inputValue = ref(0);
+
+const changeValue = num => {
+  inputValue.value = num;
+}
 
 const handleClickPhoneAuth = () => {
   if (mode === 0) phoneAuthApi(phone.value).then(resp => console.log(resp));
@@ -105,6 +119,7 @@ const gameSocketTest = () => {
 }
 
 import alert from "../script/alert.js";
+import Progress from "../components/Progress.vue";
 
 onMounted(() => {
   if (mode === 0) {

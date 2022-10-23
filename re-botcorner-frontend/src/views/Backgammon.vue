@@ -10,6 +10,53 @@
         >
           <canvas ref="canvasRef" tabindex="0"></canvas>
         </div>
+        <div class="row mt-3" style="height: 30px">
+          <div class="col-9 d-flex flex-column justify-content-center">
+            <Progress
+              :animated="!isPausing && isPlayingRecord"
+              :max="maxi"
+              :value="playi"
+              @change="rollTo"
+              @mousedown="onRolling"
+              @mouseup="rollOk"
+            />
+            <div style="font-size: 10px">
+              {{playi - 1 >> 1}} / {{maxi - 1 >> 1}}
+            </div>
+          </div>
+          <div class="col d-flex flex-column justify-content-center">
+            <select v-model="speedPlayRecord" class="form-control h-100" style="padding: 0 0 0 7px">
+              <option :value="0.5">x0.5</option>
+              <option :value="1">x1</option>
+              <option :value="2">x2</option>
+              <option :value="4">x4</option>
+            </select>
+          </div>
+          <div class="col">
+            <div class="btn-group" role="group" aria-label="Basic example">
+              <button @click="act(false, true)" :disabled="!isPausing" class="btn btn-primary p-0 w-100 h-100" style="font-size: 1rem">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-reply-fill" viewBox="0 0 16 16">
+                  <path d="M5.921 11.9 1.353 8.62a.719.719 0 0 1 0-1.238L5.921 4.1A.716.716 0 0 1 7 4.719V6c1.5 0 6 0 7 8-2.5-4.5-7-4-7-4v1.281c0 .56-.606.898-1.079.62z"/>
+                </svg>
+              </button>
+              <button @click="act(true)" v-if="isPausing" class="btn btn-primary p-0 w-100 h-100" style="font-size: 1rem">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-play-fill" viewBox="0 0 16 16">
+                  <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                </svg>
+              </button>
+              <button @click="pause" v-else class="btn btn-primary p-0 w-100 h-100" style="font-size: 1rem">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-pause-fill" viewBox="0 0 16 16">
+                  <path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/>
+                </svg>
+              </button>
+              <button :disabled="!isPausing" @click="act(false)" class="btn btn-primary p-0 w-100 h-100" style="font-size: 1rem">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-forward-fill" viewBox="0 0 16 16">
+                  <path d="m9.77 12.11 4.012-2.953a.647.647 0 0 0 0-1.114L9.771 5.09a.644.644 0 0 0-.971.557V6.65H2v3.9h6.8v1.003c0 .505.545.808.97.557z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
         <hr>
         <BackgammonRecordList
           ref="recordListRef"
@@ -118,7 +165,7 @@ import Collapse from "../components/Collapse.vue";
 import Window from "../components/Window.vue";
 import BackgammonGame from "../script/games/backgammon/BackgammonGame.js";
 import {onMounted, onUnmounted, ref} from "vue";
-import alert from "../script/alert.js";
+import alert, {removeAlert} from "../script/alert.js";
 import SOCKET from "../store/SOCKET.js";
 import ChatRoom from "../components/ChatRoom.vue";
 import USER from "../store/USER.js";
@@ -127,6 +174,7 @@ import timeFormat from "../script/timeFormat.js";
 import BackgammonInfo from "./viewsChild/BackgammonInfo.vue";
 import BackgammonRecordList from "./viewsChild/BackgammonRecordList.vue";
 import MatchBoard from "../components/MatchBoard.vue";
+import Progress from "../components/Progress.vue";
 
 const $matchBoard = ref();
 
@@ -270,7 +318,6 @@ const initRoutes = () => {
 
 const route = json => {
   const action = json.action;
-  if (action === "tellResult") console.log(json);
   routes.value[action](json);
 };
 
@@ -290,8 +337,18 @@ const game = ref(null);
 const checker = ref(null);
 const reasons = ref([]);
 
+const clearRecord = () => {
+  // 清除正在播放的录像
+  clearTimeout(playingRecordId.value);
+  playi.value = 1;
+  maxi.value = 1;
+  isPlayingRecord.value = false;
+};
+
 const initGame = (mode, initData, moveChessCallback) => {
-  canvasRef.value.remove();
+  if (mode !== "record") clearRecord();
+
+  parentRef.value.innerHTML = "";
   canvasRef.value = document.createElement("canvas");
   parentRef.value.append(canvasRef.value);
   game.value = new BackgammonGame({
@@ -314,23 +371,43 @@ const initGame = (mode, initData, moveChessCallback) => {
   checker.value = game.value.getChecker();
   const initDice = initData.initDice;
   checker.value.setDice(initDice);
-  alert("info", `游戏开始！初始点数如下，${initData.initStart === 0 ? "白" : "红" }先手。\n五秒后开始`, 5000);
+  alert("info", `游戏开始！初始点数如下，${initData.initStart === 0 ? "白" : "红" }先手。五秒后开始`, 5000);
 };
 
 /** 录像 */
 
+const maxi = ref(1);
+const playi = ref(1);
+const backPlayi = ref(1);
 const playingRecordId = ref(0);
+const speedPlayRecord = ref(1);
+const isPausing = ref(false);
+const steps = ref("");
+const isPlayingRecord = ref(false);
+const recordPlaying = ref(null);
+const indexToRoll = ref(0);
+
+const pause = () => {
+  if (!isPlayingRecord.value) return ;
+  isPausing.value = true;
+  clearTimeout(playingRecordId.value);
+};
 
 const playRecord = record => {
+  recordPlaying.value = record;
+  isPlayingRecord.value = true;
+  isPausing.value = false;
+  playi.value = 1;
   clearTimeout(playingRecordId.value);
   const json = JSON.parse(record.json);
   const initData = json.initData;
-  const steps = json.steps.trim().split("\n");
+  steps.value = json.steps.trim().split("\n");
   initGame("record", initData, () => {});
+  maxi.value = steps.value.length;
   new Promise(resolve => {
     playingRecordId.value = setTimeout(() => {
       // 告知开局的时候要等个5秒
-      const startStep = steps[0];
+      const startStep = steps.value[0];
       const curId = parseInt(startStep[2]);
       checker.value.setCurId(curId);
       const dice = startStep.slice(3).split("").map(x => parseInt(x));
@@ -338,41 +415,82 @@ const playRecord = record => {
       resolve();
     }, 5000);
   }).then(() => {
-    const n = steps.length;
-    let i = 1;
-    const act = () =>{
-      const step = steps[i++];
-      const action = step.slice(0, 2);
-      switch (action) {
-        case "mv":
-          const [from, to] = [
-            parseInt(step[2], 36),
-            parseInt(step[3], 36)
-          ];
-          checker.value.moveChess(from, to);
-          break;
-        case "ps":
-          alert("warning", `${checker.value.curId === 0 ? "白" : "红"}无棋可走，跳过`);
-          const ps = parseInt(step[2]);
-          checker.value.setCurId(ps);
-          break;
-        case "tn":
-          const tn = parseInt(step[2]);
-          checker.value.setCurId(tn);
-          break;
-      }
-      const curId = parseInt(steps[i][2]);
-      const dice = steps[i++].slice(3).split("").map(die => parseInt(die));
-      checker.value.setCurId(curId);
-      checker.value.setDice(dice);
-      if (i < n) {
-        playingRecordId.value = setTimeout(() => {
-          act();
-        }, 750);
-      }
-    };
-    act();
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+    })
+  }).then(() => {
+    act(true);
   });
+};
+
+const act = (isContinue, isRev=false) => {
+  if (!isPlayingRecord.value) return ;
+  isPausing.value = !isContinue;
+  if (isRev) playi.value -= 2;
+  const step = steps.value[playi.value++];
+  const action = step.slice(0, 2);
+  switch (action) {
+    case "mv":
+      const [from, to] = [
+        parseInt(step[2], 36),
+        parseInt(step[3], 36)
+      ];
+      if (!isRev) checker.value.moveChess(from, to);
+      else checker.value.rollback();
+      break;
+    case "ps":
+      alert("warning", `${checker.value.curId === 0 ? "白" : "红"}无棋可走，跳过`);
+      const ps = parseInt(step[2]);
+      if (!isRev) checker.value.setCurId(ps);
+      else checker.value.setCurId(ps ^ 1);
+      break;
+    case "tn":
+      const tn = parseInt(step[2]);
+      if (!isRev) checker.value.setCurId(tn);
+      else checker.value.setCurId(tn ^ 1);
+      break;
+  }
+  const curId = parseInt(steps.value[playi.value][2]);
+  if (isRev) playi.value -= 2;
+  const dice = steps.value[playi.value++].slice(3).split("").map(die => parseInt(die));
+  checker.value.setCurId(curId);
+  checker.value.setDice(dice);
+  if (playi.value < maxi.value) {
+    if (isContinue)
+      playingRecordId.value = setTimeout(() => {
+        act(true);
+      }, 750 / speedPlayRecord.value);
+  } else {
+    isPausing.value = true;
+    isPlayingRecord.value = false;
+  }
+};
+
+const onRolling = () => {
+  pause();
+  backPlayi.value = playi.value;
+};
+
+const rollOk = () => {
+  if (!recordPlaying.value) return ;
+  clearTimeout(playingRecordId.value);
+  const backupSpeed = speedPlayRecord.value;
+  speedPlayRecord.value = 10000;
+  const n = indexToRoll.value >> 1;
+  const playiFrom = playi.value >> 1;
+  if (playiFrom < n) for (let i = playiFrom; i < n; ++i) act(false);
+  else for (let i = playiFrom; i > n; --i) act(false, true);
+  removeAlert();
+  speedPlayRecord.value = backupSpeed;
+  playingRecordId.value = setTimeout(() => {
+    act(true);
+  }, 1000);
+};
+
+const rollTo = index => {
+  indexToRoll.value = index;
 };
 
 /** 聊天室 */

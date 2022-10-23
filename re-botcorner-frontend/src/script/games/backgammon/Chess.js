@@ -3,6 +3,9 @@ import C from "../../C.js";
 import G from "../../G.js";
 
 export default class Chess extends GameObject {
+  static logMove = [];
+  static step = 0;
+
   constructor(parent, {id, x, y}) {
     super(parent);
 
@@ -29,7 +32,7 @@ export default class Chess extends GameObject {
     this.tx = pos.x;
     this.ty = pos.y;
     const distance = C.distance({x: this.x, y: this.y}, {x: this.tx, y: this.ty});
-    const t = 0.75;
+    const t = 0.5;
     // s = at^2 / 2
     // a = 2s / t^2
     // v^2 = 2as

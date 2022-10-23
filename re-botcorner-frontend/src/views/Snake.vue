@@ -5,6 +5,11 @@
         <div ref="parentRef" id="parent">
           <canvas ref="canvasRef" tabindex="0"></canvas>
         </div>
+        <Progress
+          :max="maxi"
+          :value="playi"
+          class="mt-3"
+        />
         <hr>
         <SnakeRecordList
           ref="$recordList"
@@ -116,10 +121,8 @@ import Collapse from '../components/Collapse.vue';
 import { onMounted, onUnmounted, ref } from 'vue';
 import SOCKET from '../store/SOCKET';
 import SnakeGame from '../script/games/snake/SnakeGame';
-import Container from '../components/Container.vue';
 import USER from '../store/USER';
 import alert from '../script/alert';
-import { getBotApi } from '../script/api';
 import randomId from '../script/randomid';
 import SnakeInfo from './viewsChild/SnakeInfo.vue';
 import Window from '../components/Window.vue';
@@ -128,6 +131,7 @@ import timeFormat from '../script/timeFormat';
 import SnakeRecordList from "./viewsChild/SnakeRecordList.vue";
 import DirectionKeyBoard from "../components/DirectionKeyBoard.vue";
 import MatchBoard from "../components/MatchBoard.vue";
+import Progress from "../components/Progress.vue";
 
 const parentRef = ref(null);
 const canvasRef = ref(null);
@@ -139,8 +143,6 @@ const botIds = ref([null, null]);
 
 const game = ref(null);
 const checker = ref(null);
-const state = ref("toMatch");
-const gameMode = ref("");
 
 const choose = ref([0, 0]);
 const inputOk = ref([false, false]);
@@ -155,8 +157,6 @@ const initGame = (mode, initData) => {
     context: canvasRef.value.getContext('2d')
   });
   game.value.start({ initData });
-  state.value = "waitingInput";
-  gameMode.value = mode;
   checker.value = game.value.getChecker();
 };
 
@@ -171,8 +171,11 @@ const setStep = (id, direction) => {
 };
 
 const playingRecordId = ref(0);
+const maxi = ref(1);
+const playi = ref(1);
 
 const playRecord = record => {
+  playi.value = 0;
   clearInterval(playingRecordId.value);
   const recordJson = JSON.parse(record.json);
   game.value = new SnakeGame({
@@ -184,17 +187,17 @@ const playRecord = record => {
   checker.value = game.value.getChecker();
   const steps = recordJson.steps;
   const n = steps.length;
-  let i = 0;
+  maxi.value = n;
   const act = () => {
     checker.value.moveSnake({
       id: 0,
-      direction: parseInt(steps[i++])
+      direction: parseInt(steps[playi.value++])
     });
     checker.value.moveSnake({
       id: 1,
-      direction: parseInt(steps[i++])
+      direction: parseInt(steps[playi.value++])
     });
-    if (i >= n) {
+    if (playi.value >= n) {
       const result = record.result;
       alert(`success`, `游戏结束`);
       if (result === "平局" || result === "红蛇胜利") game.value.snakes[0].setStatus("die");
@@ -205,7 +208,9 @@ const playRecord = record => {
       act()
     }, 250);
   };
-  act();
+  setTimeout(() => {
+    act();
+  }, 1000);
 };
 
 const sendTalk = content => {

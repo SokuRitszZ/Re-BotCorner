@@ -8,6 +8,12 @@
         >
           <canvas ref="canvasRef" tabindex="0"></canvas>
         </div>
+        <Progress
+          :max="maxi"
+          :value="playi"
+          animated
+          class="mt-3"
+        />
         <hr>
         <!-- 最近比赛 -->
         <ReversiRecordList
@@ -134,6 +140,7 @@ import USER from '../store/USER';
 import randomId from '../script/randomid';
 import ReversiRecordList from "./viewsChild/ReversiRecordList.vue";
 import MatchBoard from "../components/MatchBoard.vue";
+import Progress from "../components/Progress.vue";
 
 const parentRef = ref(null);
 const canvasRef = ref(null);
@@ -175,17 +182,21 @@ const reasons = ref([]);
 
 /** 录像 */
 const playingRecordId = ref(0);
+const playi = ref(1);
+const maxi = ref(1);
 
 const playRecord = record => {
+  playi.value = 0;
+  clearTimeout(playingRecordId.value);
   const json = JSON.parse(record.json);
   const initData = json.initData;
   const steps = json.steps.trim();
   initGame("record", initData, () => {});
   const n = steps.length;
-  let i = 0;
+  maxi.value = n;
   const act = () => {
-    const step = steps.slice(i, i + 2);
-    i += 2;
+    const step = steps.slice(playi.value, playi.value + 2);
+    playi.value += 2;
     if (step === "ps") {
       alert("warning", `${checker.value.curId === 0 ? "黑子" : "白子"}跳过`);
       checker.value.pass();
@@ -193,16 +204,10 @@ const playRecord = record => {
       let rc = step.split("").map(c => parseInt(c));
       checker.value.putChess(...rc, checker.value.curId);
     }
-    if (i >= n) return ;
-    setTimeout(act, 750)
+    if (playi.value >= n) return ;
+    playingRecordId.value = setTimeout(act, 750)
   }
-  new Promise(resolve => {
-    setTimeout(() => {
-      resolve();
-    }, 750);
-  }).then(() => {
-    act();
-  });
+  playingRecordId.value = setTimeout(act, 750);
 };
 
 const websocketRoute = json => {
@@ -313,7 +318,7 @@ const websocketRoute = json => {
 };
 
 const initGame = (mode, initData, putChessCallback) => {
-  canvasRef.value.remove();
+  parentRef.value.innerHTML = "";
   canvasRef.value = document.createElement("canvas");
   parentRef.value.append(canvasRef.value);
   game.value = new ReversiGame({

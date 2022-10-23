@@ -8,54 +8,5 @@
   <p>4、如果当前所执的子无处可下但棋盘上还有自己的子，则会跳过让对手下。</p>
   <p>5、如果棋盘填满了，那么数量多者胜利；数量相同则平局。</p>
   <p>6、如果看不懂，可以访问此处<a target="_blank" href="https://wiki.botzone.org.cn/index.php?title=Reversi">黑白棋规则</a></p>
-  <Modal ref="botTemplateModalRef" title="Bot模板" modalID="bot-template" btnClass="btn btn-primary" closeTitle="关闭"
-    submitTitle="好了" :submitAction="botTemplateModalHide" toggle-button-style="border-radius: 0">
-    <template v-slot:button>
-      Bot代码模板
-    </template>
-    <template v-slot:body>
-      <select @change="changeTemplateLang" class="form-control" v-model="selectedTemplateLang">
-        <option value="-1" selected>选择语言</option>
-        <option v-for="lang in LANG().list" :value="lang.id">
-          {{ lang.id }}.{{ lang.lang }}
-        </option>
-      </select>
-      <hr>
-      <h2>参数说明</h2>
-      <code>方向：从0开始算起，12点钟方向开始，依次顺时针45度。</code>
-      <br>
-      <code>id: 你是什么子，0为黑子，1为白子</code>
-      <br>
-      <code>rows: 棋盘高度</code>
-      <br>
-      <code>cols: 棋盘宽度</code>
-      <br>
-      <code>chess: 棋盘以及棋盘上的子，0为黑子，1为白子，2为空位</code>
-      <hr>
-      <MonacoEditor ref="botTemplateEditorRef" height="500px" editor-id="bot-template" />
-    </template>
-  </Modal>
+  <a class="btn btn-primary w-100 rounded-0" target="_blank" href="https://www.yuque.com/sokuritszz/lot2s5/koxhvq">Bot代码模板</a>
 </template>
-
-<script setup>
-import { ref } from 'vue';
-import Modal from '../../components/Modal.vue';
-import MonacoEditor from '../../components/MonacoEditor.vue';
-import LANG from '../../store/LANG';
-import reversiDemo from '../../templateBotCode/reversiDemo';
-
-const botTemplateModalRef = ref(null);
-const botTemplateEditorRef = ref(null);
-const selectedTemplateLang = ref(-1);
-
-const botTemplateModalHide = () => {
-  botTemplateModalRef.value.hide();
-};
-
-const changeTemplateLang = () => {
-  const langId = selectedTemplateLang.value;
-  const lang = LANG().langs[langId].lang;
-  botTemplateEditorRef.value.setLang(lang);
-  botTemplateEditorRef.value.setContent(reversiDemo(langId));
-};
-</script>

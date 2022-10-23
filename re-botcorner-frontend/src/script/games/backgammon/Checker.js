@@ -2,24 +2,20 @@ import GameObject from "../../GameObject.js";
 import G from "../../G.js";
 import Chess from "./Chess.js";
 
+function pos(x, y) {
+  return { x, y }
+}
+
 export default class Checker extends GameObject {
-  static {
-    Checker.prototype.d = [-1, 1, -3, 3];
-    function pos(x, y) {
-      let res = {};
-      res.x = x;
-      res.y = y;
-      return res;
-    };
-    Checker.prototype.poss = [
-      [pos(0.5, 0.5)],
-      [pos(0.25, 0.5), pos(0.75, 0.5)],
-      [pos(0.25, 0.25), pos(0.5, 0.5), pos(0.75, 0.75)],
-      [pos(0.33, 0.33), pos(0.33, 0.66), pos(0.66, 0.33), pos(0.66, 0.66)],
-      [pos(0.25, 0.25), pos(0.25, 0.75), pos(0.5, 0.5), pos(0.75, 0.25), pos(0.75, 0.75)],
-      [pos(0.25, 0.33), pos(0.5, 0.33), pos(0.75, 0.33), pos(0.25, 0.66), pos(0.5, 0.66), pos(0.75, 0.66)]
-    ];
-  }
+  static d = [-1, 1, -3, 3];
+  static poss = [
+    [pos(0.5, 0.5)],
+    [pos(0.25, 0.5), pos(0.75, 0.5)],
+    [pos(0.25, 0.25), pos(0.5, 0.5), pos(0.75, 0.75)],
+    [pos(0.33, 0.33), pos(0.33, 0.66), pos(0.66, 0.33), pos(0.66, 0.66)],
+    [pos(0.25, 0.25), pos(0.25, 0.75), pos(0.5, 0.5), pos(0.75, 0.25), pos(0.75, 0.75)],
+    [pos(0.25, 0.33), pos(0.5, 0.33), pos(0.75, 0.33), pos(0.25, 0.66), pos(0.5, 0.66), pos(0.75, 0.66)]
+  ];
 
   constructor(parent) {
     super(parent);
@@ -33,7 +29,9 @@ export default class Checker extends GameObject {
     this.selectedPosition = null;
     this.dice = [];
     this.curId = -1;
+    this.step = 0;
     this.chessObject = [];
+    this.logMove = [];
   }
 
   getPosition(x, y) {
@@ -97,7 +95,8 @@ export default class Checker extends GameObject {
     this.dice = dice;
   }
 
-  moveChess(from, to) {
+  moveChess(from, to, isRev=false, chessObj=null) {
+    if (!isRev) ++this.step;
     from = parseInt(from);
     to = parseInt(to);
     const id0 = this.chess[from][0];
@@ -105,19 +104,75 @@ export default class Checker extends GameObject {
     const end = id0 === 0 ? 25 : 0;
     const home = id1 === 0 ? 0 : 25;
     const chess = this.chess;
-    const chessObject = chess[from][1].pop();
-    if (to !== end && id0 === (id1 ^ 1) && chess[to][1].length === 1) {
-      // 吃
-      const eatenChessObject = chess[to][1].pop();
-      eatenChessObject.moveTo(home);
-      chessObject.moveTo(to);
-      chess[to][0] = id0;
-    } else if (to === end) {
-      chessObject.setInHome(true);
-      chessObject.moveTo(id0 === 0 ? -1 : 26);
+    if (from === -1 || from === 26) {
+      chessObj.setInHome(false);
+      if (from === -1) --this.inHome[0]
+      if (from === 26) --this.inHome[1];
+      chessObj.moveTo(to);
     } else {
-      chessObject.moveTo(to);
-      chess[to][0] = id0;
+      const chessObject = chess[from][1].pop();
+      if (to !== end && id0 === (id1 ^ 1) && chess[to][1].length === 1) {
+        const eatenChessObject = chess[to][1].pop();
+        eatenChessObject.moveTo(home);
+        chessObject.moveTo(to);
+        chess[to][0] = id0;
+        if (!isRev) {
+          this.logMove.push({
+            action: "move",
+            step: this.step,
+            from: to,
+            to: home
+          });
+          this.logMove.push({
+            action: "move",
+            step: this.step,
+            from, to
+          });
+        }
+      } else if (to === end) {
+        chessObject.setInHome(true);
+        chessObject.moveTo(id0 === 0 ? -1 : 26);
+        if (!isRev) this.logMove.push({
+          action: "toEnd",
+          step: this.step,
+          chessObject,
+          from
+        });
+      } else {
+        chessObject.moveTo(to);
+        chess[to][0] = id0;
+        if (!isRev) this.logMove.push({
+          action: "move",
+          step: this.step,
+          from,
+          to
+        });
+      }
+    }
+  }
+
+  rollback() {
+    const curStep = this.step--;
+    let step;
+    while (this.logMove.length > 0 && (step = this.logMove[this.logMove.length - 1]).step === curStep) {
+      this.logMove.pop();
+      switch (step.action) {
+        case "move": {
+          const {from, to} = step;
+          try {
+            this.moveChess(to, from, true);
+          } catch (e) {
+            console.log(`---${to + " " + from}`);
+            return ;
+          }
+        }
+        break;
+        case "toEnd": {
+          const {chessObject, from} = step;
+          this.moveChess(null, from, true, chessObject);
+        }
+        break;
+      }
     }
   }
 
@@ -265,9 +320,9 @@ export default class Checker extends GameObject {
       const n = this.dice.length;
       const x = 5;
       for (let i = 0; i < n; ++i) {
-        const y = 6 + Checker.prototype.d[i];
+        const y = 6 + Checker.d[i];
         const num = this.dice[i] - 1;
-        const poss = Checker.prototype.poss;
+        const poss = Checker.poss;
         const L = this.parent.L;
         G.rectangle({
           x: (x + 0.1) * L,
