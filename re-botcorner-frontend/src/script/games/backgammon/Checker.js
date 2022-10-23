@@ -99,17 +99,17 @@ export default class Checker extends GameObject {
     if (!isRev) ++this.step;
     from = parseInt(from);
     to = parseInt(to);
-    const id0 = this.chess[from][0];
-    const id1 = this.chess[to][0];
-    const end = id0 === 0 ? 25 : 0;
-    const home = id1 === 0 ? 0 : 25;
-    const chess = this.chess;
     if (from === -1 || from === 26) {
       chessObj.setInHome(false);
       if (from === -1) --this.inHome[0]
       if (from === 26) --this.inHome[1];
       chessObj.moveTo(to);
     } else {
+      const id0 = this.chess[from][0];
+      const id1 = this.chess[to][0];
+      const end = id0 === 0 ? 25 : 0;
+      const home = id1 === 0 ? 0 : 25;
+      const chess = this.chess;
       const chessObject = chess[from][1].pop();
       if (to !== end && id0 === (id1 ^ 1) && chess[to][1].length === 1) {
         const eatenChessObject = chess[to][1].pop();
@@ -136,7 +136,8 @@ export default class Checker extends GameObject {
           action: "toEnd",
           step: this.step,
           chessObject,
-          from
+          from,
+          to: id0 === 0 ? -1 : 26
         });
       } else {
         chessObject.moveTo(to);
@@ -159,19 +160,14 @@ export default class Checker extends GameObject {
       switch (step.action) {
         case "move": {
           const {from, to} = step;
-          try {
-            this.moveChess(to, from, true);
-          } catch (e) {
-            console.log(`---${to + " " + from}`);
-            return ;
-          }
+          this.moveChess(to, from, true);
         }
-        break;
+          break;
         case "toEnd": {
-          const {chessObject, from} = step;
-          this.moveChess(null, from, true, chessObject);
+          const {chessObject, from, to} = step;
+          this.moveChess(to, from, true, chessObject);
         }
-        break;
+          break;
       }
     }
   }
