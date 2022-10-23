@@ -103,7 +103,9 @@ export default class Checker extends GameObject {
       chessObj.setInHome(false);
       if (from === -1) --this.inHome[0]
       if (from === 26) --this.inHome[1];
+      this.chess[to][1].push(chessObj);
       chessObj.moveTo(to);
+      this.chess[to][0] = chessObj.id;
     } else {
       const id0 = this.chess[from][0];
       const id1 = this.chess[to][0];
@@ -113,7 +115,9 @@ export default class Checker extends GameObject {
       const chessObject = chess[from][1].pop();
       if (to !== end && id0 === (id1 ^ 1) && chess[to][1].length === 1) {
         const eatenChessObject = chess[to][1].pop();
+        this.chess[home][1].push(eatenChessObject);
         eatenChessObject.moveTo(home);
+        this.chess[to][1].push(chessObject);
         chessObject.moveTo(to);
         chess[to][0] = id0;
         if (!isRev) {
@@ -131,6 +135,7 @@ export default class Checker extends GameObject {
         }
       } else if (to === end) {
         chessObject.setInHome(true);
+        ++this.inHome[id0];
         chessObject.moveTo(id0 === 0 ? -1 : 26);
         if (!isRev) this.logMove.push({
           action: "toEnd",
@@ -140,6 +145,7 @@ export default class Checker extends GameObject {
           to: id0 === 0 ? -1 : 26
         });
       } else {
+        chess[to][1].push(chessObject);
         chessObject.moveTo(to);
         chess[to][0] = id0;
         if (!isRev) this.logMove.push({
@@ -148,6 +154,9 @@ export default class Checker extends GameObject {
           from,
           to
         });
+      }
+      if (to !== end) {
+        this.chess[to][0] = id0;
       }
     }
   }

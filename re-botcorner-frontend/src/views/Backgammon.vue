@@ -21,7 +21,7 @@
               @mouseup="rollOk"
             />
             <div style="font-size: 10px">
-              {{playi - 1 >> 1}} / {{maxi - 1 >> 1}}
+              {{playi}} / {{maxi}}
             </div>
           </div>
           <div class="col d-flex flex-column justify-content-center">
@@ -164,7 +164,7 @@ import Col from "../components/Col.vue";
 import Collapse from "../components/Collapse.vue";
 import Window from "../components/Window.vue";
 import BackgammonGame from "../script/games/backgammon/BackgammonGame.js";
-import {onMounted, onUnmounted, ref} from "vue";
+import {nextTick, onMounted, onUnmounted, ref} from "vue";
 import alert, {removeAlert} from "../script/alert.js";
 import SOCKET from "../store/SOCKET.js";
 import ChatRoom from "../components/ChatRoom.vue";
@@ -397,17 +397,22 @@ const playRecord = record => {
   recordPlaying.value = record;
   isPlayingRecord.value = true;
   isPausing.value = false;
-  playi.value = 1;
+  playi.value = 0;
   clearTimeout(playingRecordId.value);
   const json = JSON.parse(record.json);
   const initData = json.initData;
+  const jsonSteps = json.steps.trim().split("\n");
+  const n = jsonSteps.length;
   steps.value = json.steps.trim().split("\n");
   initGame("record", initData, () => {});
-  maxi.value = steps.value.length;
+  const startStep = steps.value[0];
+  const newSteps = [];
+  for (let i = 1; i < n; i += 2) newSteps.push([jsonSteps[i], jsonSteps[i + 1]]);
+  steps.value = newSteps;
+  maxi.value = newSteps.length;
   new Promise(resolve => {
     playingRecordId.value = setTimeout(() => {
       // 告知开局的时候要等个5秒
-      const startStep = steps.value[0];
       const curId = parseInt(startStep[2]);
       checker.value.setCurId(curId);
       const dice = startStep.slice(3).split("").map(x => parseInt(x));
@@ -428,8 +433,10 @@ const playRecord = record => {
 const act = (isContinue, isRev=false) => {
   if (!isPlayingRecord.value) return ;
   isPausing.value = !isContinue;
-  if (isRev) playi.value -= 2;
-  const step = steps.value[playi.value++];
+  if (isRev) playi.value -= 1;
+  let step = steps.value[playi.value];
+  let stepDc = step[1];
+  step = step[0];
   const action = step.slice(0, 2);
   switch (action) {
     case "mv":
@@ -441,8 +448,8 @@ const act = (isContinue, isRev=false) => {
       else checker.value.rollback();
       break;
     case "ps":
-      alert("warning", `${checker.value.curId === 0 ? "白" : "红"}无棋可走，跳过`);
       const ps = parseInt(step[2]);
+      alert("warning", `${ps === 1 ? "白" : "红"}无棋可走，跳过`);
       if (!isRev) checker.value.setCurId(ps);
       else checker.value.setCurId(ps ^ 1);
       break;
@@ -452,11 +459,12 @@ const act = (isContinue, isRev=false) => {
       else checker.value.setCurId(tn ^ 1);
       break;
   }
-  const curId = parseInt(steps.value[playi.value][2]);
-  if (isRev) playi.value -= 2;
-  const dice = steps.value[playi.value++].slice(3).split("").map(die => parseInt(die));
+  if (isRev) stepDc = steps.value[playi.value - 1][1];
+  const dice = stepDc.slice(3).split("").map(die => parseInt(die));
+  const curId = parseInt(stepDc[2]);
   checker.value.setCurId(curId);
   checker.value.setDice(dice);
+  if (!isRev) ++playi.value;
   if (playi.value < maxi.value) {
     if (isContinue)
       playingRecordId.value = setTimeout(() => {
@@ -469,8 +477,8 @@ const act = (isContinue, isRev=false) => {
 };
 
 const onRolling = () => {
-  pause();
   backPlayi.value = playi.value;
+  pause();
 };
 
 const rollOk = () => {
@@ -478,10 +486,14 @@ const rollOk = () => {
   clearTimeout(playingRecordId.value);
   const backupSpeed = speedPlayRecord.value;
   speedPlayRecord.value = 10000;
-  const n = indexToRoll.value >> 1;
-  const playiFrom = playi.value >> 1;
-  if (playiFrom < n) for (let i = playiFrom; i < n; ++i) act(false);
-  else for (let i = playiFrom; i > n; --i) act(false, true);
+  const playiFrom = backPlayi.value;
+  const n = playi.value;
+  playi.value = backPlayi.value;
+  if (playiFrom < n)
+    for (let i = playiFrom; i < n; ++i)
+      act(false);
+  else for (let i = playiFrom; i > n; --i)
+    act(false, true);
   removeAlert();
   speedPlayRecord.value = backupSpeed;
   playingRecordId.value = setTimeout(() => {
@@ -491,6 +503,9 @@ const rollOk = () => {
 
 const rollTo = index => {
   indexToRoll.value = index;
+  nextTick(() => {
+    playi.value = index
+  });
 };
 
 /** 聊天室 */

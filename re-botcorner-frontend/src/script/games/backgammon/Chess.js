@@ -27,7 +27,7 @@ export default class Chess extends GameObject {
     this.destroy();
     const checker = this.parent.checker;
     const count = 0 <= to && to < 26 ? checker.chess[to][1].length + 1 : to === -1 ? checker.inHome[0] : checker.inHome[1];
-    const pos = checker.getChessPosition(to, count);
+    const pos = checker.getChessPosition(to, count - 1);
     const L = this.parent.L;
     this.tx = pos.x;
     this.ty = pos.y;
@@ -37,9 +37,6 @@ export default class Chess extends GameObject {
     // a = 2s / t^2
     // v^2 = 2as
     this.a = 2 * distance / (t * t);
-    if (0 <= to && to < 26) checker.chess[to][1].push(this);
-    else if (to === -1) ++checker.inHome[0];
-    else if (to === 26) ++checker.inHome[1];
     this.goInto();
   }
 
