@@ -1,5 +1,5 @@
 <template>
-  <div :style="{ height, width }" class="monaco-editor" :id="`editor-${editorId}`"></div>
+  <div :style="{ height }" class="monaco-editor" :id="`editor-${editorId}`"></div>
 </template>
 
 <script setup>
@@ -38,10 +38,6 @@ const props = defineProps({
   height: {
     type: String,
     required: false
-  },
-  width: {
-    type: String,
-    default: "100%"
   },
   editorId: {
     type: String,

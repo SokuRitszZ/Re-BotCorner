@@ -3,7 +3,7 @@ export default class GameObject {
     this.parent = parent;
     this.context = parent.context;
     
-    this.isStart = false;
+    this.isStarted = false;
     this.timedelta = 0;
     
     parent.gameObjects.push(this);
@@ -26,6 +26,10 @@ export default class GameObject {
         break;
       }
     }
+  }
+
+  goInto() {
+    this.parent.gameObjects.push(this);
   }
 
   onStart() { }

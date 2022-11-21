@@ -25,6 +25,22 @@
             </div>
           </div>
         </div>
+        <div>
+          <div class="entry" style="font-size: 1rem; display: grid; grid: auto / 30% 70%">
+            <div class="text-end p-2 text-md-end" style="color: gray">
+              <label class="form-control form-label">
+                选择出战的Bot
+              </label>
+            </div>
+            <div class="text-start p-2 text-md-start">
+              <select class="form-control">
+                <option>
+
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
       </template>
     </Collapse>
     <hr>
@@ -36,18 +52,7 @@
         总排名
       </template>
       <template v-slot:content>
-        <div v-for="(value, key) in contest">
-          <div class="entry" style="font-size: 1rem; display: grid; grid: auto / 30% 70%">
-            <div class="text-end p-2 text-md-end" style="color: gray">
-              <label class="form-control form-label">
-                {{turn(key)}}:
-              </label>
-            </div>
-            <div class="text-start p-2 text-md-start">
-              <input class="form-control" :name="key" type="text" disabled :value="value">
-            </div>
-          </div>
-        </div>
+        总排名信息
       </template>
     </Collapse>
     <hr>
@@ -59,18 +64,7 @@
         录像
       </template>
       <template v-slot:content>
-        <div v-for="(value, key) in contest">
-          <div class="entry" style="font-size: 1rem; display: grid; grid: auto / 30% 70%">
-            <div class="text-end p-2 text-md-end" style="color: gray">
-              <label class="form-control form-label">
-                {{turn(key)}}:
-              </label>
-            </div>
-            <div class="text-start p-2 text-md-start">
-              <input class="form-control" :name="key" type="text" disabled :value="value">
-            </div>
-          </div>
-        </div>
+        录像
       </template>
     </Collapse>
   </div>

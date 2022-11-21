@@ -1,46 +1,66 @@
-<template> 
-  <div class="game-card-container" style="margin: auto">
-    <div class="card game-card" v-for="game in GAME().list" @click="ROUTE().goto(game.title)">
-      <div class="card-body game-card-body">
-        <h3 style="font-weight: 800;">
-          {{ game.name }}
-        </h3>
+<template> <Container>
+    <Row>
+      <Col col="col-9">
+      <CardBody>
+        <div class="game-card-container">
+          <div class="card game-card" v-for="game in GAME().list" @click="router.push({ name: game.title })">
+            <div class="card-body game-card-body">
+              <h3>{{ game.name }}</h3>
+              <hr>
+              <div>{{ game.description }}</div>
+            </div>
+          </div>
+        </div>
+      </CardBody>
+      </Col>
+      <Col col="col-3">
+      <CardBody>
+        <h1>待开发区域</h1>
         <hr>
-        <div style="font-weight: 500;">{{ game.description }}</div>
-      </div>
-    </div>
-  </div>
+      </CardBody>
+      </Col>
+    </Row>
+  </Container>
 </template>
 
 <script setup>
+import Container from '../components/Container.vue';
+import Row from '../components/Row.vue';
+import Col from '../components/Col.vue';
+import CardBody from '../components/CardBody.vue';
 import GAME from '../store/GAME';
-import ROUTE from '../store/ROUTE';
-
+import router from '../routes';
 </script>
 
 <style scoped>
 .game-card-container {
   display: flex;
-  overflow: visible;
-  justify-content: baseline;
+  flex-direction: row;
 }
 
 .game-card {
   width: 200px;
   height: 300px;
   border-radius: 0;
-  box-shadow: -1px 0 5px #111;
+  box-shadow: 0 0 5px #989898;
   cursor: pointer;
-  transition: 0.5s;
   margin-left: -40px;
-  background-color: yellow;
-  color: rgba(0, 0, 255, 0.8);
+  transition: 0.5s;
+  overflow: auto;
+  padding: 10px;
+}
+
+.game-card::-webkit-scrollbar {
+  display: none;
+}
+
+.game-card:first-child {
+  margin-left: 20px;
 }
 
 .game-card:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 30px gray;
-  z-index: 99;
-  margin: 0 60px;
+  box-shadow: 0 0 30px #989898;
+  margin-right: 60px;
 }
 </style>

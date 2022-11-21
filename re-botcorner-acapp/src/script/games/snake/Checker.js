@@ -5,8 +5,8 @@ export default class Checker {
     this.snakes = parent.snakes;
   }
   
-  moveSnake({ id, direction, status, isIncreasing }) {
-    this.snakes[id].nextStep({ isIncreasing, d: direction, status });
+  moveSnake({ id, direction }) {
+    this.snakes[id].nextStep({ d: direction });
   }
 
   setStatus(id, status) {

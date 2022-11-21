@@ -1,10 +1,10 @@
 <template>
   <Navbar class="p-0">
     <template v-slot:left>
-      <NavbarItem> 
+      <NavbarItem>
         <router-link class="nav-link" :class="{active: route.name === 'game'}" to="/game"> 游戏 </router-link>
       </NavbarItem>
-      <NavbarItem> 
+      <NavbarItem>
         <router-link class="nav-link" :class="{active: route.name === 'rating'}" to="/rating"> 排行榜 </router-link>
       </NavbarItem>
       <NavbarItem>
@@ -64,13 +64,11 @@
       </template>
     </template>
   </Navbar>
-  <Container>
-    <router-view v-slot="{ Component }">
-      <transition name="page">
-        <component :is="Component"/>
-      </transition>
-    </router-view>
-  </Container>
+  <router-view v-slot="{ Component }">
+    <transition name="page">
+      <component :is="Component"/>
+    </transition>
+  </router-view>
 </template>
 
 <script setup>
@@ -130,22 +128,22 @@ const gotoSpace = () => {
 };
 
 onMounted(async () => {
-  USER().loginByToken();
-  await GAME().init();
-  LANG().init();
+  USER().loginByToken()
+    .then(() => {
+      GAME().init();
+      LANG().init();
+    });
 });
 </script>
 
 <style scoped>
 
 .page-enter-active {
-  animation: fadeInZoom 0.2s;
-  animation-delay: 0.2s;
+  animation: fadeInZoom 1s;
 }
 
 .active {
   font-weight: 800;
-
 }
 
 .page-leave-active {
@@ -155,7 +153,7 @@ onMounted(async () => {
 @keyframes fadeInLeft {
   from {
     opacity: 0;
-    transform: translateX(-2.5%);
+    transform: translateY(2.5%);
   }
   to {
     opacity: 1;
@@ -165,10 +163,14 @@ onMounted(async () => {
 @keyframes fadeInZoom {
   from {
     opacity: 0;
-    scale: 0.98;
+  }
+  50% {
+    opacity: 0;
+    top: 50px;
   }
   to {
     opacity: 1;
+    top: 0;
   }
 }
 </style>

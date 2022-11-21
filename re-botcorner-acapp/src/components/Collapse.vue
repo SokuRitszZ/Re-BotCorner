@@ -30,4 +30,8 @@ const props = defineProps({
 .card {
   border-radius: 0;
 }
+
+.card-body::-webkit-scrollbar {
+  display: none;
+}
 </style>

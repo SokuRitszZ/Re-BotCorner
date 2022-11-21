@@ -68,17 +68,11 @@ const addTalk = async (type, msg) => {
   chatroomRef.value.scrollTop = chatroomRef.value.scrollHeight;
   if (type == 'msg') {
     let messageDiv = document.querySelector(`#msg-${msg.id}>.line>.message-content`);
-    if (props.isLeft(msg)) {
-      messageDiv.classList.add('new-talk-left');
-    } else if (props.isRight(msg)) {
-      messageDiv.classList.add('new-talk-right');
-    }
+    if (props.isLeft(msg)) messageDiv.classList.add('new-talk-left');
+    else if (props.isRight(msg)) messageDiv.classList.add('new-talk-right');
     setTimeout(() => {
-      if (props.isLeft(msg)) {
-        messageDiv.classList.remove('new-talk-left');
-      } else if (props.isRight(msg)) {
-        messageDiv.classList.remove('new-talk-right');
-      }
+      if (props.isLeft(msg)) messageDiv.classList.remove('new-talk-left');
+      else if (props.isRight(msg)) messageDiv.classList.remove('new-talk-right');
     }, 1000);
   }
 };
@@ -99,8 +93,7 @@ const props = defineProps({
 });
 
 const sendTalk = () => {
-  console.log(toSendTalk.value.length)
-  if (toSendTalk.value.trim().length <= 1) return ;
+  if (toSendTalk.value.trim().length === 0) return ;
   props.sendTalk(toSendTalk.value);
   toSendTalk.value = '';
 };
@@ -111,6 +104,10 @@ defineExpose({
 </script>
 
 <style scoped>
+div::-webkit-scrollbar {
+  display: none;
+}
+
 textarea {
   resize: none;
 }

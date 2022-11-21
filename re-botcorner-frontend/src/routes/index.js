@@ -1,16 +1,4 @@
-import { createRouter, createWebHashHistory, createWebHistory } from "vue-router";
-
-import Home from '../views/Home.vue';
-import Space from '../views/Space.vue';
-import GameLobby from '../views/GameLobby.vue';
-import NotFound from '../views/NotFound.vue';
-import Snake from '../views/Snake.vue';
-import Reversi from '../views/Reversi.vue';
-import Rating from '../views/Rating.vue';
-import Group from '../views/Group.vue';
-import GroupDetail from '../views/GroupRoom.vue';
-import ContestDetail from '../views/ContestDetail.vue';
-import Backgammon from '../views/Backgammon.vue';
+import { createRouter, createWebHistory } from "vue-router";
 
 import USER from './../store/USER';
 import alert from './../script/alert';
@@ -19,12 +7,12 @@ const routes = [
   {
     path: '/',
     name: 'home',
-    component: Home
+    component: () => import("../views/Home.vue")
   },
   {
     path: '/space/:userId',
     name: 'space',
-    component: Space,
+    component: () => import("../views/Space.vue"),
     meta: {
       requireAuth: true
     }
@@ -32,37 +20,41 @@ const routes = [
   {
     path: '/game',
     name: 'game',
-    component: GameLobby,
+    component: () => import("../views/GameLobby.vue"),
+    meta: {
+      requireAuth: true
+    }
   },
   {
     path: '/rating',
     name: 'rating',
-    component: Rating
+    component: () => import("../views/Rating.vue"),
+    meta: {
+      requireAuth: true
+    }
   },
   {
     path: '/group',
     name: 'group',
-    component: Group
+    component: () => import("../views/Group.vue"),
+    meta: {
+      requireAuth: true
+    }
   },
   {
     path: '/group/:id',
     name: 'groupRoom',
-    component: GroupDetail
-  },
-  {
-    path: '/contest/:id',
-    name: 'contestDetail',
-    component: ContestDetail
+    component: () => import("../views/GroupRoom.vue")
   },
   {
     path: '/notfound',
     name: 'notfound',
-    component: NotFound,
+    component: () => import("../views/NotFound.vue"),
   },
   {
     path: '/snake',
     name: 'snake',
-    component: Snake,
+    component: () => import("../views/Snake.vue"),
     meta: {
       requireAuth: true
     }
@@ -70,7 +62,7 @@ const routes = [
   {
     path: '/reversi',
     name: 'reversi',
-    component: Reversi,
+    component: () => import("../views/Reversi.vue"),
     meta: {
       requireAuth: true
     }
@@ -78,7 +70,7 @@ const routes = [
   {
     path: '/backgammon',
     name: 'backgammon',
-    component: Backgammon,
+    component: () => import("../views/Backgammon.vue"),
     meta: {
       requireAuth: true
     }
@@ -95,15 +87,14 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach( async (to, from, next) => {
   if (to.meta.requireAuth && !USER().checkIsLogined) {
-    await USER().loginByToken(true);
-    if (USER().checkIsLogined) {
+    await USER().loginByToken(true).then(() => {
       next();
-    } else {
-      alert(`danger`, `未登录`);
-      next({ name: `home` });
-    }
+    }).catch(() => {
+      alert("danger", "未登录");
+      next({ name: "home" });
+    });
   } else {
     next();
   }

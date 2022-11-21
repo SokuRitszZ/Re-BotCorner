@@ -1,191 +1,196 @@
 import USER from './../store/USER';
-import $ from 'jquery';
 import { mode, api_url } from '../config.json';
+import axios from "axios";
 
-const API = ({ url, type, data, async, success, error, needJWT }) => {
-  let headers = {};
-  if (needJWT) {
-    headers = {
-      Authorization: `Bearer ${USER().getToken}`
-    }
-  };
-  if (async === undefined) async = true;
-  $.ajax({
-    url: `${api_url[mode]}/api${url}`,
-    type,
-    headers,
-    data,
-    async,
-    success,
-    error: error || (resp => console.log(resp)) 
-  });
+const api = axios.create({
+  baseURL: `${api_url[mode]}/api`
+});
+
+const headers = () => {
+  const token = USER().getToken;
+  if (token === null || token.length === 0) return {};
+  return {
+    Authorization: `Bearer ${USER().getToken}`
+  }
 };
 
-export default API;
+api.interceptors.request.use(config => {
+  const newHeaders = { ...config.headers, ...headers() };
+  config.headers = newHeaders;
+  return config;
+}, error => {
+  return Promise.reject(error);
+});
+
+api.interceptors.response.use(response => response.data, error => Promise.reject(error));
+
+export default api;
 
 export const registerApi = (username, password, confirmedPassword) => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/account/register/',
-      type: 'post',
-      data: {
-        username,
-        password,
-        confirmedPassword
-      },
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
+  return api.post("/account/register/", {
+    username,
+    password,
+    confirmedPassword
   });
 };
 
 export const loginApi = (username, password) => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/account/token/',
-      type: 'post',
-      data: {
-        username,
-        password,
-      },
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
+  return api.post("/account/token/", {
+    username, password
   });
 };
 
 export const getInfoApi = () => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: `/account/getInfo`,
-      type: `get`,
-      needJWT: true,
-      async: false,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api.get("/account/getInfo", {
+    headers: headers()
+  }).catch(err => {});
 };
 
 export const getAllGameApi = () => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/game/getAll',
-      type: 'get',
-      needJWT: false,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api.get("/game/getAll");
 };
 
 export const getAllLangApi = () => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/lang/getAll',
-      type: 'get',
-      needJWT: false,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
-  });
+  return api.get("/lang/getAll");
 };
 
 export const getRecordListApi = gameId => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/record/getListByGameId',
-      type: 'get',
-      data: {
-        gameId
-      },
-      needJWT: true,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
+  return api({
+    url: "/record/getListByGameId",
+    type: "GET",
+    params: {
+      gameId
+    },
+    headers: headers()
   });
 };
 
 export const getBotApi = gameId => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/bot/getByGame',
-      type: 'get',
-      data: {
-        gameId
-      },
-      needJWT: true,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
+  return api({
+    url: "/bot/getByGame",
+    type: "GET",
+    params: {
+      gameId
+    },
+    headers: headers()
   });
 };
 
 export const getAllBotApi = () => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: `/bot/getAll`,
-      type: 'get',
-      needJWT: true,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
+  return api({
+    url: "/bot/getAll",
+    type: "GET",
+    headers: headers()
   });
 };
 
 export const addBotApi = (title, langId, gameId, description, code) => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/bot/add',
-      type: 'post',
-      needJWT: true,
-      data: {
-        title,
-        langId,
-        gameId,
-        description,
-        code
-      },
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
+  return api.post("/bot/add", {
+    title, langId, gameId, description, code
+  }, {
+    headers: headers()
   });
 };
 
 export const deleteBotApi = id => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/bot/delete',
-      type: 'delete',
-      needJWT: true,
-      data: { id },
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
+  return api({
+    url: "/bot/delete",
+    method: "DELETE",
+    headers: headers(),
+    params: { id }
   });
 };
 
 export const updateBotApi = (id, info) => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: '/bot/update',
-      type: 'post',
-      needJWT: true,
-      data: { id, ...info },
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
+  return api.post("/bot/update", {
+    id, ...info
+  }, {
+    headers: headers()
   });
 };
 
 export const getRatingApi = game => {
-  return new Promise((resolve, reject) => {
-    API({
-      url: `/getrating/${game}`,
-      type: 'get',
-      needJWT: false,
-      success: resp => resolve(resp),
-      error: err => reject(err)
-    });
+  return api({
+    url: `/getrating/${game}`,
+    method: "GET"
   });
 };
+
+export const updateHeadIconApi = data => {
+  return api.post("/updateHeadIcon", data);
+};
+
+export const phoneAuthApi = phone => {
+  return api.post("/account/phoneauth/", {phone});
+};
+
+export const phoneLoginApi = (phone, authCode) => {
+  return api.post("/account/phonelogin/", { phone, authCode });
+};
+
+export const getGroupListApi = () => {
+  return api({
+    url: "/group/list",
+    method: "GET"
+  });
+};
+
+export const createGroupApi = data => {
+  return api.post("/group/create/", data);
+};
+
+export const getGroupByIdApi = id => {
+  return api({
+    url: "/group/getById",
+    method: "GET",
+    params: { id }
+  });
+};
+
+export const deleteGroupApi = id => {
+  return api.post("/group/delete/", {id});
+};
+
+export const applyGroupApi = (groupId, application) => {
+  return api.post("/group/apply/", {groupId, application});
+};
+
+export const getApplicationApi = () => {
+  return api({
+    url: "/group/application",
+    method: "get"
+  });
+};
+
+
+export const handleApplicationApi = (groupId, applicantId, state) => {
+  return api.post("/group/handleApp/", {groupId, applicantId, state});
+};
+
+export const getMembers = groupId => {
+  return api({
+    url: "/group/members",
+    method: "GET",
+    params: { groupId }
+  });
+};
+
+export const resignFromGroupApi = groupId => {
+  return api.post("/group/resign/", {groupId});
+};
+
+export const createContestApi = ({title, groupId, gameId, rule, time}) => {
+  return api.post("/contest/create/",{title, groupId, gameId, rule, time});
+};
+
+export const getContestsApi = groupId => {
+  return api({
+    url: "/contest/getAll",
+    method: "GET",
+    params: {groupId}
+  });
+};
+
+export const removeContestApi = contestId => {
+  return api.post("/contest/remove/", {contestId});
+}

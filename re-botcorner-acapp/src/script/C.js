@@ -1,6 +1,6 @@
 export default class C {
   static {
-    C.prototype.EPS = () => 1e-2;
+    C.prototype.EPS = 1e-2;
   }
 
   static EPS() {
@@ -19,5 +19,22 @@ export default class C {
 
   static dy(object1, object2) {
     return Math.abs(object1.y - object2.y);
+  }
+
+  static ndx(object1, object2) {
+    return object2.x - object1.x;
+  }
+
+  static ndy(object1, object2) {
+    return object2.y - object1.y;
+  }
+
+  static rotate(x, y, angle) {
+    const l = Math.sqrt(x * x + y * y);
+    const alpha = Math.asin(y / l);
+    return {
+      x: l * Math.cos(alpha + angle),
+      y: l * Math.sin(alpha + angle)
+    };
   }
 };

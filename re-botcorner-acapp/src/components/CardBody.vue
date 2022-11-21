@@ -1,6 +1,6 @@
 <template>
   <div class="card">
-    <div class="card-body" :style="`max-height: 50vh; height: ${height || `90%`}; ${otherStyle || ''}; ${width ? `width: ${width}` : ''}`">
+    <div class="card-body" :style="`height: ${height || `90vh`}; ${otherStyle || ''}; ${width ? `width: ${width}` : ''}`">
       <slot></slot>
     </div>
   </div>
@@ -24,6 +24,9 @@ const props = defineProps({
 </script>
 
 <style scoped>
+*::-webkit-scrollbar {
+  display: none;
+}
 
 .card {
   margin-top: 20px;

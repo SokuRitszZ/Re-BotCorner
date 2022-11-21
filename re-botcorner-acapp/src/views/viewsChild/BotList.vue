@@ -3,63 +3,53 @@
     <Row>
       <Col col="col-5">
       <CardBody height="55vh">
-        <Window
-          ref="addBotWindowRef"
-          title="添加Bot"
-          opacity="1"
-          buttonClass="btn btn-success"
-          buttonStyle="width: 100%; border-radius: 0"
-        >
+        <Modal ref="addBotModalRef" :title="`添加Bot`" :modalID="`addBotModal`" :btnClass="`btn btn-success`"
+          :closeTitle="`关闭`" :submitTitle="`添加`" :submitAction="addBot"
+          :toggleButtonStyle="`width: 100%; border-radius: 0`">
           <template v-slot:button>
             添加Bot
           </template>
           <template v-slot:body>
-            <div style="width: 100%; padding: 20px; overflow: auto">
-              <div class="mb-3">
-                <label for="newbot-title" class="form-label">名字</label>
-                <input type="text" class="form-control" id="newbot-title" v-model="addBotTitle" placeholder="不超过8个字">
-              </div>
-              <label for="newbot-game-id" class="form-label">游戏</label>
-              <select id="newbot-game-id" class="form-select mb-3" v-model="addBotGame">
-                <option selected :value="-1">选择游戏</option>
-                <option v-for="game in GAME().list" :value="game.id">
-                  {{  game.id  }}.{{  game.title  }}
-                </option>
-              </select>
-              <label for="newbot-lang" class="form-label">语言</label>
-              <select @change="changeLang" id="newbot-lang" class="form-select mb-3" v-model="addBotLang">
-                <option selected :value="-1">选择语言</option>
-                <option v-for="lang in LANG().list" :value="lang.id">
-                  {{  lang.id  }}.{{  lang.lang  }}
-                </option>
-              </select>
-              <div class="mb-3">
-                <label for="newbot-description" class="form-label">描述</label>
-                <textarea class="form-control" id="newbot-description" rows="3" v-model="addBotDescription" placeholder="不超过128个字"></textarea>
-              </div>
-              <label for="newbot-code" class="form-label">代码</label>
-              <MonacoEditor ref="addBotEditorRef" height="30vh" editorId="addBotEditor" />
-              <hr>
-              <div 
-                style="width: 100%; display: flex; flex-direction: row-reverse;"
-              >
-                <button class="btn btn-primary" style="width: fit-content; margin-left: 20px;" @click="addBot">添加</button>
-                <div v-if="addBotLoading" class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
-              </div>
+            <div class="mb-3">
+              <label for="newbot-title" class="form-label">名字</label>
+              <input type="text" class="form-control" id="newbot-title" v-model="addBotTitle" placeholder="不超过8个字">
+            </div>
+            <label for="newbot-game-id" class="form-label">游戏</label>
+            <select id="newbot-game-id" class="form-select mb-3" v-model="addBotGame">
+              <option selected :value="-1">选择游戏</option>
+              <option v-for="game in GAME().list" :value="game.id">
+                {{  game.id  }}.{{  game.title  }}
+              </option>
+            </select>
+            <label for="newbot-lang" class="form-label">语言</label>
+            <select @change="changeLang" id="newbot-lang" class="form-select mb-3" v-model="addBotLang">
+              <option selected :value="-1">选择语言</option>
+              <option v-for="lang in LANG().list" :value="lang.id">
+                {{  lang.id  }}.{{  lang.lang  }}
+              </option>
+            </select>
+            <div class="mb-3">
+              <label for="newbot-description" class="form-label">描述</label>
+              <textarea class="form-control" id="newbot-description" rows="3" v-model="addBotDescription" placeholder="不超过128个字"></textarea>
+            </div>
+            <label for="newbot-code" class="form-label">代码</label>
+            <MonacoEditor ref="addBotEditorRef" height="30vh" editorId="addBotEditor" />
+          </template>
+          <template v-slot:footer>
+            <div v-if="addBotLoading" class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
             </div>
           </template>
-        </Window>
+        </Modal>
         <hr>
         <div style="height: 90% ; overflow: auto;">
           <button @click="chooseBot(bots.indexOf(bot))" v-for="bot in bots" class="btn btn-light mb-2" style="border: 1px solid #ccc">
             <span style="float: left">
-              <img :src="`http://localhost:8080/static/lang/lang_${LANG().langs[bot.langId].lang}.png`" alt="" width="50">
+              <img :src="`${api_url[mode]}/static/lang/lang_${LANG().langs[bot.langId].lang}.png`" alt="" width="50">
             </span>
             <span>
-              <strong class="title">{{ bot.title }}</strong>
-              <span class="id" style="color: gray">#{{ bot.id }}</span>
+              <strong class="title">{{  bot.title  }}</strong>
+              <span class="id" style="color: gray">#{{  bot.id  }}</span>
             </span>
           </button>
         </div>
@@ -97,29 +87,24 @@
             <input disabled type="text" class="form-control" id="bot-modify-time"
               :value="timeFormat(bots[ptr].modifyTime)">
           </div>
-          <Window 
-            ref="modifyBotWindowRef"
-            title="修改Bot"
-            opacity="1"
-            buttonClass="btn btn-primary"
-            buttonStyle="width: 100%; border-radius: 0"
+          <Modal ref="modifyModalRef" :title="`${bots[ptr].title}#${bots[ptr].id}`" :modalID="`bot${bots[ptr].id}`"
+            :btnClass="`btn btn-primary`" :closeTitle="`关闭`" :submitTitle="`改好了`"
+            :toggleButtonStyle="`width: 100%; border-radius: 0`"
+            :closeAction="recoverCode"
+            :submitAction="updateCode"
           >
-            <template v-slot:button>代码</template>
+            <template v-slot:button>
+              代码
+            </template>
             <template v-slot:body>
-              <div style="width: 100%; padding: 20px; overflow: auto;">
-                <h1>{{ bots[ptr].title }}</h1>
-                <hr>
-                <MonacoEditor ref="modifyBotEditorRef" :height="`50vh`" :width="`95%`" editorId="modifyBotEditor" />
-                <hr>
-                <div style="width: 100%; display: flex; flex-direction: row-reverse;">
-                  <button @click="updateCode" class="btn btn-primary" style="width: fit-content; margin-left: 20px;">修改</button>
-                  <div v-if="updateCodeLoading" class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                  </div>
-                </div>
+              <MonacoEditor ref="modifyBotEditorRef" :height="`50vh`" editorId="modifyBotEditor" />
+            </template>
+            <template v-slot:footer>
+              <div v-if="updateCodeLoading" class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
               </div>
             </template>
-          </Window>
+          </Modal>
         </template>
       </CardBody>
       </Col>
@@ -131,15 +116,16 @@
 import Container from '../../components/Container.vue';
 import Row from '../../components/Row.vue';
 import Col from '../../components/Col.vue';
-import Window from '../../components/Window.vue';
 import CardBody from '../../components/CardBody.vue';
-import { nextTick, ref } from 'vue';
+import {nextTick, onMounted, ref} from 'vue';
+import Modal from '../../components/Modal.vue';
 import timeFormat from '../../script/timeFormat.js';
 import GAME from '../../store/GAME.js';
 import LANG from '../../store/LANG.js';
 import MonacoEditor from '../../components/MonacoEditor.vue';
 import { addBotApi, deleteBotApi, updateBotApi } from '../../script/api';
 import alert from '../../script/alert';
+import {api_url, mode} from '../../config.json';
 
 const props = defineProps({
   bots: {
@@ -156,9 +142,9 @@ const addBotDescription = ref(null);
 const updateCodeLoading = ref(false);
 const addBotLoading = ref(false);
 
-const addBotWindowRef = ref(null);
+const addBotModalRef = ref(null);
 const addBotEditorRef = ref(null);
-const modifyBotWindowRef = ref(null);
+const modifyModalRef = ref(null);
 const modifyBotEditorRef = ref(null);
 
 const bkupTitle = ref(null);
@@ -190,7 +176,7 @@ const addBot = () => {
         createTime: new Date(resp.createTime),
         modifyTime: new Date(resp.modifyTime)
       });
-      addBotWindowRef.value.close();
+      addBotModalRef.value.hide();
       addBotTitle.value = null;
       addBotLang.value = null;
       addBotGame.value = null;
@@ -269,11 +255,15 @@ const updateDescription = () => {
   });
 };
 
+const recoverCode = () => {
+  modifyBotEditorRef.value.setContent(props.bots[ptr.value].code);
+};
+
 const updateCode = () => {
   if (updateCodeLoading.value) return ;
   const newCode = modifyBotEditorRef.value.getContent();
   if (newCode === props.bots[ptr.value].code) {
-    modifyBotWindowRef.value.hide();
+    modifyModalRef.value.hide();
     return ;
   }
   updateCodeLoading.value = true;
@@ -284,7 +274,7 @@ const updateCode = () => {
       props.bots[ptr.value].modifyTime = new Date(resp.modifyTime);
       alert(`success`, `修改成功`);
       updateCodeLoading.value = false;
-      modifyBotWindowRef.value.close();
+      modifyModalRef.value.hide();
     } else {
       updateCodeLoading.value = false;
       alert(`danger`, `修改失败：\n${resp.result}`, 3000);
@@ -310,12 +300,23 @@ const changeLang = () => {
   addBotEditorRef.value.setLang(lang);
 };
 
+onMounted(() => {
+});
+
 </script>
 
 <style scoped>
+*::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+}
+
 .btn {
-  width: 100%;
   border-radius: 0;
+  width: 100%;
 }
 
 textarea {

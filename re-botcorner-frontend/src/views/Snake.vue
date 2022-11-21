@@ -2,7 +2,7 @@
   <CardBody>
     <Row>
       <Col col="col-8">
-        <div ref="parentRef" id="parent">
+        <div ref="parentRef" id="parent" style="background-color: antiquewhite">
           <canvas ref="canvasRef" tabindex="0"></canvas>
         </div>
         <Progress

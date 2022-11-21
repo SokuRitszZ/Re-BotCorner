@@ -48,10 +48,11 @@ import Row from '../components/Row.vue';
 import Col from '../components/Col.vue';
 import USER from '../store/USER';
 import BotList from './viewsChild/BotList.vue';
-import {getAllBotApi, updateHeadIconApi} from '../script/api';
+import {updateHeadIconApi} from '../script/api';
 import Window from "../components/Window.vue";
 import Cropper from "../components/Cropper.vue";
 import LANG from "../store/LANG.js";
+import MYBOTS from "../store/MYBOTS.js";
 
 const route = useRoute();
 const userId = ref(parseInt(route.params.userId));
@@ -74,16 +75,10 @@ const updateHeadIcon = file => {
 };
 
 onMounted(() => {
-  LANG().init().then(() => {
-    getAllBotApi()
-      .then(botList => {
-        bots.value = botList;
-        bots.value.map(bot => {
-          bot.createTime = new Date(bot.createTime);
-          bot.modifyTime = new Date(bot.modifyTime);
-        });
-      });
-  });
+  Promise.all([MYBOTS().init(), LANG().init()])
+    .then(() => {
+      bots.value = MYBOTS().list
+    });
 });
 
 </script>

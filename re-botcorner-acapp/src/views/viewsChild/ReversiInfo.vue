@@ -1,5 +1,5 @@
 <template>
-  <h1>黑白棋</h1>
+  <h1 class="text-center">黑白棋</h1>
   <hr>
   <p>玩家可以落子在棋盘上，相应的也有规定。简明规定如下：</p>
   <p>1、落子的地方，必须满足在八个方向上，存在某方向是有自己的子，并且与这个子之间的路上全部都是敌子（不能没有敌子）。</p>
@@ -8,56 +8,5 @@
   <p>4、如果当前所执的子无处可下但棋盘上还有自己的子，则会跳过让对手下。</p>
   <p>5、如果棋盘填满了，那么数量多者胜利；数量相同则平局。</p>
   <p>6、如果看不懂，可以访问此处<a target="_blank" href="https://wiki.botzone.org.cn/index.php?title=Reversi">黑白棋规则</a></p>
-  <Window
-    ref="botTemplateWindowRef"
-    title="ReversiBot模板"
-    opacity="1"
-    buttonClass="btn btn-primary"
-    buttonStyle="width: 100%; border-radius: 0"
-  >
-    <template v-slot:button>
-      Bot模板
-    </template>
-    <template v-slot:body>
-      <div style="width: 100%; padding: 20px; overflow: auto;">
-        <select @change="changeTemplateLang" class="form-control" v-model="selectedTemplateLang">
-          <option value="-1" selected>选择语言</option>
-          <option v-for="lang in LANG().list" :value="lang.id">
-            {{ lang.id }}.{{ lang.lang }}
-          </option>
-        </select>
-        <hr>
-        <h2>参数说明</h2>
-        <code>方向：从0开始算起，12点钟方向开始，依次顺时针45度。</code>
-        <br>
-        <code>id: 你是什么子，0为黑子，1为白子</code>
-        <br>
-        <code>rows: 棋盘高度</code>
-        <br>
-        <code>cols: 棋盘宽度</code>
-        <br>
-        <code>chess: 棋盘以及棋盘上的子，0为黑子，1为白子，2为空位</code>
-        <hr>
-        <MonacoEditor ref="botTemplateEditorRef" height="400px" width="90%" editor-id="bot-template" />
-      </div>
-    </template>
-  </Window>
+  <a class="btn btn-primary w-100 rounded-0" target="_blank" href="https://www.yuque.com/sokuritszz/lot2s5/koxhvq">Bot代码模板</a>
 </template>
-
-<script setup>
-import { ref } from 'vue';
-import MonacoEditor from '../../components/MonacoEditor.vue';
-import LANG from '../../store/LANG';
-import reversiDemo from '../../templateBotCode/reversiDemo';
-import Window from '../../components/Window.vue';
-
-const botTemplateEditorRef = ref(null);
-const selectedTemplateLang = ref(-1);
-
-const changeTemplateLang = () => {
-  const langId = selectedTemplateLang.value;
-  const lang = LANG().langs[langId].lang;
-  botTemplateEditorRef.value.setLang(lang);
-  botTemplateEditorRef.value.setContent(reversiDemo(langId));
-};
-</script>

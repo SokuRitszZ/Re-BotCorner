@@ -5,19 +5,18 @@ const LANG = defineStore('LANG', {
   state: () => {
     return {
       langs: {},
-      list: []
+      list: [],
+      promiseOk: null
     }
   },
   actions: {
     init() {
-      return new Promise((resolve) => {
-        getAllLangApi().then(langList => {
-          this.list = langList;
-          this.list.map(lang => {
-            this.langs[lang.id] = lang;
-          });
+      if (this.promiseOk !== null) return this.promiseOk;
+      return this.promiseOk = getAllLangApi().then(langList => {
+        this.list = langList;
+        this.list.map(lang => {
+          this.langs[lang.id] = lang;
         });
-        resolve();
       });
     }
   }

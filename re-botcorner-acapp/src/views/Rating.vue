@@ -1,15 +1,16 @@
 <template>
-  <Container>
-    <Row>
-      <Col col="col-3">
-        <CardBody other-style="background-color: yellow; color: rgba(0, 0, 255, 0.8)">
-          <button @click="selectGame(game.title)" :class="`btn btn-outline-primary mb-2 ${selectedGame === game.title ? 'active' : ''}`" v-for="game in GAME().list" style="width: 100%; height: 50px; border-radius: 0">
-            {{ game.name }}
-          </button>
-        </CardBody>
-      </Col>
-      <Col col="col-9">
-        <CardBody other-style="background-color: yellow; color: rgba(0, 0, 255, 0.8)">
+  <CardBody>
+    <Container>
+      <Row>
+        <Col col="col-3">
+          <CardBody>
+            <button @click="selectGame(game.title)" :class="`btn btn-outline-dark mb-2 ${selectedGame === game.title ? 'active' : ''}`" v-for="game in GAME().list" style="width: 100%; height: 50px; border-radius: 0">
+              {{ game.name }}
+            </button>
+          </CardBody>
+        </Col>
+        <Col col="col-9">
+          <CardBody>
             <table class="table table-striped">
               <thead>
                 <tr>
@@ -19,31 +20,32 @@
                 </tr>
               </thead>
               <tbody>
-              <tr v-for="(user, index) in shownList">
-                <td style="font-size: 35px">{{ user.rank }}</td>
-                <td>
-                  <img :src="user.headIcon" style="width: 50px">
-                  {{ user.username }}
-                  <span style="color: #ccc">#{{ user.userId }}</span>
-                </td>
-                <td>{{ user.rating }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </CardBody>
-      </Col>
-    </Row>
-  </Container>
+                <tr v-for="(user, index) in shownList">
+                  <td style="font-size: 35px">{{ user.rank }}</td>
+                  <td>
+                    <img :src="user.headIcon" style="width: 50px">
+                    {{ user.username }}
+                    <span style="color: #ccc">#{{ user.userId }}</span>
+                  </td>
+                  <td>{{ user.rating }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </CardBody>
+        </Col>
+      </Row>
+    </Container>
+  </CardBody>
 </template>
 
 <script setup>
+import CardBody from '../components/CardBody.vue';
 import Row from '../components/Row.vue';
 import Col from '../components/Col.vue';
 import Container from '../components/Container.vue';
 import GAME from '../store/GAME';
 import { ref } from 'vue';
 import { getRatingApi } from '../script/api';
-import CardBody from '../components/CardBody.vue';
 
 const selectedGame = ref('');
 const hasSelectedGame = ref({});

@@ -8,7 +8,7 @@ const api = axios.create({
 
 const headers = () => {
   const token = USER().getToken;
-  if (token === null || token.length === 0) return {};
+  if (token === "null" || token === null || token.length === 0) return {};
   return {
     Authorization: `Bearer ${USER().getToken}`
   }
@@ -190,3 +190,7 @@ export const getContestsApi = groupId => {
     params: {groupId}
   });
 };
+
+export const removeContestApi = contestId => {
+  return api.post("/contest/remove/", {contestId});
+}

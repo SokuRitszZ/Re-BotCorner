@@ -2,19 +2,21 @@
   <button ref="btnRef" @click="show" :class="buttonClass" :style="buttonStyle">
     <slot name="button"></slot>
   </button>
-  <div class="window-board" ref="boardRef" style="display: none; position: fixed; left: 50vw; top: 50vh; width: 500px; height: 500px; background-color: #f4f4f4; border-radius: 10px; border: 5px solid #ccc; overflow: hidden; box-shadow: 0 0 10px #aaa; z-index: 100;">
-    <div class="window-head no-select" ref="headRef" style="width: 100%; height: 40px; background-color: #ccc; padding: 5px">
-      <div style="position: absolute; left: 10px; font-size: 20px">{{ title }}</div>
-      <div @click.stop="close" class="btn btn-danger" style="position: absolute; padding: 0; right: 0; top: 7px; margin-right: 5px; height: 20px; width: 20px; border-radius: 50%;">
+  <transition>
+    <div class="window-board" ref="boardRef" style="display: none; position: fixed; left: 50vw; top: 50vh; width: 500px; height: 500px; background-color: #f4f4f4; border-radius: 10px; border: 5px solid #ccc; overflow: hidden; box-shadow: 0 0 10px #aaa; z-index: 100; overflow: hidden">
+      <div class="window-head no-select" ref="headRef" style="width: 100%; height: 42px; background-color: #ccc; padding: 5px;">
+        <div style="position: absolute; left: 10px; font-size: 20px">{{ title }}</div>
+        <div @click.stop="close" class="btn btn-danger" style="position: absolute; padding: 0; right: 0; top: 7px; margin-right: 5px; height: 20px; width: 20px; border-radius: 50%;">
+        </div>
+      </div>
+      <div class="window-body" style="width: 100%; height: calc(100% - 62px); overflow: auto">
+        <slot name="body"></slot>
+      </div>
+      <div class="window-foot no-select" style="position: absolute; bottom: 0; width: 100%; height: 20px; background-color: aliceblue;">
+        <div class="window-right-foot" ref="rightFootRef" style="position: absolute; right: 0; width: 20px; height: 20px; border-radius: 1px; font-size: 5px; padding: 5px; color: #888; cursor: nwse-resize"><i class="bi bi-arrows-fullscreen"></i></div>
       </div>
     </div>
-    <div class="window-body" style="width: 100%; height: calc(90% - 50px); overflow: auto">
-      <slot name="body"></slot>
-    </div>
-    <div class="window-foot no-select" style="position: absolute; bottom: 0; width: 100%; height: 20px; background-color: aliceblue;">
-      <div class="window-right-foot" ref="rightFootRef" style="cursor: nwse-resize; position: absolute; right: 0; width: 20px; height: 20px; background-color: none; border-radius: 1px; font-size: 5px; padding: 5px; color: #888"><i class="bi bi-arrows-fullscreen"></i></div>
-    </div>
-  </div>
+  </transition>
 </template>
 
 <script setup>
@@ -26,25 +28,6 @@ const rightFootRef = ref(null);
 const btnRef = ref(null);
 
 const state = ref('close');
-
-const props = defineProps({
-  title: {
-    type: String,
-    default: 'window'
-  },
-  opacity: {
-    type: Number,
-    default: 1
-  },
-  buttonStyle: {
-    type: String,
-    default: ''
-  },
-  buttonClass: {
-    type: String,
-    default: 'btn btn-primary'
-  }
-});
 
 const show = () => {
   if (state.value === 'open') {
@@ -70,10 +53,10 @@ const close = () => {
   boardRef.value.classList.add(`closing-board`);
   emit('close');
   setTimeout(() => {
-    boardRef.value.classList.remove(`closing-board`);
     boardRef.value.style.display = "none";
+    boardRef.value.classList.remove(`closing-board`);
     state.value = 'close';
-  }, 500);
+  }, 200);
 };
 
 const getState = () => {
@@ -150,6 +133,25 @@ const getBtn = () => {
   return btnRef.value;
 };
 
+const props = defineProps({
+  title: {
+    type: String,
+    default: 'window'
+  },
+  opacity: {
+    type: Number,
+    default: 1
+  },
+  buttonStyle: {
+    type: String,
+    default: ''
+  },
+  buttonClass: {
+    type: String,
+    default: 'btn btn-primary'
+  }
+});
+
 defineExpose({
   show,
   close,
@@ -166,23 +168,25 @@ onMounted(() => {
 
 <style scoped>
 .opening-board {
-  animation-name: openingBoard;
-  animation-duration: 0.5s;
+  animation: openingBoard 0.5s;
 }
 
 .closing-board {
-  animation-name: closingBoard;
-  animation-duration: 0.5s;
+  animation: openingBoard reverse 0.2s;
+}
+
+.window-head:hover {
+  cursor: move;
 }
 
 @keyframes openingBoard {
-  from {
-    width: 0;
-    height: 0;
+  0% {
     opacity: 0;
+    transform: translateY(-5%);
   }
 
-  to {
+  100% {
+    opacity: 1;
     display: block;
   }
 }

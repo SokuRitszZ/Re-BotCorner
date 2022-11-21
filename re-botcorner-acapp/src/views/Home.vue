@@ -22,7 +22,7 @@
       <Col col="col-8">
         <div style="padding: 20px">
           <h1>
-            待开发区域
+            实验室
             <hr>
             <Window>
               <template v-slot:button>
@@ -32,6 +32,42 @@
                 <ChatRoom />
               </template>
             </Window>
+            <hr>
+            <Chessboard />
+            <hr>
+            <div>
+              <form class="row g-3">
+                <div class="col-auto">
+                  <input v-model="phone" type="text" class="form-control" name="phone" placeholder="手机号">
+                </div>
+                <div class="col-auto">
+                  <button @click.prevent="handleClickPhoneAuth" class="btn btn-primary mb-3">发送验证码</button>
+                </div>
+              </form>
+              <form class="row g-3">
+                <div class="col-auto">
+                  <input v-model="auth" type="text" class="form-control" name="auth" placeholder="验证码">
+                </div>
+                <div class="col-auto">
+                  <button @click.prevent="handleClickLogin" class="btn btn-success mb-3">登录</button>
+                </div>
+              </form>
+            </div>
+            <hr>
+            <div>
+              <div @click="gameSocketTest" class="m-1 btn btn-primary">测试一下WebSocket捏</div>
+              <div @click="startSingleGaming" class="btn btn-success">测试一下捏</div>
+            </div>
+            <hr>
+            <div>
+              <Progress
+                :max="10"
+                :value="inputValue"
+                @change="changeValue"
+                animated
+              />
+              <input class="form-control mt-3" name="inputValue" v-model="inputValue" type="number">
+            </div>
           </h1>
         </div>
       </Col>
@@ -49,6 +85,73 @@ import Row from '../components/Row.vue';
 import Col from '../components/Col.vue';
 import Window from '../components/Window.vue';
 import ChatRoom from '../components/ChatRoom.vue';
+import Chessboard from "../components/Chessboard.vue";
+import {phoneAuthApi, phoneLoginApi} from "../script/api.js";
+import {computed, nextTick, onMounted, onUnmounted, ref} from "vue";
+import { mode } from "../config.json";
+import SOCKET from "../store/SOCKET.js";
+
+const phone = ref();
+const auth = ref();
+const inputValue = ref(0);
+
+const changeValue = num => {
+  inputValue.value = num;
+}
+
+const handleClickPhoneAuth = () => {
+  if (mode === 0) phoneAuthApi(phone.value).then(resp => console.log(resp));
+};
+
+const handleClickLogin = () => {
+  if (mode === 0) phoneLoginApi(phone.value, auth.value).then(resp => console.log(resp));
+};
+
+const gameSocketTest = () => {
+  if (mode === 0) {
+    SOCKET().sendMessage({
+      action: "startSingleGaming",
+      botIds: [
+        0, 1, 2
+      ]
+    });
+  }
+}
+
+import alert from "../script/alert.js";
+import Progress from "../components/Progress.vue";
+
+onMounted(() => {
+  if (mode === 0) {
+    SOCKET().connect({
+      game: "test/nsnake",
+      onOpen() {
+        console.log("open socket.");
+      },
+      onClose() {
+        console.log("close socket.");
+      },
+      onMessage(resp) {
+        resp = JSON.parse(resp.data);
+        if (resp.result === "success") {
+          const data = JSON.parse(resp.data);
+          console.log(data);
+        } else {
+          alert("danger", resp.message);
+        }
+      },
+      onError(error) {
+        console.log(error);
+      }
+    });
+  }
+});
+
+onUnmounted(() => {
+  if (mode === 0) {
+    SOCKET().disconnect();
+  }
+});
 
 </script>
 

@@ -1,8 +1,8 @@
-<template> <Container>
+<template>
+  <CardBody>
     <Row>
       <Col col="col-9">
-      <CardBody>
-        <div class="game-card-container">
+        <div class="game-card-container mt-4">
           <div class="card game-card" v-for="game in GAME().list" @click="router.push({ name: game.title })">
             <div class="card-body game-card-body">
               <h3>{{ game.name }}</h3>
@@ -11,25 +11,26 @@
             </div>
           </div>
         </div>
-      </CardBody>
       </Col>
       <Col col="col-3">
-      <CardBody>
         <h1>待开发区域</h1>
         <hr>
-      </CardBody>
       </Col>
     </Row>
-  </Container>
+  </CardBody>
 </template>
 
 <script setup>
-import Container from '../components/Container.vue';
 import Row from '../components/Row.vue';
 import Col from '../components/Col.vue';
 import CardBody from '../components/CardBody.vue';
 import GAME from '../store/GAME';
 import router from '../routes';
+import {onMounted} from "vue";
+
+onMounted(() => {
+  GAME().init();
+});
 </script>
 
 <style scoped>
