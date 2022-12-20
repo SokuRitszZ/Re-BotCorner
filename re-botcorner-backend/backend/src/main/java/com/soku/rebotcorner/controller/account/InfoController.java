@@ -1,5 +1,6 @@
 package com.soku.rebotcorner.controller.account;
 
+import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.service.account.InfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +14,7 @@ public class InfoController {
   private InfoService infoService;
 
   @GetMapping("/api/account/getInfo")
-  public Map<String, String> getInfo() {
+  public JSONObject getInfo() {
     return infoService.getInfo();
   }
 }

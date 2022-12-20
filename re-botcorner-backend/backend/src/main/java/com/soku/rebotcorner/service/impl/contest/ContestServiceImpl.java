@@ -69,4 +69,13 @@ public class ContestServiceImpl implements ContestService {
     List<Contest> contests = mapper.selectList(new QueryWrapper<Contest>().eq("group_id", groupId));
     return Res.ok(contests);
   }
+
+  /**
+   * 删除比赛
+   * @param contestId
+   */
+  @Override
+  public void removeContest(Integer contestId) {
+    mapper.deleteById(contestId);
+  }
 }

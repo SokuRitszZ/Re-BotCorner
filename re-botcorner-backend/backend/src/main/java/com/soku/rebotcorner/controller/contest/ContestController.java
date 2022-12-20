@@ -37,4 +37,15 @@ public class ContestController {
     Integer groupId = Integer.parseInt(data.get("groupId"));
     return service.getContests(groupId);
   }
+
+  @PostMapping("/remove")
+  Res removeContest(@RequestBody JSONObject json) {
+    Integer contestId = json.getInt("contestId");
+    try {
+      service.removeContest(contestId);
+    } catch (Exception e) {
+      return Res.fail("不存在此比赛");
+    }
+    return Res.ok("删除成功");
+  }
 }

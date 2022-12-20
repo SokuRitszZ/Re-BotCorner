@@ -1,3 +1,5 @@
+import "../alert.css";
+
 const alert = (type, content, remain) => {
   const removeAlert = (div) => {
     div.classList.add(`alert-out`);

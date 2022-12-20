@@ -30,6 +30,13 @@ public abstract class AbsGame {
   private StringBuilder steps;
   private boolean hasStart;
 
+  /**
+   * 构造函数
+   *
+   * @param mode
+   * @param match
+   * @param bots
+   */
   public AbsGame(String mode, GameMatch match, List<RunningBot> bots) {
     this.setMode(mode);
     this.setMatch(match);

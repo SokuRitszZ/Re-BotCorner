@@ -1,8 +1,7 @@
-package com.soku.matchingsystem.controller.pools;
+package com.soku.matchingsystem.pools;
 
 import com.soku.matchingsystem.Player;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;

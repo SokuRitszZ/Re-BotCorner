@@ -1,4 +1,4 @@
-package com.soku.matchingsystem.controller.pools;
+package com.soku.matchingsystem.pools;
 
 import com.soku.matchingsystem.Player;
 import org.springframework.beans.factory.annotation.Autowired;

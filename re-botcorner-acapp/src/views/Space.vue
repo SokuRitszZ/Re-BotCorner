@@ -1,5 +1,5 @@
 <template>
-  <CardBody>
+  <div class="w-75 m-auto">
     <Row>
       <Col col="col-4">
         <div class="card" style="width: 100%; border-radius: 0">
@@ -24,26 +24,17 @@
             </template>
           </Window>
         </div>
-        <CardBody height="45vh">
-          <CardBody height="100%">
-          </CardBody>
-        </CardBody>
       </Col>
       <Col col="col-8">
-        <CardBody height="20vh"></CardBody>
-        <template v-if="userId === USER().getUserID">
-          <BotList :bots="bots">
-          </BotList>
-        </template>
+        <BotList :bots="bots">
+        </BotList>
       </Col>
     </Row>
-  </CardBody>
+  </div>
 </template>
 
 <script setup>
 import {nextTick, onMounted, ref} from 'vue';
-import { useRoute } from 'vue-router';
-import CardBody from '../components/CardBody.vue';
 import Row from '../components/Row.vue';
 import Col from '../components/Col.vue';
 import USER from '../store/USER';
@@ -53,8 +44,7 @@ import Window from "../components/Window.vue";
 import Cropper from "../components/Cropper.vue";
 import LANG from "../store/LANG.js";
 
-const route = useRoute();
-const userId = ref(parseInt(route.params.userId));
+const userId = ref(parseInt(USER().getUserID));
 const bots = ref([]);
 const cropperRef = ref();
 

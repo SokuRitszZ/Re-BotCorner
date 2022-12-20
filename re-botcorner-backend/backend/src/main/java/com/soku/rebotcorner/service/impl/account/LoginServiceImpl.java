@@ -1,8 +1,11 @@
 package com.soku.rebotcorner.service.impl.account;
 
+import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.service.account.LoginService;
 import com.soku.rebotcorner.utils.JwtUtil;
+import com.soku.rebotcorner.utils.NewRes;
+import com.soku.rebotcorner.utils.Res;
 import com.soku.rebotcorner.utils.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,7 +22,7 @@ public class LoginServiceImpl implements LoginService {
   private AuthenticationManager authenticationManager;
 
   @Override
-  public Map<String, String> getToken(String username, String password) {
+  public JSONObject getToken(String username, String password) {
     Map<String, String> map = new HashMap<>();
     try {
       // 获取token（已经自动放在了请求头上）
@@ -34,13 +37,10 @@ public class LoginServiceImpl implements LoginService {
       User user = loginUser.getUser();
       // 通过工具类创建JWT
       String jwt = JwtUtil.createJWT(user.getId().toString());
-      map.put("result", "success");
-      map.put("token", jwt);
-      return map;
+      return NewRes.ok(new JSONObject().set("token", jwt));
     } catch (Exception e) {
       // 登录失败的
-      map.put("result", "fail");
-      return map;
+      return NewRes.fail("密码错误");
     }
   }
 }

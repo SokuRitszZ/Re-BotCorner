@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import alert from './../script/alert';
-import API, { getInfoApi } from './../script/api';
+import { getInfoApi } from './../script/api';
 
 const USER = defineStore(`USER`, {
   state: () => {
@@ -42,22 +42,17 @@ const USER = defineStore(`USER`, {
 
     loginByToken() {
       this.changeIsPulling(true);
-      API({
-        url: '/account/getInfo',
-        type: 'get',
-        needJWT: true,
-        async: false,
-        success: info => {
+      getInfoApi()
+        .then(info => {
           this.setUserID(info.id);
           this.setUsername(info.username);
           this.setHeadIcon(info.headIcon);
           this.changeIsPulling(false);
           this.changeIsLogined(true);
-        },
-        error: err => {
+        })
+        .catch(err => {
           this.changeIsPulling(false);
-        }
-      });
+        })
     },
 
     logout() {

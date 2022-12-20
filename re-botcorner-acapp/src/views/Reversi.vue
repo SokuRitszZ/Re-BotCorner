@@ -1,10 +1,10 @@
 <template>
-  <CardBody>
+  <div class="w-75 m-auto">
     <Row>
       <!-- 大版面 -->
       <Col col="col-8">
         <div ref="parentRef" id="parent"
-          style="width: 100%; height: 50vh; background-color: antiquewhite; text-align: center;"
+             style="width: 100%; height: 50vh; background-color: antiquewhite; text-align: center;"
         >
           <canvas ref="canvasRef" tabindex="0"></canvas>
         </div>
@@ -99,9 +99,9 @@
         <Window ref="chatroomWindowRef" @show="showChatRoomWindow" button-style="width: 100%; border-radius: 0" title="聊天窗口">
           <template v-slot:button>聊天窗口</template>
           <template v-slot:body>
-            <ChatRoom 
-              ref="chatroomRef" 
-              :sendTalk="sendTalk" 
+            <ChatRoom
+              ref="chatroomRef"
+              :sendTalk="sendTalk"
               :isLeft="isLeft"
               :isRight="isRight"
             />
@@ -119,7 +119,7 @@
         </Collapse>
       </Col>
     </Row>
-  </CardBody>
+  </div>
 </template>
 
 <script setup>
@@ -342,7 +342,7 @@ const initSocket = () => {
     hasLinkWebSocket.value = true;
     hasClickedInitSocket.value = false;
   };
-  
+
   const onClose = () => {
     console.log(`close websocket.`);
     hasLinkWebSocket.value = false;
@@ -363,7 +363,7 @@ const initSocket = () => {
     alert(`danger`, `无法连接到Websocket`);
     hasClickedInitSocket.value = false;
   };
-  
+
   SOCKET().connect({
     game: "reversi",
     onOpen,

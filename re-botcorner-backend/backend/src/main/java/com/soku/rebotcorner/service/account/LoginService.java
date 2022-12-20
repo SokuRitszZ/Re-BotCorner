@@ -1,7 +1,7 @@
 package com.soku.rebotcorner.service.account;
 
-import java.util.Map;
+import cn.hutool.json.JSONObject;
 
 public interface LoginService {
-  Map<String, String> getToken(String username, String password);
+  JSONObject getToken(String username, String password);
 }

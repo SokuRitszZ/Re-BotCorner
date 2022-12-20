@@ -1,5 +1,5 @@
 <template>
-  <CardBody>
+  <div class="w-75 m-auto">
     <Row>
       <!--大版面-->
       <Col col="col-8">
@@ -153,7 +153,7 @@
         </Collapse>
       </Col>
     </Row>
-  </CardBody>
+  </div>
 </template>
 
 <script setup>

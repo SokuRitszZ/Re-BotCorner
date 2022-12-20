@@ -1,9 +1,9 @@
 package com.soku.matchingsystem.service.impl;
 
-import com.soku.matchingsystem.controller.pools.BackgammonPool;
-import com.soku.matchingsystem.controller.pools.MatchPool;
-import com.soku.matchingsystem.controller.pools.ReversiPool;
-import com.soku.matchingsystem.controller.pools.SnakePool;
+import com.soku.matchingsystem.pools.BackgammonPool;
+import com.soku.matchingsystem.pools.MatchPool;
+import com.soku.matchingsystem.pools.ReversiPool;
+import com.soku.matchingsystem.pools.SnakePool;
 import com.soku.matchingsystem.service.MatchingService;
 import org.springframework.stereotype.Service;
 

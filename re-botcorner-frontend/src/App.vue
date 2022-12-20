@@ -74,7 +74,6 @@
 <script setup>
 import Navbar from './components/Navbar.vue';
 import NavbarItem from './components/NavbarItem.vue';
-import Container from './components/Container.vue';
 import USER from './store/USER.js';
 import { onMounted, ref } from 'vue';
 import Modal from './components/Modal.vue';

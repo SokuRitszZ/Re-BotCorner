@@ -8,4 +8,6 @@ public interface ContestService {
   Res createContest(String title, Integer groupId, Integer gameId, Integer rule, Date time);
 
   Res getContests(Integer groupId);
+
+  void removeContest(Integer contestId);
 }

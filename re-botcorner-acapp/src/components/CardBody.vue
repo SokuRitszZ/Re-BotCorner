@@ -1,6 +1,6 @@
 <template>
   <div class="card">
-    <div class="card-body" :style="`height: ${height || `90vh`}; ${otherStyle || ''}; ${width ? `width: ${width}` : ''}`">
+    <div class="card-body overflow-auto" style="max-height: 90%;">
       <slot></slot>
     </div>
   </div>

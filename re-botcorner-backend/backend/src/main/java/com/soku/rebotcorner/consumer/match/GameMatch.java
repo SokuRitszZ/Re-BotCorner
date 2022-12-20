@@ -116,6 +116,13 @@ public class GameMatch {
    * @param res
    */
   public void sendOne(int id, Res res) {
+    if (id >= this.sockets.size()) {
+      for (int i = 0; i < this.sockets.size(); ++i)
+        if (this.sockets.get(i) != null) {
+          id = i;
+          break;
+        }
+    }
     this.sockets.get(id).sendMessage(JSONUtil.parseObj(res));
   }
 

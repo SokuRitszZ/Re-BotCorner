@@ -1,41 +1,41 @@
 <template>
-  <CardBody>
-    <Container>
-      <Row>
-        <Col col="col-3">
-          <CardBody>
-            <button @click="selectGame(game.title)" :class="`btn btn-outline-dark mb-2 ${selectedGame === game.title ? 'active' : ''}`" v-for="game in GAME().list" style="width: 100%; height: 50px; border-radius: 0">
-              {{ game.name }}
-            </button>
-          </CardBody>
-        </Col>
-        <Col col="col-9">
+  <Container>
+    <Row>
+      <Col col="col-3">
+        <CardBody>
+          <button @click="selectGame(game.title)" :class="`btn btn-outline-dark mb-2 ${selectedGame === game.title ? 'active' : ''}`" v-for="game in GAME().list" style="width: 100%; height: 50px; border-radius: 0">
+            {{ game.name }}
+          </button>
+        </CardBody>
+      </Col>
+      <Col col="col-9">
+        <div class="overflow-auto">
           <CardBody>
             <table class="table table-striped">
               <thead>
-                <tr>
-                  <th>排名</th>
-                  <th>用户</th>
-                  <th>分数</th>
-                </tr>
+              <tr>
+                <th>排名</th>
+                <th>用户</th>
+                <th>分数</th>
+              </tr>
               </thead>
               <tbody>
-                <tr v-for="(user, index) in shownList">
-                  <td style="font-size: 35px">{{ user.rank }}</td>
-                  <td>
-                    <img :src="user.headIcon" style="width: 50px">
-                    {{ user.username }}
-                    <span style="color: #ccc">#{{ user.userId }}</span>
-                  </td>
-                  <td>{{ user.rating }}</td>
-                </tr>
+              <tr v-for="(user, index) in shownList">
+                <td style="font-size: 35px">{{ user.rank }}</td>
+                <td>
+                  <img :src="user.headIcon" style="width: 50px">
+                  {{ user.username }}
+                  <span style="color: #ccc">#{{ user.userId }}</span>
+                </td>
+                <td>{{ user.rating }}</td>
+              </tr>
               </tbody>
             </table>
           </CardBody>
-        </Col>
-      </Row>
-    </Container>
-  </CardBody>
+        </div>
+      </Col>
+    </Row>
+  </Container>
 </template>
 
 <script setup>

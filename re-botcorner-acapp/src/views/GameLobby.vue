@@ -1,35 +1,23 @@
-<template> <Container>
-    <Row>
-      <Col col="col-9">
-      <CardBody>
-        <div class="game-card-container">
-          <div class="card game-card" v-for="game in GAME().list" @click="router.push({ name: game.title })">
-            <div class="card-body game-card-body">
-              <h3>{{ game.name }}</h3>
-              <hr>
-              <div>{{ game.description }}</div>
-            </div>
+<template>
+  <Container>
+    <div class="w-100 h-100 d-flex flex-column justify-content-center">
+      <div class="game-card-container">
+        <div :key="game.id" class="card game-card" v-for="game in GAME().list" @click="ROUTE().goto(game.title)">
+          <div class="card-body game-card-body">
+            <h3>{{ game.name }}</h3>
+            <hr>
+            <div>{{ game.description }}</div>
           </div>
         </div>
-      </CardBody>
-      </Col>
-      <Col col="col-3">
-      <CardBody>
-        <h1>待开发区域</h1>
-        <hr>
-      </CardBody>
-      </Col>
-    </Row>
+      </div>
+    </div>
   </Container>
 </template>
 
 <script setup>
 import Container from '../components/Container.vue';
-import Row from '../components/Row.vue';
-import Col from '../components/Col.vue';
-import CardBody from '../components/CardBody.vue';
+import ROUTE from "../store/ROUTE";
 import GAME from '../store/GAME';
-import router from '../routes';
 </script>
 
 <style scoped>
@@ -39,10 +27,12 @@ import router from '../routes';
 }
 
 .game-card {
+  color: #0000ff;
   width: 200px;
   height: 300px;
   border-radius: 0;
-  box-shadow: 0 0 5px #989898;
+  box-shadow: 0 0 5px #ffff00;
+  background-color: #ffff00;
   cursor: pointer;
   margin-left: -40px;
   transition: 0.5s;
@@ -60,7 +50,7 @@ import router from '../routes';
 
 .game-card:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 30px #989898;
+  box-shadow: 0 0 30px #ffff00;
   margin-right: 60px;
 }
 </style>
