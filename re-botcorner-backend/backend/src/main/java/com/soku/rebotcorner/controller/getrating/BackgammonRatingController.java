@@ -1,5 +1,6 @@
 package com.soku.rebotcorner.controller.getrating;
 
+import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.service.getrating.BackgammonRatingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +15,7 @@ public class BackgammonRatingController {
   private BackgammonRatingService backgammonRatingService;
 
   @GetMapping("/api/getrating/backgammon")
-  public List<Map<String, String>> getRatingList() {
+  public JSONObject getRatingList() {
     return backgammonRatingService.getRatingList();
   }
 }

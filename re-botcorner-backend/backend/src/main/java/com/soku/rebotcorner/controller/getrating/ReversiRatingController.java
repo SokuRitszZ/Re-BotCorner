@@ -1,5 +1,6 @@
 package com.soku.rebotcorner.controller.getrating;
 
+import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.service.getrating.ReversiRatingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +15,7 @@ public class ReversiRatingController {
   private ReversiRatingService reversiRatingService;
 
   @GetMapping("/api/getrating/reversi")
-  public List<Map<String, String>> getRatingList() {
+  public JSONObject getRatingList() {
     return reversiRatingService.getRatingList();
   }
 }

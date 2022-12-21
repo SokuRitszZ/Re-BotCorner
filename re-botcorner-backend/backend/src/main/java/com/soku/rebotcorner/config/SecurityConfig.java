@@ -43,6 +43,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         "/api/account/register/",
         "/api/lang/getall",
         "/api/game/getall",
+        "/api/getrating/**",
         "/static/**",
         "/",
         "/api/getrating/**","/api/user/account/acwing/acapp/apply_code/",

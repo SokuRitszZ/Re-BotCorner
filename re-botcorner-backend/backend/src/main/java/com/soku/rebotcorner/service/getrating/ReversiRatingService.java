@@ -1,8 +1,10 @@
 package com.soku.rebotcorner.service.getrating;
 
+import cn.hutool.json.JSONObject;
+
 import java.util.List;
 import java.util.Map;
 
 public interface ReversiRatingService {
-  List<Map<String, String>> getRatingList();
+  JSONObject getRatingList();
 }
