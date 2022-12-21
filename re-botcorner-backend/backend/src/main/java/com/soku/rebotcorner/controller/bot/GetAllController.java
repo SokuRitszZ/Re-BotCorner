@@ -1,5 +1,6 @@
 package com.soku.rebotcorner.controller.bot;
 
+import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.service.bot.GetAllService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +14,8 @@ public class GetAllController {
   @Autowired
   private GetAllService getAllService;
 
-  @GetMapping("/api/bot/getAll")
-  public List<Bot> getAll() {
+  @GetMapping("/api/bot/getall")
+  public JSONObject getAll() {
     return getAllService.getAll();
   }
 }
