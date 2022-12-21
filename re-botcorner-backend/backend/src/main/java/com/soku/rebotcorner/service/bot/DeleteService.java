@@ -1,7 +1,9 @@
 package com.soku.rebotcorner.service.bot;
 
+import cn.hutool.json.JSONObject;
+
 import java.util.Map;
 
 public interface DeleteService {
-  Map<String, String> deleteBot(Map<String, String> data);
+  JSONObject deleteBot(Integer id);
 }

@@ -1,7 +1,7 @@
 package com.soku.rebotcorner.service.bot;
 
-import java.util.Map;
+import cn.hutool.json.JSONObject;
 
 public interface UpdateService {
-  Map<String, String> updateBot(Map<String, String> data);
+  JSONObject updateBot(JSONObject data);
 }

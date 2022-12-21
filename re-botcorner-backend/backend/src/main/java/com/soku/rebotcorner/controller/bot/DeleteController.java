@@ -1,5 +1,6 @@
 package com.soku.rebotcorner.controller.bot;
 
+import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.service.bot.DeleteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,7 +15,7 @@ public class DeleteController {
   private DeleteService deleteService;
 
   @DeleteMapping("/api/bot/delete")
-  public Map<String, String> deleteBot(@RequestParam Map<String, String> data) {
-    return deleteService.deleteBot(data);
+  public JSONObject deleteBot(@RequestParam("id") Integer id) {
+    return deleteService.deleteBot(id);
   }
 }

@@ -1,21 +1,19 @@
 package com.soku.rebotcorner.service.impl.bot;
 
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.mapper.BotMapper;
 import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.service.bot.AddService;
+import com.soku.rebotcorner.utils.NewRes;
 import com.soku.rebotcorner.utils.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class AddServiceImpl implements AddService {
@@ -24,70 +22,67 @@ public class AddServiceImpl implements AddService {
   private BotMapper botMapper;
 
   @Override
-  public Map<String, String> addBot(Map<String, String> data) {
-    UsernamePasswordAuthenticationToken authenticate =
-      (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-    UserDetailsImpl loginUser = (UserDetailsImpl) authenticate.getPrincipal();
-    User user = loginUser.getUser();
+  public JSONObject addBot(JSONObject data) {
+    try {
+      UsernamePasswordAuthenticationToken authenticate =
+        (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+      UserDetailsImpl loginUser = (UserDetailsImpl) authenticate.getPrincipal();
+      User user = loginUser.getUser();
 
-    String title = data.get("title");
-    String description = data.get("description");
-    String code = data.get("code");
-    Integer gameId = Integer.parseInt(data.get("gameId"));
-    Integer langId = Integer.parseInt(data.get("langId"));
-    Map<String, String> map = new HashMap<>();
+      // title
+      String title = data.getStr("title", "").trim();
+      if (title.isEmpty()) { return NewRes.fail("名称为空"); }
+      if (title.length() > 32) { return NewRes.fail("名称长度超过32"); }
 
-    if (title == null || title.length() == 0) {
-      map.put("result", "名字为空");
-      return map;
-    } else if (title.length() > 8) {
-      map.put("result", "名字长度大于8");
-      return map;
-    } else if (description != null && description.length() > 128) {
-      map.put("result", "描述大于128");
-      return map;
-    } else if (code == null || code.length() == 0) {
-      map.put("result", "代码为空");
-      return map;
-    } else if (code.length() > 8196) {
-      map.put("result", "代码超过8196字");
-      return map;
-    } else if (gameId == -1) {
-      map.put("result", "没有指定游戏");
-      return map;
-    } else if (langId == -1) {
-      map.put("result", "没有指定语言");
-      return map;
-    }
-    if (description == null || description.length() == 0) {
-      description = "这个人很懒，什么都没有留下。";
-    }
+      // gameId
+      Integer gameId = data.getInt("gameId");
+      if (gameId == null || gameId == 0) { return NewRes.fail("没有选择所属游戏"); }
 
-    Date now = new Date();
-    Bot bot = new Bot(null, user.getId(), title, description, code, 1500, gameId, langId, now, now, false);
-    // 检测代码可否编译
-    RunningBot runningBot = new RunningBot();
-    runningBot.setBot(bot);
-    runningBot.start();
-    JSONObject json = JSONObject.parseObject(runningBot.compile());
-    if (!"ok".equals(json.getString("result"))) {
-      map.put("result", json.getString("result"));
+      // langId
+      Integer langId = data.getInt("langId");
+      if (langId == null || langId == 0) { return NewRes.fail("没有选择所属语言"); }
+
+      // description
+      String description = data.getStr("description", "").trim();
+      if (description.isEmpty()) description = "这个人很懒，什么都没留下。";
+      if (description.length() > 128) { return NewRes.fail("描述长度超过128"); }
+
+      // code
+      String code = data.getStr("code", "").trim();
+      Date now = new Date();
+      Bot bot = new Bot(
+        null,
+        user.getId(),
+        title,
+        description,
+        code,
+        1500,
+        gameId,
+        langId,
+        now,
+        now,
+        false
+      );
+      RunningBot runningBot = new RunningBot();
+      runningBot.setBot(bot);
+      runningBot.start();
+      JSONObject json = new JSONObject(runningBot.compile());
+      if (!"ok".equals(json.getStr("result"))) {
+        runningBot.stop();
+        return NewRes.fail("编译失败");
+      }
       runningBot.stop();
-      return map;
+
+      botMapper.insert(bot);
+
+      JSONObject ret = new JSONObject();
+      ret.set("id", bot.getId());
+      ret.set("createTime", bot.getCreateTime());
+      ret.set("modifyTime", bot.getModifyTime());
+
+      return NewRes.ok(ret);
+    } catch (Exception e) {
+      return NewRes.fail("Token无效");
     }
-    runningBot.stop();
-    botMapper.insert(bot);
-
-    map.put("result", "success");
-    map.put("id", bot.getId().toString());
-    map.put("userId", bot.getUserId().toString());
-    map.put("description", bot.getDescription());
-    map.put("rating", bot.getRating().toString());
-    String timeFMT = "yyyy-MM-dd HH:mm:ss";
-    SimpleDateFormat sdf = new SimpleDateFormat(timeFMT);
-    map.put("createTime", sdf.format(bot.getCreateTime()));
-    map.put("modifyTime", sdf.format(bot.getModifyTime()));
-
-    return map;
   }
 }

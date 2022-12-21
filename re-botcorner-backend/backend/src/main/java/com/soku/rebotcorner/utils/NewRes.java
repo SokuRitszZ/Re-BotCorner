@@ -10,6 +10,13 @@ public class NewRes {
     return ret;
   }
 
+  public static JSONObject ok() {
+    JSONObject ret = new JSONObject();
+    ret.set("result", "success");
+    ret.set("data", new JSONObject());
+    return ret;
+  }
+
   public static JSONObject fail(String message) {
     JSONObject ret = new JSONObject();
     ret.set("result", "fail");
