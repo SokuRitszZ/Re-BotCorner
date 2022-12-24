@@ -45,7 +45,7 @@ public class PhoneLoginServiceImpl implements PhoneLoginService {
     }
 
     // 4. 一致，通过手机号查询用户
-    User user = UserDAO.selectOne(new QueryWrapper<User>().eq("phone", phone));
+    User user = UserDAO.mapper.selectOne(new QueryWrapper<User>().eq("phone", phone));
 
     // 5. 判断用户是否存在
     if (user == null)
@@ -69,9 +69,9 @@ public class PhoneLoginServiceImpl implements PhoneLoginService {
       null,
       phone
     );
-    while (UserDAO.selectList(new QueryWrapper<User>().eq("username", user.getUsername())).size() > 0)
+    while (UserDAO.mapper.selectList(new QueryWrapper<User>().eq("username", user.getUsername())).size() > 0)
       user.setUsername(user.getUsername() + RandomUtil.randomNumbers(1));
-    UserDAO.insert(user);
+    UserDAO.mapper.insert(user);
     return user;
   }
 }

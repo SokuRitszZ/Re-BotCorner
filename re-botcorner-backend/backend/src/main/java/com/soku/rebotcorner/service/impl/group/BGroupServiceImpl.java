@@ -59,7 +59,7 @@ public class BGroupServiceImpl implements BGroupService {
     bGroupMemberMapper.insert(new BGroupMember( group.getId(), creatorId ));
 
     JSONObject json = JSONUtil.parseObj(group);
-    json.put("creatorUsername", UserDAO.selectById(creatorId).getUsername());
+    json.put("creatorUsername", UserDAO.mapper.selectById(creatorId).getUsername());
     return Res.ok(json);
   }
 
@@ -95,7 +95,7 @@ public class BGroupServiceImpl implements BGroupService {
       JSONObject json = JSONUtil.parseObj(gp);
       Integer creatorId = json.getInt("creatorId");
       if (!usernameMap.containsKey(creatorId)) {
-        User user = UserDAO.selectById(creatorId);
+        User user = UserDAO.mapper.selectById(creatorId);
         usernameMap.put(creatorId, user.getUsername());
       }
       String username = usernameMap.get(creatorId);
@@ -117,7 +117,7 @@ public class BGroupServiceImpl implements BGroupService {
     if (group == null) return Res.fail("不存在此小组");
     User user = JwtAuthenticationUtil.getCurrentUser();
     JSONObject json = JSONUtil.parseObj(group);
-    json.put("creatorUsername", UserDAO.selectById(group.getCreatorId()).getUsername());
+    json.put("creatorUsername", UserDAO.mapper.selectById(group.getCreatorId()).getUsername());
     json.put("isIn", bGroupMemberMapper.selectOne(new QueryWrapper<BGroupMember>().eq("group_id", id).eq("user_id", user.getId())) != null);
     return Res.ok(json);
   }
@@ -166,7 +166,7 @@ public class BGroupServiceImpl implements BGroupService {
       JSONObject json = JSONUtil.parseObj(item);
       Integer applicantId = json.getInt("applicantId");
       Integer groupId = json.getInt("groupId");
-      if (!userMap.containsKey(applicantId)) userMap.put(applicantId, UserDAO.selectById(applicantId));
+      if (!userMap.containsKey(applicantId)) userMap.put(applicantId, UserDAO.mapper.selectById(applicantId));
       if (!groupMap.containsKey(groupId)) groupMap.put(groupId, bGroupMapper.selectById(groupId));
       User user = userMap.get(applicantId);
       BGroup group = groupMap.get(groupId);
@@ -210,7 +210,7 @@ public class BGroupServiceImpl implements BGroupService {
     List<JSONObject> infos = new ArrayList<>();
     members.forEach(member -> {
       JSONObject json = JSONUtil.parseObj(member);
-      User user = UserDAO.selectById(json.getInt("userId"));
+      User user = UserDAO.mapper.selectById(json.getInt("userId"));
       json.put("id", user.getId());
       json.put("headIcon", user.getHeadIcon());
       json.put("username", user.getUsername());

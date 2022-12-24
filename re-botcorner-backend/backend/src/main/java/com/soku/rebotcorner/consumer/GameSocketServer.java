@@ -1,7 +1,6 @@
 package com.soku.rebotcorner.consumer;
 
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.consumer.match.GameMatch;
 import com.soku.rebotcorner.games.AbsGame;
@@ -11,7 +10,6 @@ import com.soku.rebotcorner.games.SnakeGame;
 import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.pojo.SnakeRating;
 import com.soku.rebotcorner.pojo.User;
-import com.soku.rebotcorner.pojo.vo.UserVo;
 import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.utils.*;
 import lombok.Data;
@@ -22,10 +20,7 @@ import org.springframework.util.MultiValueMap;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -55,9 +50,8 @@ public class GameSocketServer {
     // 获取socket
     List<GameSocketServer> sockets = new ArrayList<>();
     for (Integer userId : userIds) {
-      UserVo user = UserDAO.userVoMapper.selectById(userId);
-      JSONObject json = new JSONObject(user);
-      jsons.add(json);
+      JSONObject user = UserDAO.mapper.selectBaseById(userId);
+      jsons.add(user);
 
       GameSocketServer socket = users.get(userId);
       sockets.add(socket);
@@ -95,7 +89,7 @@ public class GameSocketServer {
     this.initMatch();
 
     System.out.println(String.format("%d connected.", userId));
-    this.user = UserDAO.selectById(userId);
+    this.user = UserDAO.mapper.selectById(userId);
     users.put(userId, this);
     this.gameClass = game;
 

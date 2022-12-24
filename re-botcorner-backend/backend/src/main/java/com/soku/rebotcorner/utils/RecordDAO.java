@@ -8,13 +8,5 @@ import org.springframework.stereotype.Component;
 @Component
 public class RecordDAO {
   @Autowired
-  public static RecordMapper recordMapper;
-
-  public static void add(Record record) {
-    recordMapper.insert(record);
-  }
-
-  public static Record selectById(Integer id) {
-    return recordMapper.selectById(id);
-  }
+  public static RecordMapper mapper;
 }

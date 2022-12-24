@@ -76,7 +76,7 @@ public class AcappServiceImpl implements AcappService {
 
     QueryWrapper<User> qw = new QueryWrapper<>();
     qw.eq("openid", openid);
-    User user = UserDAO.selectOne(qw);
+    User user = UserDAO.mapper.selectOne(qw);
     if (user != null) {
       String jwt = JwtUtil.createJWT(user.getId().toString()); // 通过工具类创建JWT
       resp.put("result", "success");
@@ -94,7 +94,7 @@ public class AcappServiceImpl implements AcappService {
     for (int i = 0; i < 100; ++i) {
       QueryWrapper<User> qwx = new QueryWrapper<>();
       qwx.eq("username", username.toString());
-      if (UserDAO.selectList(qwx).isEmpty()) break;
+      if (UserDAO.mapper.selectList(qwx).isEmpty()) break;
       username.append(random.nextInt(10));
       if (i == 99) return resp;
     }
@@ -108,7 +108,7 @@ public class AcappServiceImpl implements AcappService {
       openid,
       null
     );
-    UserDAO.insert(user);
+    UserDAO.mapper.insert(user);
     String jwt = JwtUtil.createJWT(user.getId().toString());
     resp.put("result", "success");
     resp.put("jwt_token", jwt);

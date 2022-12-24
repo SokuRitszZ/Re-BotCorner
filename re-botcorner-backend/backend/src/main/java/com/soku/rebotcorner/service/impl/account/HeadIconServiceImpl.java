@@ -39,7 +39,7 @@ public class HeadIconServiceImpl implements HeadIconService {
     // 修改用户信息
     String newUrl = json.getStr("newUrl");
     user.setHeadIcon(newUrl);
-    UserDAO.updateById(user);
+    UserDAO.mapper.updateById(user);
     Map<String, String> map = new HashMap<>();
     map.put("result", "ok");
     map.put("url", newUrl);
