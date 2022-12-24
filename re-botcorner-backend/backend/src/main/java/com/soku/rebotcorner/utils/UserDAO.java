@@ -2,6 +2,7 @@ package com.soku.rebotcorner.utils;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.mapper.UserMapper;
+import com.soku.rebotcorner.mapper.vo.UserVoMapper;
 import com.soku.rebotcorner.pojo.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import java.util.List;
 public class UserDAO {
   @Autowired
   public static UserMapper userMapper;
+  public static UserVoMapper userVoMapper;
 
   public static void updateById(User user) {
     userMapper.updateById(user);
