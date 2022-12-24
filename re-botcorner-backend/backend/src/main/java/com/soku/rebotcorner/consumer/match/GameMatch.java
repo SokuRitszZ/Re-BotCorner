@@ -26,6 +26,9 @@ public class GameMatch {
     this.sockets = sockets;
     this.isOk = new boolean[sockets.size()];
     this.canStartGame = new boolean[sockets.size()];
+    for (int i = 0; i < this.canStartGame.length; i++) {
+      this.canStartGame[i] = false;
+    }
     for (GameSocketServer socket : sockets)
       if (socket != null)
         socket.setMatch(this);
@@ -37,13 +40,12 @@ public class GameMatch {
    *
    * @param res
    */
-  public void broadCast(Res res) {
-    JSONObject json = JSONUtil.parseObj(res);
+  public void broadCast(JSONObject res) {
     Set<GameSocketServer> set = new HashSet<>();
     for (GameSocketServer socket : sockets) {
       if (socket != null && !set.contains(socket)) {
         set.add(socket);
-        socket.sendMessage(json);
+        socket.sendMessage(res);
       }
     }
   }
@@ -88,9 +90,9 @@ public class GameMatch {
   public void someoneExit(GameSocketServer socket) {
     Integer theOne = this.getMe(socket);
     JSONObject json = new JSONObject();
-    json.set("action", "exitMatching");
-    json.set("id", theOne);
-    this.broadCast(Res.ok(json));
+    json.set("action", "exit match");
+    json.set("data", new JSONObject().set("id", theOne));
+    this.broadCast(json);
     for (GameSocketServer gameSocket : this.sockets) {
       gameSocket.initMatch();
       if (socket != gameSocket) gameSocket.addToMatch();
@@ -127,6 +129,7 @@ public class GameMatch {
   }
 
   public void setStartGame(GameSocketServer socket) {
+
     lock.lock();
     int me = getMe(socket);
     canStartGame[me] = true;

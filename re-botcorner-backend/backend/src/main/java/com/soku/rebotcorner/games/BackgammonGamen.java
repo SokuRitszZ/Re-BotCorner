@@ -295,10 +295,10 @@ public class BackgammonGamen extends AbsGame {
     // 保存到录像
     getSteps().append("mv" + transform(from, 36) + transform(to, 36) + "\n");
 
-    this.getMatch().broadCast(Res.ok(ret));
+//    this.getMatch().broadCast(Res.ok(ret));
 
     // 添加骰子的变化
-    this.getMatch().broadCast(Res.ok(getCurrentDiceToSet()));
+//    this.getMatch().broadCast(Res.ok(getCurrentDiceToSet()));
 
     // 保存到录像
     getSteps().append("dc" + curId);
@@ -353,7 +353,7 @@ public class BackgammonGamen extends AbsGame {
     this.setHasStart(true);
     this.flushDice();
     JSONObject json = this.getCurrentDiceToSet();
-    this.getMatch().broadCast(Res.ok(json));
+//    this.getMatch().broadCast(Res.ok(json));
 
     // 保存到录像
     getSteps().append("dc" + curId);
@@ -422,11 +422,11 @@ public class BackgammonGamen extends AbsGame {
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
-    this.getMatch().broadCast(Res.ok(json));
+//    this.getMatch().broadCast(Res.ok(json));
     // 保存到录像
     getSteps().append("ps" + curId + "\n");
 
-    this.getMatch().broadCast(Res.ok(this.getCurrentDiceToSet()));
+//    this.getMatch().broadCast(Res.ok(this.getCurrentDiceToSet()));
 
     // 保存到录像
     getSteps().append("dc" + curId);
@@ -464,7 +464,7 @@ public class BackgammonGamen extends AbsGame {
     // 保存到录像
     getSteps().append("tn" + curId + "\n");
 
-    this.getMatch().broadCast(Res.ok(this.getCurrentDiceToSet()));
+//    this.getMatch().broadCast(Res.ok(this.getCurrentDiceToSet()));
     // 保存到录像
     getSteps().append("dc" + curId);
     for (Integer die : this.dice) getSteps().append("" + die);

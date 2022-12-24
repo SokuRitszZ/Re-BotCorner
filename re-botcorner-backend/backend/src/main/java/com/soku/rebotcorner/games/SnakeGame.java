@@ -20,7 +20,7 @@ public class SnakeGame extends AbsGame {
   private int innerWallsCount;
   private Deque<Pair>[] snakes;
   private int[][] g;
-  private int[][] initG;
+  private JSONObject initData;
   private int[] directions;
   private String[] state;
   private ReentrantLock lock;
@@ -48,20 +48,35 @@ public class SnakeGame extends AbsGame {
     this.cols = 13;
     this.innerWallsCount = 20;
     createMap();
-    this.getRecord().set("initG", this.initG);
 
     // init snake
     this.snakes = new Deque[2];
     this.snakes[0] = new LinkedList<>();
     this.snakes[1] = new LinkedList<>();
-    this.snakes[0].addFirst(new Pair(this.rows - 2, 1));
-    this.snakes[1].addFirst(new Pair(1, this.cols - 2));
+    this.snakes[0].addFirst(new Pair(1, this.cols - 2));
+    this.snakes[1].addFirst(new Pair(this.rows - 2, 1));
     this.state = new String[2];
 
     // init operations
     this.lock = new ReentrantLock();
     this.directions = new int[2];
     directions[0] = directions[1] = -1;
+  }
+
+  private JSONObject getInitData() {
+    int rc = 0;
+    rc |= (this.rows & (1 << 16) - 1);
+    rc <<= 16;
+    rc |= (this.cols & (1 << 16) - 1);
+    List<Integer> grid = new ArrayList<>();
+    int k = 0;
+    StringBuilder mask = new StringBuilder();
+    for (int i = 0; i < this.rows; ++i) {
+      for (int j = 0; j < this.cols; ++j) {
+        mask.append(this.g[i][j]);
+      }
+    }
+    return new JSONObject().set("rc", rc).set("mask", mask.toString());
   }
 
   /**
@@ -81,13 +96,9 @@ public class SnakeGame extends AbsGame {
    */
   @Override
   public JSONObject getInitDataAndSave() {
-    // 行、列、地图
-    JSONObject json = new JSONObject();
-    json.set("rows", this.rows);
-    json.set("cols", this.cols);
-    json.set("initG", this.initG);
-    this.getRecord().set("initData", json);
-    return json;
+    JSONObject initData = getInitData();
+    this.getRecord().set("initData", initData);
+    return initData;
   }
 
   /**
@@ -98,13 +109,15 @@ public class SnakeGame extends AbsGame {
   @Override
   public void setStep(JSONObject json) {
     if (!isHasStart()) return ;
+
     Integer id = json.getInt("id");
-    Integer direction = json.getInt("direction");
-    this.setDirectionAndCheckMove(id, direction);
-    JSONObject returnJson = new JSONObject();
-    returnJson.set("action", "setStep");
-    returnJson.set("step", json);
-    this.getMatch().broadCast(Res.ok(returnJson));
+    Integer d = json.getInt("d");
+    this.getMatch().broadCast(
+      new JSONObject()
+        .set("action", "set step")
+        .set("data", json)
+    );
+    this.setDirectionAndCheckMove(id, d);
   }
 
   /**
@@ -113,33 +126,49 @@ public class SnakeGame extends AbsGame {
   private void moveSnake() {
     boolean isIncreasing = this.checkIncreasing();
     ++step;
+    // 移动
     for (int i = 0; i < 2; ++i) {
-      this.state[i] = "move";
-      Pair first = snakes[i].getFirst();
+      this.state[i] = "alive";
       if (!isIncreasing) {
         Pair last = snakes[i].getLast();
         this.g[last.x][last.y] -= 1;
         this.snakes[i].removeLast();
       }
+    }
+    for (int i = 0; i < 2; ++i) {
+      Pair first = snakes[i].getFirst();
       int d = this.directions[i];
       int nx = first.x + dx[d];
       int ny = first.y + dy[d];
       Pair newFirst = new Pair(nx, ny);
       this.g[nx][ny] += 1;
       snakes[i].addFirst(newFirst);
-      if (this.g[nx][ny] >= 2) this.setReason(i, "正常战败");
+      // 战败
+      if (this.g[nx][ny] >= 2) {
+        this.state[i] = "die";
+        this.setReason(i, "碰撞致死");
+      }
     }
 
+    String step =
+      "" + this.directions[0] + this.directions[1]
+        + (isIncreasing ? 1 : 0)
+        + (this.state[0] == "die" ? 1 : 0) + (this.state[1] == "die" ? 1 : 0);
     // 保存在steps
-    this.getSteps().append("" + this.directions[0] + this.directions[1]);
+    this.getSteps().append(step);
 
+    JSONObject ret = new JSONObject();
+    JSONObject data = new JSONObject();
     // 发送信息
-    JSONObject json = new JSONObject();
-    json.set("action", "moveSnake");
-    json.set("directions", this.directions);
-    json.set("isIncreasing", isIncreasing);
-    json.set("state", this.state);
-    this.getMatch().broadCast(Res.ok(json));
+    this
+      .getMatch()
+      .broadCast(ret
+        .set("action", "move snake")
+        .set("data",
+          data
+            .set("step", step)
+        )
+      );
 
     // 清空保存的操作
     this.directions[0] = this.directions[1] = -1;
@@ -198,9 +227,8 @@ public class SnakeGame extends AbsGame {
             this.setReason(fi, check);
           } else {
             json = new JSONObject();
-            json.set("action", "setStep");
             json.set("id", fi);
-            json.set("direction", Integer.parseInt(result));
+            json.set("d", Integer.parseInt(result));
             this.setStep(json);
           }
           runOk.incrementAndGet();
@@ -242,8 +270,8 @@ public class SnakeGame extends AbsGame {
   public void setResultToRecord() {
     String result = "";
     if (isDie(0) && isDie(1)) result = "平局";
-    else if (isDie(0)) result = "红蛇胜利";
-    else result = "蓝蛇胜利";
+    else if (isDie(0)) result = "蓝蛇胜利";
+    else result = "红蛇胜利";
     this.setResult(result);
     this.getRecord().set("result", result);
   }
@@ -330,17 +358,17 @@ public class SnakeGame extends AbsGame {
         map.append(g[i][j]);
 
     StringBuilder data = new StringBuilder();
-    data.append(String.valueOf(rows) + " ");
-    data.append(String.valueOf(cols) + " ");
-    data.append(String.valueOf(step) + " ");
+    data.append(rows + " ");
+    data.append(cols + " ");
+    data.append(step + " ");
     data.append(map + " ");
-    data.append(String.valueOf(snakes[0].size()) + " ");
-    data.append(String.valueOf(snakes[1].size()) + " ");
+    data.append(snakes[0].size() + " ");
+    data.append(snakes[1].size() + " ");
     for (Deque<Pair> snake : this.snakes) {
       StringBuilder snakeStr = new StringBuilder();
       for (Pair pair : snake) {
-        snakeStr.append(String.valueOf(pair.x) + " ");
-        snakeStr.append(String.valueOf(pair.y) + " ");
+        snakeStr.append(pair.x + " ");
+        snakeStr.append(pair.y + " ");
       }
       data.append(snakeStr);
     }
@@ -353,10 +381,6 @@ public class SnakeGame extends AbsGame {
   void createMap() {
     this.g = new int[this.rows][this.cols];
     for (int i = 0; i < 1000; ++i) if (this.draw()) break;
-    this.initG = new int[this.rows][this.cols];
-    for (int i = 0; i < this.rows; ++i)
-      for (int j = 0; j < this.cols; ++j)
-        this.initG[i][j] = this.g[i][j];
   }
 
   /**
@@ -427,17 +451,6 @@ public class SnakeGame extends AbsGame {
     for (int i = 0; i < this.rows; ++i) {
       for (int j = 0; j < this.cols; ++j)
         System.out.print(this.g[i][j] + " ");
-      System.out.println();
-    }
-  }
-
-   /**
-   * 输出初始棋盘（测试用）
-   */
-  private void displayInitG() {
-    for (int i = 0; i < this.rows; ++i) {
-      for (int j = 0; j < this.cols; ++j)
-        System.out.print(this.initG[i][j] + " ");
       System.out.println();
     }
   }

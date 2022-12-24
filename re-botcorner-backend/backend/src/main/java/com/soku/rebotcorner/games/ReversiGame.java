@@ -189,7 +189,7 @@ public class ReversiGame extends AbsGame {
     json.set("id", id);
     json.set("r", r);
     json.set("c", c);
-    this.getMatch().broadCast(Res.ok(json));
+//    this.getMatch().broadCast(Res.ok(json));
 
     // 保存到录像
     getSteps().append(r + "" + c);
@@ -208,7 +208,7 @@ public class ReversiGame extends AbsGame {
     JSONObject json = new JSONObject();
     json.set("action", "pass");
     json.set("passTo", step % 2);
-    this.getMatch().broadCast(Res.ok(json));
+//    this.getMatch().broadCast(Res.ok(json));
 
     // 保存到录像
     getSteps().append("ps");

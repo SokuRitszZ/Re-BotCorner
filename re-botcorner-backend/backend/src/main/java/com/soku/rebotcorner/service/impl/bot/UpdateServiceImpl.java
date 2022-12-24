@@ -69,7 +69,7 @@ public class UpdateServiceImpl implements UpdateService {
 
       botMapper.updateById(bot);
 
-      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
       sdf.setTimeZone(TimeZone.getTimeZone("GMT+8"));
 
       JSONObject ret = new JSONObject();

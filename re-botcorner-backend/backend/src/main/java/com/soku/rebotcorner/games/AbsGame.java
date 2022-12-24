@@ -113,7 +113,7 @@ public abstract class AbsGame {
       } catch (InterruptedException ex) {
         throw new RuntimeException(ex);
       }
-      this.getMatch().broadCast(Res.fail("录像文件太大，无法保存"));
+//      this.getMatch().broadCast(Res.fail("录像文件太大，无法保存"));
     }
   }
 
@@ -177,15 +177,19 @@ public abstract class AbsGame {
    * 通知结果
    */
   public void tellResult() {
-    JSONObject json = new JSONObject();
-    json.set("action", "tellResult");
-    StringBuilder message = new StringBuilder("");
-    for (String s : this.reason)
-      if (s != null) message.append(s).append("\n");
-      else message.append("获胜").append("\n");
-    json.set("reason", message.toString().trim());
-    json.set("result", this.result);
-    this.match.broadCast(Res.ok(json));
+    JSONObject ret = new JSONObject();
+    JSONObject data = new JSONObject();
+    StringBuilder reason = new StringBuilder();
+    for (String s : this.reason) { if (s != null) reason.append(s); }
+    this.match.broadCast(
+      ret
+        .set("action", "tell result")
+        .set("data",
+          data
+            .set("result", this.result)
+            .set("reason", reason.toString().trim())
+        )
+    );
   }
 
   /**

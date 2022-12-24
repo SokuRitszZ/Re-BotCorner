@@ -11,6 +11,7 @@ import com.soku.rebotcorner.games.SnakeGame;
 import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.pojo.SnakeRating;
 import com.soku.rebotcorner.pojo.User;
+import com.soku.rebotcorner.pojo.vo.UserVo;
 import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.utils.*;
 import lombok.Data;
@@ -54,11 +55,8 @@ public class GameSocketServer {
     // 获取socket
     List<GameSocketServer> sockets = new ArrayList<>();
     for (Integer userId : userIds) {
-      User user = UserDAO.selectById(userId);
-      JSONObject json = new JSONObject();
-      json.set("id", user.getId());
-      json.set("username", user.getUsername());
-      json.set("headIcon", user.getHeadIcon());
+      UserVo user = UserDAO.userVoMapper.selectById(userId);
+      JSONObject json = new JSONObject(user);
       jsons.add(json);
 
       GameSocketServer socket = users.get(userId);
@@ -66,11 +64,14 @@ public class GameSocketServer {
     }
     // 生成Matching
     GameMatch match = new GameMatch(sockets);
+
     // 广播
-    JSONObject json = new JSONObject();
-    json.set("infos", jsons);
-    json.set("action", "successMatching");
-    match.broadCast(Res.ok(json));
+    JSONObject ret = new JSONObject();
+    JSONObject data = new JSONObject();
+    data.set("userData", jsons);
+    ret.set("action", "make match");
+    ret.set("data", data);
+    match.broadCast(ret);
   }
 
   public void setMatch(GameMatch match) {
@@ -128,7 +129,7 @@ public class GameSocketServer {
 
   @OnMessage
   public void onMessage(String message, Session session) {
-    JSONObject json = JSONUtil.parseObj(message);
+    JSONObject json = new JSONObject(message);
     this.route(json);
   }
 
@@ -138,7 +139,7 @@ public class GameSocketServer {
       try {
         this.session.getBasicRemote().sendText(json.toString());
       } catch (Exception e) {
-        System.out.println("e.getMessage() = " + e.getMessage());
+        e.printStackTrace();
       }
     }
   }
@@ -149,20 +150,18 @@ public class GameSocketServer {
     this.match = new GameMatch(sockets);
   }
 
-  void route(JSONObject json) {
+  private void route(JSONObject json) {
     String action = json.getStr("action");
     System.out.println(this.user.getId() + " action = " + action);
-    Res res = null;
+    JSONObject res = null;
     switch (action) {
-      case "startSingleGaming": res = startSingleGaming(json); break;
-      case "sendTalk": res = sendTalk(json); break;
-      case "startMatching": res = startMatching(json); break;
-      case "cancelMatching": res = cancelMatching(json); break;
-      case "matchOk": res = matchOk(json); break;
-      case "matchNot": res = matchNot(json); break;
-      case "exitMatching": res = exitMatching(json); break;
-      case "setStep": res = setStep(json); break;
-      case "startGame": res = startGame(); break;
+      case "start single game": res = startSingleGaming(json.getJSONObject("data")); break;
+//      case "send talk": res = sendTalk(json); break;
+      case "start match": res = startMatching(json); break;
+      case "exit match": res = exitMatching(json); break;
+      case "toggle match": res = toggleMatch(json); break;
+      case "set step": res = setStep(json); break;
+      case "start game": res = startGame(); break;
       default: break;
     }
     this.match.broadCast(res);
@@ -172,13 +171,19 @@ public class GameSocketServer {
     }
   }
 
-  /**
-   * 加入待办
-   *
-   * @param thread
-   */
-  void addAbeyance(Thread thread) {
-    threadQueue.add(thread);
+  private JSONObject toggleMatch(JSONObject json) {
+    boolean isOk = json.getJSONObject("data").getBool("isOk");
+    this.match.setOk(this, isOk);
+    if (this.match.allOk())
+      new Thread(() -> {
+        this.startMultiGaming();
+      }).start();
+    return new JSONObject()
+      .set("action", "toggle match")
+      .set("data", new JSONObject()
+        .set("id", this.match.getMe(this))
+        .set("isOk", isOk)
+      );
   }
 
   /**
@@ -187,10 +192,14 @@ public class GameSocketServer {
    * @param json
    * @return
    */
-  private Res setStep(JSONObject json) {
-    JSONObject step = json.getJSONObject("step");
-    if (this.match.getGame() != null) this.match.getGame().setStep(step);
-    return Res.ok("");
+  private JSONObject setStep(JSONObject json) {
+    JSONObject ret = new JSONObject();
+    ret.set("action", "nothing");
+
+    if (this.match.getGame() != null)
+      this.match.getGame().setStep(json.getJSONObject("data"));
+
+    return ret;
   }
 
   /**
@@ -199,49 +208,15 @@ public class GameSocketServer {
    * @param json
    * @return
    */
-  private Res exitMatching(JSONObject json) {
-    this.match.someoneExit(this);
-    return Res.ok("");
-  }
-
-  /**
-   * 取消准备
-   *
-   * @param json
-   * @return
-   */
-  private Res matchNot(JSONObject json) {
-    this.match.setOk(this, false);
-    json.set("id", match.getMe(this));
-    return Res.ok(json);
-  }
-
-  /**
-   * 准备好
-   *
-   * @param json
-   * @return
-   */
-  private Res matchOk(JSONObject json) {
-    this.match.setOk(this, true);
-    json.set("id", match.getMe(this));
-    if (this.match.allOk())
-      new Thread(() -> {
-        this.startMulitGaming();
-      }).start();
-    return Res.ok(json);
-  }
-
-  /**
-   * 取消匹配
-   *
-   * @param json
-   * @return
-   */
-  private Res cancelMatching(JSONObject json) {
-    this.bot = null;
-    this.removeFromMatch();
-    return Res.ok(json);
+  private JSONObject exitMatching(JSONObject json) {
+    if (this.match.getSockets().size() == 1) {
+      this.bot = null;
+      this.removeFromMatch();
+    } else {
+      this.match.someoneExit(this);
+    }
+    return new JSONObject()
+      .set("action", "nothing");
   }
 
   /**
@@ -250,14 +225,16 @@ public class GameSocketServer {
    * @param json
    * @return
    */
-  Res startMatching(JSONObject json) {
+  JSONObject startMatching(JSONObject json) {
     // 开始匹配的时候必须初始化match，否则某个对局结束后会相互影响
     this.initMatch();
-    Integer botId = json.getInt("botId");
+    Integer botId = json
+      .getJSONObject("data")
+      .getInt("botId");
     if (botId == 0) this.bot = null;
     else this.bot = new RunningBot(botId);
     this.addToMatch();
-    return Res.ok(json);
+    return new JSONObject().set("action", "start match");
   }
 
   /**
@@ -290,16 +267,22 @@ public class GameSocketServer {
    * @param json
    * @return
    */
-  Res startSingleGaming(JSONObject json) {
+  JSONObject startSingleGaming(JSONObject json) {
+    JSONObject ret = new JSONObject();
+    ret.set("action", "start single game");
+
+    JSONObject data = new JSONObject();
     // 获取机器人编号
-    int i = 0;
     List<Integer> botIds = json.getBeanList("botIds", Integer.class);
+    data.set("botIds", botIds);
+
     List<RunningBot> bots = new ArrayList<>();
     for (Integer botId : botIds) {
-      if (botId != null && botId > 0) {
+      if (botId > 0) {
         if (!this.findBot(botId)) {
-          json.set("errorMessage", "不存在此编号的Bot");
-          return Res.ok(json);
+          data.set("error", "不存在此编号的Bot");
+          ret.set("data", data);
+          return ret;
         } else bots.add(new RunningBot(botId));
       } else bots.add(null);
     }
@@ -314,12 +297,19 @@ public class GameSocketServer {
 
     // 获取初始数据
     JSONObject initData = game.getInitDataAndSave();
-    json.set("initData", initData);
+    data.set("initData", initData);
+
+    // 返回数据
+    this.match.broadCast(ret
+      .set("data", data
+        .set("mode", "single"))
+    );
 
     // 启动所有机器人
     game.compileBots();
 
-    return Res.ok(json);
+    return new JSONObject()
+      .set("action", "allow to control");
   }
 
   /**
@@ -358,17 +348,13 @@ public class GameSocketServer {
   /**
    * 开始多人游戏
    */
-  void startMulitGaming() {
-    JSONObject json = new JSONObject();
-    json.set("action", "startMultiGaming");
-
+  void startMultiGaming() {
     AbsGame game = createGameObject("multi", this.match, this.match.getBots());
     game.setMatch(this.match);
     this.match.setGame(game);
 
     // 获取初始数据
     JSONObject initData = game.getInitDataAndSave();
-    json.set("initData", initData);
 
     // 获取botIds
     List<RunningBot> bots = this.match.getBots();
@@ -377,19 +363,32 @@ public class GameSocketServer {
       if (runningBot != null) ids.add(runningBot.getBot().getId());
       else ids.add(0);
     }
-    json.set("botIds", ids);
+
+    this.match.broadCast(new JSONObject()
+      .set("action", "start multi game")
+      .set("data", new JSONObject()
+        .set("mode", "multi")
+        .set("initData", initData)
+        .set("botIds", ids))
+    );
 
     // 启动机器人
     game.compileBots();
 
-    this.match.broadCast(Res.ok(json));
+    this.match.broadCast(new JSONObject()
+      .set("action", "allow to control")
+    );
   }
 
   /**
    * 前端都准备好才能开始
    */
-  Res startGame() {
+  JSONObject startGame() {
     this.match.setStartGame(this);
-    return Res.ok("");
+    this.sendMessage(new JSONObject()
+      .set("action", "start game")
+    );
+    return new JSONObject()
+      .set("action", "nothing");
   }
 }
