@@ -4,7 +4,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.soku.rebotcorner.consumer.match.GameMatch;
 import com.soku.rebotcorner.runningbot.RunningBot;
-import com.soku.rebotcorner.utils.Res;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,12 +19,23 @@ public class SnakeGame extends AbsGame {
   private int innerWallsCount;
   private Deque<Pair>[] snakes;
   private int[][] g;
-  private JSONObject initData;
-  private int[] directions;
+
+  private Vector<Integer> directions = new Vector<>(2);
   private String[] state;
   private ReentrantLock lock;
-
+  private AtomicInteger ok = new AtomicInteger();
   private int step;
+  private UUID uuid = UUID.randomUUID();
+
+  /**
+   * 获取玩家数
+   *
+   * @return
+   */
+  @Override
+  public Integer getPlayerCount() {
+    return 2;
+  }
 
   /**
    * 构造函数
@@ -41,52 +51,43 @@ public class SnakeGame extends AbsGame {
   ) {
     super(mode, match, bots);
 
-    this.setGameId(1);
+    setGameId(1);
 
     // init grid
-    this.rows = 12;
-    this.cols = 13;
-    this.innerWallsCount = 20;
+    rows = 12;
+    cols = 13;
+    innerWallsCount = 20;
     createMap();
 
     // init snake
-    this.snakes = new Deque[2];
-    this.snakes[0] = new LinkedList<>();
-    this.snakes[1] = new LinkedList<>();
-    this.snakes[0].addFirst(new Pair(1, this.cols - 2));
-    this.snakes[1].addFirst(new Pair(this.rows - 2, 1));
-    this.state = new String[2];
+    snakes = new Deque[2];
+    snakes[0] = new LinkedList<>();
+    snakes[1] = new LinkedList<>();
+    snakes[0].addFirst(new Pair(1, cols - 2));
+    snakes[1].addFirst(new Pair(rows - 2, 1));
+    state = new String[2];
 
     // init operations
-    this.lock = new ReentrantLock();
-    this.directions = new int[2];
-    directions[0] = directions[1] = -1;
+    lock = new ReentrantLock();
+    directions.add(-1);
+    directions.add(-1);
   }
 
-  private JSONObject getInitData() {
+  private JSONObject makeInitData() {
     int rc = 0;
-    rc |= (this.rows & (1 << 16) - 1);
+    rc |= (rows & (1 << 16) - 1);
     rc <<= 16;
-    rc |= (this.cols & (1 << 16) - 1);
-    List<Integer> grid = new ArrayList<>();
-    int k = 0;
+    rc |= (cols & (1 << 16) - 1);
     StringBuilder mask = new StringBuilder();
-    for (int i = 0; i < this.rows; ++i) {
-      for (int j = 0; j < this.cols; ++j) {
-        mask.append(this.g[i][j]);
+    for (int i = 0; i < rows; ++i) {
+      for (int j = 0; j < cols; ++j) {
+        mask.append(g[i][j]);
       }
     }
-    return new JSONObject().set("rc", rc).set("mask", mask.toString());
-  }
-
-  /**
-   * 获取玩家数
-   *
-   * @return
-   */
-  @Override
-  public Integer getPlayerCount() {
-    return 2;
+    setInitData(new JSONObject()
+      .set("rc", rc)
+      .set("mask", mask.toString()));
+    return getInitData();
   }
 
   /**
@@ -96,9 +97,30 @@ public class SnakeGame extends AbsGame {
    */
   @Override
   public JSONObject getInitDataAndSave() {
-    JSONObject initData = getInitData();
-    this.getRecord().set("initData", initData);
+    JSONObject initData = makeInitData();
+    getRecord().set("initData", initData);
     return initData;
+  }
+
+  public boolean beforeSetStep(JSONObject json) {
+    getMatch().broadCast(
+      new JSONObject()
+        .set("action", "set step")
+        .set("data", json)
+    );
+    return true;
+  }
+
+  public void afterSetStep(JSONObject json) {
+    // 检测是否已经设置好所有方向了
+    if (!checkDirections()) return ;
+
+    // 两个都准备好了，开始移动
+    moveSnake();
+
+    if (checkOver()) {
+      gameOver();
+    }
   }
 
   /**
@@ -108,70 +130,94 @@ public class SnakeGame extends AbsGame {
    */
   @Override
   public void setStep(JSONObject json) {
-    if (!isHasStart()) return ;
+    if (!isHasStart() || isHasOver()) {
+      return ;
+    }
 
     Integer id = json.getInt("id");
     Integer d = json.getInt("d");
-    this.getMatch().broadCast(
-      new JSONObject()
-        .set("action", "set step")
-        .set("data", json)
-    );
-    this.setDirectionAndCheckMove(id, d);
+
+    if (beforeSetStep(json)) {
+      setDirection(id, d);
+      afterSetStep(json);
+    }
+  }
+
+  private boolean beforeMoveSnake() {
+    // 处理Bot输出数据错误导致的游戏结束
+    if (checkOver()) return false;
+    return true;
+  }
+
+  private void afterMoveSnake() {
+    // 处理正常的战败
+    boolean isIncreasing = checkIncreasing();
+
+    // 检测当前状态
+    for (int i = 0; i < snakes.length; i++) {
+      Pair first = snakes[i].getFirst();
+      if (g[first.x][first.y] > 1) {
+        state[i] = "die";
+        setReason(i, "碰撞致死");
+      }
+    }
+
+    // 发送移动蛇的信息
+    String step = ""
+      + directions.get(0) + directions.get(1)
+      + (isIncreasing ? 1 : 0)
+      + (state[0] == "die" ? 1 : 0) + (state[1] == "die" ? 1 : 0);
+
+    // 保存在steps
+    getSteps().append(step);
+
+    // 发送信息
+    getMatch()
+      .broadCast(
+        new JSONObject()
+          .set("action", "move snake")
+          .set("data", new JSONObject()
+            .set("step", step)
+          )
+      );
+
+    // 处理现场
+    directions.set(0, -1);
+    directions.set(1, -1);
+    ++this.step;
+
+    ok.getAndIncrement();
   }
 
   /**
    * 移动蛇
    */
   private void moveSnake() {
-    boolean isIncreasing = this.checkIncreasing();
-    ++step;
+    if (!beforeMoveSnake()) {
+      return ;
+    }
+
+    boolean isIncreasing = checkIncreasing();
     // 移动
     for (int i = 0; i < 2; ++i) {
-      this.state[i] = "alive";
+      state[i] = "alive";
       if (!isIncreasing) {
         Pair last = snakes[i].getLast();
-        this.g[last.x][last.y] -= 1;
-        this.snakes[i].removeLast();
+        g[last.x][last.y] -= 1;
+        snakes[i].removeLast();
       }
     }
     for (int i = 0; i < 2; ++i) {
       Pair first = snakes[i].getFirst();
-      int d = this.directions[i];
+      int d = directions.get(i);
       int nx = first.x + dx[d];
       int ny = first.y + dy[d];
       Pair newFirst = new Pair(nx, ny);
-      this.g[nx][ny] += 1;
+      g[nx][ny] += 1;
       snakes[i].addFirst(newFirst);
-      // 战败
-      if (this.g[nx][ny] >= 2) {
-        this.state[i] = "die";
-        this.setReason(i, "碰撞致死");
-      }
     }
 
-    String step =
-      "" + this.directions[0] + this.directions[1]
-        + (isIncreasing ? 1 : 0)
-        + (this.state[0] == "die" ? 1 : 0) + (this.state[1] == "die" ? 1 : 0);
-    // 保存在steps
-    this.getSteps().append(step);
-
-    JSONObject ret = new JSONObject();
-    JSONObject data = new JSONObject();
-    // 发送信息
-    this
-      .getMatch()
-      .broadCast(ret
-        .set("action", "move snake")
-        .set("data",
-          data
-            .set("step", step)
-        )
-      );
-
-    // 清空保存的操作
-    this.directions[0] = this.directions[1] = -1;
+    afterMoveSnake();
   }
 
   /**
@@ -180,19 +226,14 @@ public class SnakeGame extends AbsGame {
    * @return
    */
   private boolean checkIncreasing() {
-    return this.step < 10 || (this.step - 9) % 3 == 0;
+    return step < 10 || (step - 9) % 3 == 0;
   }
 
   /**
    * 巡回
    */
   private void nextStep() {
-    if (this.checkOver()) {
-      this.gameOver();
-      return ;
-    }
     runBot();
-    if (this.checkOver()) this.gameOver();
   }
 
   /**
@@ -201,7 +242,10 @@ public class SnakeGame extends AbsGame {
    * @return
    */
   private boolean checkOver() {
-    for (String s : this.state)
+    for (int i = 0; i < 2; i++)
+      if (directions.get(i) == 4)
+        state[i] = "die";
+    for (String s : state)
       if (s != null && s.equals("die"))
         return true;
     return false;
@@ -211,36 +255,31 @@ public class SnakeGame extends AbsGame {
    * 运行Bot
    */
   private void runBot() {
-    AtomicInteger runOk = new AtomicInteger();
-    List<RunningBot> bots = this.getBots();
+    List<RunningBot> bots = getBots();
     for (int i = 0; i < bots.size(); ++i) {
       RunningBot bot = bots.get(i);
       int fi = i;
       if (bot != null)
         new Thread(() -> {
-          bot.prepareData(fi + " " + this.parseDataString());
+          bot.prepareData(fi + " " + parseDataString());
           JSONObject json = JSONUtil.parseObj(bot.run());
           String result = json.getStr("data");
-          String check = this.checkResult(result);
+          String check = checkResult(result);
           // 检查结果是否合法
           if (!check.equals(result)) {
-            this.setReason(fi, check);
+            state[fi] = "die";
+            setReason(fi, check);
+            setStep(new JSONObject()
+              .set("id", fi)
+              .set("d", 4)
+            );
           } else {
-            json = new JSONObject();
-            json.set("id", fi);
-            json.set("d", Integer.parseInt(result));
-            this.setStep(json);
+            setStep(new JSONObject()
+              .set("id", fi)
+              .set("d", Integer.parseInt(result))
+            );
           }
-          runOk.incrementAndGet();
         }).start();
-      else runOk.incrementAndGet();
-    }
-    while (runOk.get() != 2) {
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
     }
   }
 
@@ -267,13 +306,12 @@ public class SnakeGame extends AbsGame {
    * 将结果保存在录像中
    */
   @Override
-  public void setResultToRecord() {
+  public void describeResult() {
     String result = "";
     if (isDie(0) && isDie(1)) result = "平局";
     else if (isDie(0)) result = "蓝蛇胜利";
     else result = "红蛇胜利";
-    this.setResult(result);
-    this.getRecord().set("result", result);
+    setResult(result);
   }
 
   /**
@@ -283,18 +321,7 @@ public class SnakeGame extends AbsGame {
    * @return
    */
   boolean isDie(Integer id) {
-    return "die".equals(this.state[id]);
-  }
-
-  /**
-   * 设置失败原因
-   *
-   * @param id
-   * @param reason
-   */
-  public void setReason(Integer id, String reason) {
-    this.state[id] = "die";
-    super.setReason(id, reason);
+    return "die".equals(state[id]);
   }
 
   /**
@@ -303,23 +330,8 @@ public class SnakeGame extends AbsGame {
    * @param id
    * @param direction
    */
-  private void setDirectionAndCheckMove(Integer id, Integer direction) {
-    lock.lock();
-    this.directions[id] = direction;
-    lock.unlock();
-    new Thread(() -> {
-      if (!this.checkDirections()) return ;
-      if (this.checkOver()) {
-        this.gameOver();
-        return ;
-      }
-
-      // 两个都准备好了，开始移动
-      this.moveSnake();
-
-      // 下一步
-      this.nextStep();
-    }).start();
+  private void setDirection(Integer id, Integer direction) {
+    directions.set(id, direction);
   }
 
   /**
@@ -328,9 +340,7 @@ public class SnakeGame extends AbsGame {
    * @return
    */
   private boolean checkDirections() {
-    lock.lock();
-    boolean ok = this.directions[0] != -1 && this.directions[1] != -1;
-    lock.unlock();
+    boolean ok = directions.get(0) != -1 && directions.get(1) != -1;
     return ok;
   }
 
@@ -339,9 +349,17 @@ public class SnakeGame extends AbsGame {
    */
   @Override
   public void start() {
-    this.setHasStart(true);
-    this.g[this.rows - 2][1] = this.g[1][this.cols - 2] = 1;
-    this.nextStep();
+    setHasStart(true);
+    g[rows - 2][1] = g[1][cols - 2] = 1;
+    ok.getAndIncrement();
+    new Thread(() -> {
+      while (!checkOver()) {
+        if (ok.get() > 0) {
+          ok.decrementAndGet();
+          nextStep();
+        }
+      }
+    }).start();
   }
 
   /**
@@ -353,8 +371,8 @@ public class SnakeGame extends AbsGame {
   public String parseDataString() {
     StringBuilder map = new StringBuilder();
 
-    for (int i = 0; i < this.rows; ++i)
-      for (int j = 0; j < this.cols; ++j)
+    for (int i = 0; i < rows; ++i)
+      for (int j = 0; j < cols; ++j)
         map.append(g[i][j]);
 
     StringBuilder data = new StringBuilder();
@@ -364,7 +382,7 @@ public class SnakeGame extends AbsGame {
     data.append(map + " ");
     data.append(snakes[0].size() + " ");
     data.append(snakes[1].size() + " ");
-    for (Deque<Pair> snake : this.snakes) {
+    for (Deque<Pair> snake : snakes) {
       StringBuilder snakeStr = new StringBuilder();
       for (Pair pair : snake) {
         snakeStr.append(pair.x + " ");
@@ -379,8 +397,8 @@ public class SnakeGame extends AbsGame {
    * 造图
    */
   void createMap() {
-    this.g = new int[this.rows][this.cols];
-    for (int i = 0; i < 1000; ++i) if (this.draw()) break;
+    g = new int[rows][cols];
+    for (int i = 0; i < 1000; ++i) if (draw()) break;
   }
 
   /**
@@ -389,24 +407,24 @@ public class SnakeGame extends AbsGame {
    * @return
    */
   boolean draw() {
-    for (int i = 0; i < this.rows; ++i) for (int j = 0; j < this.cols; ++j) g[i][j] = 0;
-    for (int i = 0; i < this.rows; ++i) g[i][0] = g[i][this.cols - 1] = 1;
-    for (int i = 0; i < this.cols; ++i) g[0][i] = g[this.rows - 1][i] = 1;
+    for (int i = 0; i < rows; ++i) for (int j = 0; j < cols; ++j) g[i][j] = 0;
+    for (int i = 0; i < rows; ++i) g[i][0] = g[i][cols - 1] = 1;
+    for (int i = 0; i < cols; ++i) g[0][i] = g[rows - 1][i] = 1;
 
     Random random = new Random();
-    for (int i = 0; i < this.innerWallsCount / 2; ++i) for (int j = 0; j < 1000; ++j) {
-      int r = random.nextInt(this.rows);
-      int c = random.nextInt(this.cols);
-      if (g[r][c] == 1 || g[this.rows - 1 - r][this.cols - 1 - c] == 1) {
+    for (int i = 0; i < innerWallsCount / 2; ++i) for (int j = 0; j < 1000; ++j) {
+      int r = random.nextInt(rows);
+      int c = random.nextInt(cols);
+      if (g[r][c] == 1 || g[rows - 1 - r][cols - 1 - c] == 1) {
         continue;
       }
-      if ((r == this.rows - 2 && c == 1) || (r == 1 && c == this.cols - 2)) {
+      if ((r == rows - 2 && c == 1) || (r == 1 && c == cols - 2)) {
         continue;
       }
-      g[r][c] = g[this.rows - 1 - r][this.cols - 1 - c] = 1;
+      g[r][c] = g[rows - 1 - r][cols - 1 - c] = 1;
       break;
     }
-    return checkValid(this.rows - 2, 1, 1, this.cols - 2);
+    return checkValid(rows - 2, 1, 1, cols - 2);
   }
 
   /**
@@ -421,14 +439,14 @@ public class SnakeGame extends AbsGame {
   boolean checkValid(int sx, int sy, int tx, int ty) {
     Queue<Pair> q = new LinkedList<>();
     q.add(new Pair(sx, sy));
-    boolean[][] st = new boolean[this.rows][this.cols];
+    boolean[][] st = new boolean[rows][cols];
     st[sx][sy] = true;
     while (!q.isEmpty()) {
       Pair u = q.remove();
       for (int i = 0; i < 4; ++i) {
         int nx = u.x + dx[i];
         int ny = u.y + dy[i];
-        if (nx < 0 || nx >= this.rows || ny < 0 || ny >= this.cols) {
+        if (nx < 0 || nx >= rows || ny < 0 || ny >= cols) {
           continue;
         }
         if (g[nx][ny] == 1 || st[nx][ny]) {
@@ -448,10 +466,12 @@ public class SnakeGame extends AbsGame {
    * 输出棋盘（测试用）
    */
   private void display() {
-    for (int i = 0; i < this.rows; ++i) {
-      for (int j = 0; j < this.cols; ++j)
-        System.out.print(this.g[i][j] + " ");
+    System.out.println(uuid.toString());
+    for (int i = 0; i < rows; ++i) {
+      for (int j = 0; j < cols; ++j)
+        System.out.print(g[i][j] + " ");
       System.out.println();
     }
+    System.out.println();
   }
 }

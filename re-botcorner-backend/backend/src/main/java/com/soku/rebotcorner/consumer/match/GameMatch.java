@@ -129,7 +129,6 @@ public class GameMatch {
   }
 
   public void setStartGame(GameSocketServer socket) {
-
     lock.lock();
     int me = getMe(socket);
     canStartGame[me] = true;
