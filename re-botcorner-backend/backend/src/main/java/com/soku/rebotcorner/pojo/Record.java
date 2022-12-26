@@ -19,8 +19,8 @@ public class Record {
   private Integer id;
   private Integer gameId;
   private String recordJson;
-  private String resultJson;
-  private String reasonJson;
+  private String result;
+  private String reason;
   private String userIds;
   private String botIds;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")

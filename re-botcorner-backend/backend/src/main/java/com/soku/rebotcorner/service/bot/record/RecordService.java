@@ -1,10 +1,13 @@
 package com.soku.rebotcorner.service.bot.record;
 
 import cn.hutool.json.JSONObject;
-import com.soku.rebotcorner.pojo.Record;
 
 import java.util.List;
 
 public interface RecordService {
-  List<JSONObject> getBaseRecordByGameId(Integer gameId);
+  JSONObject getBaseRecordByGameId(Integer gameId, Integer from, Integer count);
+
+  JSONObject getRecordCount(Integer gameId);
+
+  JSONObject getRecordJson(Integer id);
 }
