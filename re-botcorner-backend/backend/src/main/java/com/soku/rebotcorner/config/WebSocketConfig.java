@@ -31,7 +31,7 @@ public class WebSocketConfig {
   ) {
     RecordDAO.mapper = recordMapper;
     UserDAO.mapper = userMapper;
-    BotDAO.botMapper = botMapper;
+    BotDAO.mapper = botMapper;
     RT.restTemplate = restTemplate;
     LangDAO.langMapper = langMapper;
     SnakeRatingDAO.snakeRatingMapper = snakeRatingMapper;

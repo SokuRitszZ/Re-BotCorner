@@ -9,13 +9,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class BotDAO {
   @Autowired
-  public static BotMapper botMapper;
+  public static BotMapper mapper;
 
   public static Bot selectById(Integer id) {
-    return botMapper.selectById(id);
+    return mapper.selectById(id);
   }
 
   public static Bot selectOne(QueryWrapper<Bot> qw) {
-    return botMapper.selectOne(qw);
+    return mapper.selectOne(qw);
   }
 }

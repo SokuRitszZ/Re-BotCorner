@@ -50,7 +50,7 @@ public class GameSocketServer {
     // 获取socket
     List<GameSocketServer> sockets = new ArrayList<>();
     for (Integer userId : userIds) {
-      JSONObject user = UserDAO.mapper.selectBaseById(userId);
+      JSONObject user = UserDAO.mapper.getBaseById(userId);
       jsons.add(user);
 
       GameSocketServer socket = users.get(userId);
