@@ -68,6 +68,20 @@ public abstract class AbsGame {
   }
 
   /**
+   * 获取初始值并且保存起来
+   *
+   * @return
+   */
+  public JSONObject getInitDataAndSave() {
+    JSONObject initData = makeInitData();
+    getRecord().set("initData", initData);
+    return initData;
+  }
+
+
+  abstract protected JSONObject makeInitData();
+
+  /**
    * 构造函数
    *
    * @param mode
@@ -86,13 +100,6 @@ public abstract class AbsGame {
     this.setRecord(new JSONObject());
     this.setSteps(new StringBuilder());
   }
-
-  /**
-   * 获取初始数据
-   *
-   * @return
-   */
-  public abstract JSONObject getInitDataAndSave();
 
   /**
    * 启动机器人
@@ -131,11 +138,22 @@ public abstract class AbsGame {
   public abstract String parseDataString();
 
   /**
-   * 设步
+   * 设步前验证是否有机器人
    *
    * @param json
    */
-  public abstract void setStep(JSONObject json);
+  public void setStep(JSONObject json) {
+    if (!isHasStart() || isHasOver()) return ;
+    if (this.bots.get(json.getInt("id")) != null) return ;
+    this._setStep(json);
+  }
+
+  /**
+   * 真正的设步
+   *
+   * @param json
+   */
+  protected abstract void _setStep(JSONObject json);
 
   /**
    * 设置原因

@@ -73,7 +73,8 @@ public class SnakeGame extends AbsGame {
     directions.add(-1);
   }
 
-  private JSONObject makeInitData() {
+  @Override
+  protected JSONObject makeInitData() {
     int rc = 0;
     rc |= (rows & (1 << 16) - 1);
     rc <<= 16;
@@ -88,18 +89,6 @@ public class SnakeGame extends AbsGame {
       .set("rc", rc)
       .set("mask", mask.toString()));
     return getInitData();
-  }
-
-  /**
-   * 获取初始数据
-   *
-   * @return
-   */
-  @Override
-  public JSONObject getInitDataAndSave() {
-    JSONObject initData = makeInitData();
-    getRecord().set("initData", initData);
-    return initData;
   }
 
   public boolean beforeSetStep(JSONObject json) {
@@ -129,11 +118,7 @@ public class SnakeGame extends AbsGame {
    * @param json
    */
   @Override
-  public void setStep(JSONObject json) {
-    if (!isHasStart() || isHasOver()) {
-      return ;
-    }
-
+  protected void _setStep(JSONObject json) {
     Integer id = json.getInt("id");
     Integer d = json.getInt("d");
 
@@ -175,7 +160,7 @@ public class SnakeGame extends AbsGame {
     getMatch()
       .broadCast(
         new JSONObject()
-          .set("action", "move snake")
+          .set("action", "set step truly")
           .set("data", new JSONObject()
             .set("step", step)
           )
@@ -193,9 +178,7 @@ public class SnakeGame extends AbsGame {
    * 移动蛇
    */
   private void moveSnake() {
-    if (!beforeMoveSnake()) {
-      return ;
-    }
+    if (!beforeMoveSnake()) return ;
 
     boolean isIncreasing = checkIncreasing();
     // 移动
@@ -269,14 +252,16 @@ public class SnakeGame extends AbsGame {
           if (!check.equals(result)) {
             state[fi] = "die";
             setReason(fi, check);
-            setStep(new JSONObject()
-              .set("id", fi)
-              .set("d", 4)
+            _setStep(
+              new JSONObject()
+                .set("id", fi)
+                .set("d", 4)
             );
           } else {
-            setStep(new JSONObject()
-              .set("id", fi)
-              .set("d", Integer.parseInt(result))
+            _setStep(
+              new JSONObject()
+                .set("id", fi)
+                .set("d", Integer.parseInt(result))
             );
           }
         }).start();
@@ -314,7 +299,7 @@ public class SnakeGame extends AbsGame {
     setResult(result);
   }
 
-  /**
+  /*u
    * 检测是否死亡
    *
    * @param id
