@@ -7,6 +7,7 @@ import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.utils.Res;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 public class ReversiGame extends AbsGame {
@@ -15,8 +16,10 @@ public class ReversiGame extends AbsGame {
 
   private final int rows;
   private final int cols;
-  private int[][] chess;
+  private int[] rc = new int[2];
+  private int[][] g;
   private int step;
+  private AtomicInteger ok = new AtomicInteger();
 
   /**
    * 构造函数
@@ -32,19 +35,19 @@ public class ReversiGame extends AbsGame {
   ) {
     super(mode, match, bots);
 
-    this.setGameId(2);
+    setGameId(2);
 
-    // init chess
-    this.rows = this.cols = 8;
-    this.chess = new int[rows][cols];
-    this.step = 0;
+    // init g
+    rows = cols = 8;
+    g = new int[rows][cols];
+    step = 0;
     for (int i = 0; i < rows; ++i)
       for (int j = 0; j < cols; ++j)
-        this.chess[i][j] = 2;
+        g[i][j] = 2;
     int mdRow = rows >> 1;
     int mdCol = cols >> 1;
-    chess[mdRow - 1][mdCol - 1] = chess[mdRow][mdCol] = 1;
-    chess[mdRow][mdCol - 1] = chess[mdRow - 1][mdCol] = 0;
+    g[mdRow - 1][mdCol - 1] = g[mdRow][mdCol] = 1;
+    g[mdRow][mdCol - 1] = g[mdRow - 1][mdCol] = 0;
   }
 
   /**
@@ -53,21 +56,50 @@ public class ReversiGame extends AbsGame {
    * @return
    */
   @Override
-  Integer getPlayerCount() {
+  public Integer getPlayerCount() {
     return 2;
   }
 
-  /**
-   * 获取初始值并且保存起来
-   *
-   * @return
-   */
   @Override
-  public JSONObject getInitDataAndSave() {
-    JSONObject json = new JSONObject();
-    json.set("initChess", this.chess);
-    this.getRecord().set("initData", json);
-    return json;
+  protected JSONObject makeInitData() {
+    int rc = 0;
+    rc |= (rows & (1 << 16) - 1);
+    rc <<= 16;
+    rc |= (cols & (1 << 16) - 1);
+    StringBuilder mask = new StringBuilder();
+    for (int i = 0; i < rows; ++i) {
+      for (int j = 0; j < cols; ++j) {
+        mask.append(g[i][j]);
+      }
+    }
+    setInitData(new JSONObject()
+      .set("rc", rc)
+      .set("mask", mask.toString()));
+
+    return getInitData();
+  }
+
+  public boolean beforeSetStep(JSONObject json) {
+    Integer id = json.getInt("id");
+    Integer r = json.getInt("r");
+    Integer c = json.getInt("c");
+    this.rc[0] = r;
+    this.rc[1] = c;
+    return checkValid(id, r, c);
+  }
+
+  private void afterSetStep(JSONObject json) {
+    if (checkOver()) {
+      gameOver();
+    }
+    if (checkPass()) {
+      _setStep(
+        new JSONObject()
+          .set("id", step % 2)
+          .set("r", 9)
+          .set("c", 9)
+      );
+    }
   }
 
   /**
@@ -76,37 +108,120 @@ public class ReversiGame extends AbsGame {
    * @param json
    */
   @Override
-  public void setStep(JSONObject json) {
-    if (!this.isHasStart() || this.isHasOver()) return ;
-//    this.display();
+  protected void _setStep(JSONObject json) {
     Integer id = json.getInt("id");
     Integer r = json.getInt("r");
     Integer c = json.getInt("c");
-    this.checkAndPutChess(id, r, c);
-  }
 
-  private void display() {
-    for (int i = 0; i < this.rows; i++) {
-      for (int j = 0; j < this.cols; j++) {
-        System.out.print(chess[i][j] + " ");
-      }
-      System.out.println();
+    if (beforeSetStep(json)) {
+      putChess(id, r, c);
+      afterSetStep(json);
     }
   }
 
+  private boolean beforePutChess() {
+    // 处理Bot输出数据导致的游戏结束
+    return !checkOver();
+  }
+
+  private void afterPutChess() {
+    // 发送信息
+    String step = "" + this.step % 2 + this.rc[0] + this.rc[1];
+    getMatch()
+      .broadCast(
+        new JSONObject()
+          .set("action", "set step truly")
+          .set("data",
+            new JSONObject()
+              .set("step", step)
+          )
+      );
+    getSteps().append(step);
+
+    // 处理正常输
+    int[] cnt = new int[2];
+    // 已经没有某个颜色的棋子
+    for (int[] ints : g) {
+      for (int anInt : ints) {
+        if (anInt != 2)
+          ++cnt[anInt];
+      }
+    }
+    int id = cnt[0] == 0 ? 0 : 1;
+    if (cnt[id] == 0) {
+      this.setResult((id == 0 ? "白子" : "黑子") + "胜利");
+      this.setReason(id, (id == 0 ? "黑子" : "白子") + "失去所有棋子");
+      rc[0] = -1;
+      return ;
+    }
+    // 已经放满了棋盘
+    if (cnt[0] + cnt[1] == rows * cols) {
+      int i = cnt[0] > cnt[1] ? 0 : 1;
+      if (cnt[i] == cnt[i ^ 1]) {
+        setResult("平局");
+        for (int i1 = 0; i1 < 2; i1++) {
+          this.setReason(i1, "棋子数相等");
+        }
+      } else {
+        setResult((i == 0 ? "黑子" : "白子") + "胜利");
+        setReason(i ^ 1, "棋数更少");
+      }
+      rc[0] = -1;
+      return ;
+    }
+
+    ++this.step;
+    rc[0] = 8; // 还能继续
+    ok.getAndIncrement();
+  }
+
+
   /**
-   * 检测并落子
+   * 落子
    *
    * @param id
    * @param r
    * @param c
    */
-  private void checkAndPutChess(Integer id, Integer r, Integer c) {
-    if (!checkValid(id, r, c)) {
-      this.getMatch().sendOne(id, Res.fail("操作不合法，请重试"));
-      return ;
+  private void putChess(int id, int r, int c) {
+    if (!beforePutChess()) return ;
+
+    rc[0] = r;
+    rc[1] = c;
+
+    if (r != 9) {
+      g[r][c] = id;
+      for (int i = 0; i < 8; ++i) {
+        if (isValidDir(r, c, i)) {
+          int nr = r + dx[i];
+          int nc = c + dy[i];
+          while (isIn(nr, nc) && g[nr][nc] == (id ^ 1)) {
+            g[nr][nc] = id;
+            nr += dx[i];
+            nc += dy[i];
+          }
+        }
+      }
     }
-    this.putChess(id, r, c);
+
+    afterPutChess();
+  }
+
+  private boolean checkOver() {
+    if (rc[0] != -1) return false;
+    return true;
+  }
+
+  /**
+   * 输出测试
+   */
+  private void display() {
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        System.out.print(g[i][j] + " ");
+      }
+      System.out.println();
+    }
   }
 
   /**
@@ -114,21 +229,24 @@ public class ReversiGame extends AbsGame {
    */
   @Override
   public void start() {
-    this.setHasStart(true);
-    this.nextStep();
+    setHasStart(true);
+
+    ok.getAndIncrement();
+    new Thread(() -> {
+      while (!checkOver()) {
+        if (ok.get() > 0) {
+          ok.decrementAndGet();
+          nextStep();
+        }
+      }
+    }).start();
   }
 
   /**
    * 下一步
    */
   private void nextStep() {
-    if (this.checkOverAndSaveResult()) {
-      this.gameOver();
-      return ;
-    }
-    // 检测是否跳过
-    if (this.checkPass()) this.pass();
-    this.runBot();
+    runBot();
   }
 
   /**
@@ -136,9 +254,9 @@ public class ReversiGame extends AbsGame {
    */
   private void runBot() {
     int id = step % 2;
-    if (this.getBots().get(id) == null) return ;
+    if (getBots().get(id) == null) return ;
     String data = id + " " + parseDataString();
-    RunningBot bot = this.getBots().get(id);
+    RunningBot bot = getBots().get(id);
     bot.prepareData(data);
     JSONObject json = JSONUtil.parseObj(bot.run());
     String result = json.getStr("data");
@@ -154,64 +272,22 @@ public class ReversiGame extends AbsGame {
       int c = Integer.parseInt(rc[1]);
       if (!checkValid(id, r, c))
         throw new RuntimeException(String.format("非法操作: %s", result));
-      this.putChess(id, r, c);
+      _setStep(
+        new JSONObject()
+          .set("id", id)
+          .set("r", r)
+          .set("c", c)
+      );
     } catch (Exception e) {
       String reason = e.getMessage();
-      this.setReason(id, reason);
-      this.gameOver();
+      setReason(id, reason);
+      _setStep(
+        new JSONObject()
+          .set("id", id)
+          .set("r", -1)
+          .set("c", -1)
+      );
     }
-  }
-
-  /**
-   * 落子
-   *
-   * @param id
-   * @param r
-   * @param c
-   */
-  private void putChess(int id, int r, int c) {
-    this.chess[r][c] = id;
-    for (int i = 0; i < 8; ++i) {
-      if (isValidDir(r, c, i)) {
-        int nr = r + dx[i];
-        int nc = c + dy[i];
-        while (isIn(nr, nc) && chess[nr][nc] == (id ^ 1)) {
-          chess[nr][nc] = id;
-          nr += dx[i];
-          nc += dy[i];
-        }
-      }
-    }
-    ++this.step;
-
-    JSONObject json = new JSONObject();
-    json.set("action", "putChess");
-    json.set("id", id);
-    json.set("r", r);
-    json.set("c", c);
-//    this.getMatch().broadCast(Res.ok(json));
-
-    // 保存到录像
-    getSteps().append(r + "" + c);
-
-    // 下一步
-    new Thread(() -> {
-      this.nextStep();
-    }).start();
-  }
-
-  /**
-   * 跳过
-   */
-  private void pass() {
-    ++this.step;
-    JSONObject json = new JSONObject();
-    json.set("action", "pass");
-    json.set("passTo", step % 2);
-//    this.getMatch().broadCast(Res.ok(json));
-
-    // 保存到录像
-    getSteps().append("ps");
   }
 
   /**
@@ -220,11 +296,15 @@ public class ReversiGame extends AbsGame {
    * @return
    */
   private boolean checkPass() {
+    boolean isHasEmpty = false;
     for (int i = 0; i < rows; ++i)
       for (int j = 0; j < cols; ++j)
-        if (checkValid(step % 2, i, j))
+        if (checkValid(step % 2, i, j)) {
           return false;
-    return true;
+        } else if (g[i][j] == 2) {
+          isHasEmpty = true;
+        }
+    return isHasEmpty;
   }
 
   /**
@@ -237,7 +317,8 @@ public class ReversiGame extends AbsGame {
    */
   private boolean checkValid(int id, int r, int c) {
     if (id != step % 2) return false;
-    if (!isIn(r, c) || chess[r][c] != 2)
+    if (r == 9) return true;
+    if (!isIn(r, c) || g[r][c] != 2)
       return false;
     for (int i = 0; i < 8; ++i)
       if (isValidDir(r, c, i))
@@ -258,12 +339,12 @@ public class ReversiGame extends AbsGame {
     int nr = r + dx[i];
     int nc = c + dy[i];
     boolean flg = false;
-    while (isIn(nr, nc) && chess[nr][nc] == (id ^ 1)) {
+    while (isIn(nr, nc) && g[nr][nc] == (id ^ 1)) {
       nr += dx[i];
       nc += dy[i];
       flg = true;
     }
-    return flg && isIn(nr, nc) && chess[nr][nc] == id;
+    return flg && isIn(nr, nc) && g[nr][nc] == id;
   }
 
   /**
@@ -274,50 +355,7 @@ public class ReversiGame extends AbsGame {
    * @return
    */
   private boolean isIn(int r, int c) {
-    return r >= 0 && c >= 0 && r < this.rows && c < this.cols;
-  }
-
-  /**
-   * 检测是否结束并保存结果
-   *
-   * @return
-   */
-  private boolean checkOverAndSaveResult() {
-    int id = step % 2;
-    boolean flag = true;
-    for (int[] ints : chess)
-      for (int anInt : ints)
-        if (anInt == id) {
-          flag = false;
-          break;
-        }
-    if (flag) {
-      this.setReason(id, "战败");
-      this.setReason(id ^ 1, "获胜");
-      this.setResult(id == 0 ? "白获胜" : "黑获胜");
-      return true;
-    }
-    int[] cnt = new int[2];
-    for (int i = 0; i < rows; i++)
-      for (int j = 0; j < cols; j++) {
-        if (chess[i][j] == 2)
-          return false;
-        ++cnt[chess[i][j]];
-      }
-    if (cnt[0] == cnt[1]) {
-      this.setReason(0, "平局");
-      this.setReason(1, "平局");
-      this.setResult("平局");
-    } else if (cnt[0] > cnt[1]) {
-      this.setReason(0, "获胜");
-      this.setReason(1, "战败");
-      this.setResult("黑获胜");
-    } else {
-      this.setReason(1, "获胜");
-      this.setReason(0, "战败");
-      this.setResult("白获胜");
-    }
-    return true;
+    return r >= 0 && c >= 0 && r < rows && c < cols;
   }
 
   /**
@@ -326,7 +364,7 @@ public class ReversiGame extends AbsGame {
    * @return
    */
   @Override
-  String parseDataString() {
+  public String parseDataString() {
     StringBuilder data = new StringBuilder("");
     data.append(rows);
     data.append(" ").append(cols);
@@ -334,7 +372,7 @@ public class ReversiGame extends AbsGame {
     stringifiedChess = "";
     for (int i = 0; i < rows; ++i)
       for (int j = 0; j < cols; ++j)
-        stringifiedChess += chess[i][j];
+        stringifiedChess += g[i][j];
     data.append(" ").append(stringifiedChess);
     return data.toString();
   }
@@ -343,13 +381,13 @@ public class ReversiGame extends AbsGame {
    * 保存结果给录像
    */
   @Override
-  protected void setResultToRecord() {
-    if (this.getResult() == null || this.getResult().length() == 0) {
-      if (this.getReason()[0] == null || this.getReason()[0].length() == 0)
-        this.setResult("黑获胜");
+  public void describeResult() {
+    if (getResult() == null || getResult().length() == 0) {
+      if (getReason()[0] == null || getReason()[0].length() == 0)
+        setResult("黑获胜");
       else
-        this.setResult("白获胜");
+        setResult("白获胜");
     }
-    this.getRecord().set("result", this.getResult());
+    getRecord().set("result", getResult());
   }
 }
