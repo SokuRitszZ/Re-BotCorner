@@ -4,7 +4,7 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.consumer.match.GameMatch;
 import com.soku.rebotcorner.games.AbsGame;
-import com.soku.rebotcorner.games.BackgammonGamen;
+import com.soku.rebotcorner.games.BackgammonGame;
 import com.soku.rebotcorner.games.ReversiGame;
 import com.soku.rebotcorner.games.SnakeGame;
 import com.soku.rebotcorner.pojo.Bot;
@@ -20,7 +20,10 @@ import org.springframework.util.MultiValueMap;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -74,9 +77,12 @@ public class GameSocketServer {
 
   AbsGame createGameObject(String mode, GameMatch match, List<RunningBot> bots) {
     switch (this.gameClass) {
-      case "snake": return new SnakeGame(mode, match, bots);
-      case "reversi": return new ReversiGame(mode, match, bots);
-      case "backgammon": return new BackgammonGamen(mode, match, bots);
+      case "snake":
+        return new SnakeGame(mode, match, bots);
+      case "reversi":
+        return new ReversiGame(mode, match, bots);
+      case "backgammon":
+        return new BackgammonGame(mode, match, bots);
     }
     return null;
   }
@@ -128,7 +134,7 @@ public class GameSocketServer {
   }
 
   public void sendMessage(JSONObject json) {
-    if (hasClosed) return ;
+    if (hasClosed) return;
     synchronized (this.session) {
       try {
         this.session.getBasicRemote().sendText(json.toString());
@@ -149,14 +155,27 @@ public class GameSocketServer {
     System.out.println(this.user.getId() + " action = " + action);
     JSONObject res = null;
     switch (action) {
-      case "start single game": res = startSingleGaming(json.getJSONObject("data")); break;
+      case "start single game":
+        res = startSingleGaming(json.getJSONObject("data"));
+        break;
 //      case "send talk": res = sendTalk(json); break;
-      case "start match": res = startMatching(json); break;
-      case "exit match": res = exitMatching(json); break;
-      case "toggle match": res = toggleMatch(json); break;
-      case "set step": res = setStep(json); break;
-      case "start game": res = startGame(); break;
-      default: break;
+      case "start match":
+        res = startMatching(json);
+        break;
+      case "exit match":
+        res = exitMatching(json);
+        break;
+      case "toggle match":
+        res = toggleMatch(json);
+        break;
+      case "set step":
+        res = setStep(json);
+        break;
+      case "start game":
+        res = startGame();
+        break;
+      default:
+        break;
     }
     this.match.broadCast(res);
     while (!this.threadQueue.isEmpty()) {
@@ -248,9 +267,12 @@ public class GameSocketServer {
    */
   public int getGameId() {
     switch (this.gameClass) {
-      case "snake": return 1;
-      case "reversi": return 2;
-      case "backgammon": return 3;
+      case "snake":
+        return 1;
+      case "reversi":
+        return 2;
+      case "backgammon":
+        return 3;
     }
     return 0;
   }

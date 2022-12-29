@@ -11,8 +11,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 public class SnakeGame extends AbsGame {
-  private static final int[] dx = { -1, 0, 1, 0 };
-  private static final int[] dy = { 0, 1, 0, -1 };
+  private static final int[] dx = {-1, 0, 1, 0};
+  private static final int[] dy = {0, 1, 0, -1};
 
   private int rows;
   private int cols;
@@ -102,7 +102,7 @@ public class SnakeGame extends AbsGame {
 
   public void afterSetStep(JSONObject json) {
     // 检测是否已经设置好所有方向了
-    if (!checkDirections()) return ;
+    if (!checkDirections()) return;
 
     // 两个都准备好了，开始移动
     moveSnake();
@@ -178,7 +178,7 @@ public class SnakeGame extends AbsGame {
    * 移动蛇
    */
   private void moveSnake() {
-    if (!beforeMoveSnake()) return ;
+    if (!beforeMoveSnake()) return;
 
     boolean isIncreasing = checkIncreasing();
     // 移动
@@ -225,6 +225,7 @@ public class SnakeGame extends AbsGame {
    * @return
    */
   private boolean checkOver() {
+    if (this.isHasOver()) return true;
     for (int i = 0; i < 2; i++)
       if (directions.get(i) == 4)
         state[i] = "die";
@@ -397,18 +398,19 @@ public class SnakeGame extends AbsGame {
     for (int i = 0; i < cols; ++i) g[0][i] = g[rows - 1][i] = 1;
 
     Random random = new Random();
-    for (int i = 0; i < innerWallsCount / 2; ++i) for (int j = 0; j < 1000; ++j) {
-      int r = random.nextInt(rows);
-      int c = random.nextInt(cols);
-      if (g[r][c] == 1 || g[rows - 1 - r][cols - 1 - c] == 1) {
-        continue;
+    for (int i = 0; i < innerWallsCount / 2; ++i)
+      for (int j = 0; j < 1000; ++j) {
+        int r = random.nextInt(rows);
+        int c = random.nextInt(cols);
+        if (g[r][c] == 1 || g[rows - 1 - r][cols - 1 - c] == 1) {
+          continue;
+        }
+        if ((r == rows - 2 && c == 1) || (r == 1 && c == cols - 2)) {
+          continue;
+        }
+        g[r][c] = g[rows - 1 - r][cols - 1 - c] = 1;
+        break;
       }
-      if ((r == rows - 2 && c == 1) || (r == 1 && c == cols - 2)) {
-        continue;
-      }
-      g[r][c] = g[rows - 1 - r][cols - 1 - c] = 1;
-      break;
-    }
     return checkValid(rows - 2, 1, 1, cols - 2);
   }
 

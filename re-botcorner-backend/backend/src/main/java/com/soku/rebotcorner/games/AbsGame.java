@@ -1,7 +1,6 @@
 package com.soku.rebotcorner.games;
 
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.soku.rebotcorner.consumer.match.GameMatch;
 import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.pojo.Record;
@@ -45,41 +44,6 @@ public abstract class AbsGame {
   private boolean hasStart;
 
   // 游戏准备阶段
-  /**
-   * 玩家数
-   *
-   * @return
-   */
-  public abstract Integer getPlayerCount();
-
-  /**
-   * 获取所有bot的id
-   *
-   * @return
-   */
-  private List<Integer> getBotIds() {
-    List<Integer> list = new ArrayList<>();
-    for (RunningBot bot : this.getBots())
-      if (bot != null)
-        list.add(bot.getBot().getId());
-      else
-        list.add(0);
-    return list;
-  }
-
-  /**
-   * 获取初始值并且保存起来
-   *
-   * @return
-   */
-  public JSONObject getInitDataAndSave() {
-    JSONObject initData = makeInitData();
-    getRecord().set("initData", initData);
-    return initData;
-  }
-
-
-  abstract protected JSONObject makeInitData();
 
   /**
    * 构造函数
@@ -100,6 +64,19 @@ public abstract class AbsGame {
     this.setRecord(new JSONObject());
     this.setSteps(new StringBuilder());
   }
+
+  /**
+   * 获取初始值并且保存起来
+   *
+   * @return
+   */
+  public JSONObject getInitDataAndSave() {
+    JSONObject initData = makeInitData();
+    getRecord().set("initData", initData);
+    return initData;
+  }
+
+  abstract protected JSONObject makeInitData();
 
   /**
    * 启动机器人
@@ -128,8 +105,6 @@ public abstract class AbsGame {
    */
   public abstract void start();
 
-  // 游戏进行时
-
   /**
    * 获取序列化运行数据
    *
@@ -143,10 +118,14 @@ public abstract class AbsGame {
    * @param json
    */
   public void setStep(JSONObject json) {
-    if (!isHasStart() || isHasOver()) return ;
-    if (this.bots.get(json.getInt("id")) != null) return ;
+    // 未开始 已结束的时候都不能set step
+    if (!isHasStart() || isHasOver()) return;
+    // 如果set step一方有机器人，就不能set step
+    if (this.bots.get(json.getInt("id")) != null) return;
     this._setStep(json);
   }
+
+  // 游戏进行时
 
   /**
    * 真正的设步
@@ -169,7 +148,7 @@ public abstract class AbsGame {
    * 结束游戏
    */
   public void gameOver() {
-    if (this.hasOver) return ;
+    if (this.hasOver) return;
     this.hasOver = true;
 
     this.describeResult();
@@ -180,7 +159,34 @@ public abstract class AbsGame {
     this.saveRecord();
   }
 
+  public abstract void describeResult();
+
+  /**
+   * 通知结果
+   */
+  private void tellResult() {
+    this.match.broadCast(
+      new JSONObject()
+        .set("action", "tell result")
+        .set("data",
+          new JSONObject()
+            .set("result", this.result)
+            .set("reason", Strings.join(Arrays.asList(this.reason), ','))
+        )
+    );
+  }
+
   // 游戏结束
+
+  /**
+   * 停止运行所有Bot
+   */
+  public void stopBots() {
+    List<RunningBot> bots = this.getBots();
+    for (RunningBot bot : bots)
+      if (bot != null)
+        bot.stop();
+  }
 
   /**
    * 保存录像
@@ -206,33 +212,6 @@ public abstract class AbsGame {
     }
   }
 
-  /**
-   * 停止运行所有Bot
-   */
-  public void stopBots() {
-    List<RunningBot> bots = this.getBots();
-    for (RunningBot bot : bots)
-      if (bot != null)
-        bot.stop();
-  }
-
-  /**
-   * 通知结果
-   */
-  private void tellResult() {
-    this.match.broadCast(
-      new JSONObject()
-        .set("action", "tell result")
-        .set("data",
-          new JSONObject()
-            .set("result", this.result)
-            .set("reason", Strings.join(Arrays.asList(this.reason), ','))
-        )
-    );
-  }
-
-  public abstract void describeResult();
-
   public List<Integer> getUserIds() {
     List<Integer> list = new ArrayList<>();
     int n = getPlayerCount();
@@ -248,4 +227,26 @@ public abstract class AbsGame {
     }
     return list;
   }
+
+  /**
+   * 获取所有bot的id
+   *
+   * @return
+   */
+  private List<Integer> getBotIds() {
+    List<Integer> list = new ArrayList<>();
+    for (RunningBot bot : this.getBots())
+      if (bot != null)
+        list.add(bot.getBot().getId());
+      else
+        list.add(0);
+    return list;
+  }
+
+  /**
+   * 玩家数
+   *
+   * @return
+   */
+  public abstract Integer getPlayerCount();
 }

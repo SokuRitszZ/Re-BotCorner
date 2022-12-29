@@ -4,22 +4,21 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.soku.rebotcorner.consumer.match.GameMatch;
 import com.soku.rebotcorner.runningbot.RunningBot;
-import com.soku.rebotcorner.utils.Res;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 public class ReversiGame extends AbsGame {
-  private static int dx[] = { -1, -1, 0, 1, 1, 1, 0, -1 };
-  private static int dy[] = { 0, 1, 1, 1, 0, -1, -1, -1 };
+  private static final int[] dx = {-1, -1, 0, 1, 1, 1, 0, -1};
+  private static final int dy[] = {0, 1, 1, 1, 0, -1, -1, -1};
 
   private final int rows;
   private final int cols;
-  private int[] rc = new int[2];
-  private int[][] g;
+  private final int[] rc = new int[2];
+  private final int[][] g;
+  private final AtomicInteger ok = new AtomicInteger();
   private int step;
-  private AtomicInteger ok = new AtomicInteger();
 
   /**
    * 构造函数
@@ -50,16 +49,6 @@ public class ReversiGame extends AbsGame {
     g[mdRow][mdCol - 1] = g[mdRow - 1][mdCol] = 0;
   }
 
-  /**
-   * 玩家人数
-   *
-   * @return
-   */
-  @Override
-  public Integer getPlayerCount() {
-    return 2;
-  }
-
   @Override
   protected JSONObject makeInitData() {
     int rc = 0;
@@ -79,10 +68,85 @@ public class ReversiGame extends AbsGame {
     return getInitData();
   }
 
-  public boolean beforeSetStep(JSONObject json) {
+  /**
+   * 游戏开始
+   */
+  @Override
+  public void start() {
+    setHasStart(true);
+
+    ok.getAndIncrement();
+    new Thread(() -> {
+      while (!checkOver()) {
+        if (ok.get() > 0) {
+          ok.decrementAndGet();
+          nextStep();
+        }
+      }
+    }).start();
+  }
+
+  /**
+   * 获取序列化数据
+   *
+   * @return
+   */
+  @Override
+  public String parseDataString() {
+    StringBuilder data = new StringBuilder("");
+    data.append(rows);
+    data.append(" ").append(cols);
+    StringBuilder stringifyChess;
+    stringifyChess = new StringBuilder();
+    for (int i = 0; i < rows; ++i)
+      for (int j = 0; j < cols; ++j)
+        stringifyChess.append(g[i][j]);
+    data.append(" ").append(stringifyChess);
+    return data.toString();
+  }
+
+  /**
+   * 从前端接收并处理步
+   *
+   * @param json
+   */
+  @Override
+  protected void _setStep(JSONObject json) {
     Integer id = json.getInt("id");
     Integer r = json.getInt("r");
     Integer c = json.getInt("c");
+
+    if (beforeSetStep(id, r, c)) {
+      putChess(id, r, c);
+      afterSetStep(json);
+    }
+  }
+
+  /**
+   * 保存结果给录像
+   */
+  @Override
+  public void describeResult() {
+    if (getResult() == null || getResult().length() == 0) {
+      if (getReason()[0] == null || getReason()[0].length() == 0)
+        setResult("黑子不战而胜");
+      else
+        setResult("白子不战而胜");
+    }
+    getRecord().set("result", getResult());
+  }
+
+  /**
+   * 玩家人数
+   *
+   * @return
+   */
+  @Override
+  public Integer getPlayerCount() {
+    return 2;
+  }
+
+  public boolean beforeSetStep(int id, int r, int c) {
     this.rc[0] = r;
     this.rc[1] = c;
     return checkValid(id, r, c);
@@ -100,23 +164,7 @@ public class ReversiGame extends AbsGame {
           .set("c", 9)
       );
     }
-  }
-
-  /**
-   * 从前端接收并处理步
-   *
-   * @param json
-   */
-  @Override
-  protected void _setStep(JSONObject json) {
-    Integer id = json.getInt("id");
-    Integer r = json.getInt("r");
-    Integer c = json.getInt("c");
-
-    if (beforeSetStep(json)) {
-      putChess(id, r, c);
-      afterSetStep(json);
-    }
+    ok.getAndIncrement();
   }
 
   private boolean beforePutChess() {
@@ -152,7 +200,7 @@ public class ReversiGame extends AbsGame {
       this.setResult((id == 0 ? "白子" : "黑子") + "胜利");
       this.setReason(id, (id == 0 ? "黑子" : "白子") + "失去所有棋子");
       rc[0] = -1;
-      return ;
+      return;
     }
     // 已经放满了棋盘
     if (cnt[0] + cnt[1] == rows * cols) {
@@ -167,14 +215,12 @@ public class ReversiGame extends AbsGame {
         setReason(i ^ 1, "棋数更少");
       }
       rc[0] = -1;
-      return ;
+      return;
     }
 
     ++this.step;
     rc[0] = 8; // 还能继续
-    ok.getAndIncrement();
   }
-
 
   /**
    * 落子
@@ -184,7 +230,7 @@ public class ReversiGame extends AbsGame {
    * @param c
    */
   private void putChess(int id, int r, int c) {
-    if (!beforePutChess()) return ;
+    if (!beforePutChess()) return;
 
     rc[0] = r;
     rc[1] = c;
@@ -208,6 +254,7 @@ public class ReversiGame extends AbsGame {
   }
 
   private boolean checkOver() {
+    if (isHasOver()) return true;
     if (rc[0] != -1) return false;
     return true;
   }
@@ -225,24 +272,6 @@ public class ReversiGame extends AbsGame {
   }
 
   /**
-   * 游戏开始
-   */
-  @Override
-  public void start() {
-    setHasStart(true);
-
-    ok.getAndIncrement();
-    new Thread(() -> {
-      while (!checkOver()) {
-        if (ok.get() > 0) {
-          ok.decrementAndGet();
-          nextStep();
-        }
-      }
-    }).start();
-  }
-
-  /**
    * 下一步
    */
   private void nextStep() {
@@ -254,7 +283,7 @@ public class ReversiGame extends AbsGame {
    */
   private void runBot() {
     int id = step % 2;
-    if (getBots().get(id) == null) return ;
+    if (getBots().get(id) == null) return;
     String data = id + " " + parseDataString();
     RunningBot bot = getBots().get(id);
     bot.prepareData(data);
@@ -356,38 +385,5 @@ public class ReversiGame extends AbsGame {
    */
   private boolean isIn(int r, int c) {
     return r >= 0 && c >= 0 && r < rows && c < cols;
-  }
-
-  /**
-   * 获取序列化数据
-   *
-   * @return
-   */
-  @Override
-  public String parseDataString() {
-    StringBuilder data = new StringBuilder("");
-    data.append(rows);
-    data.append(" ").append(cols);
-    String stringifiedChess;
-    stringifiedChess = "";
-    for (int i = 0; i < rows; ++i)
-      for (int j = 0; j < cols; ++j)
-        stringifiedChess += g[i][j];
-    data.append(" ").append(stringifiedChess);
-    return data.toString();
-  }
-
-  /**
-   * 保存结果给录像
-   */
-  @Override
-  public void describeResult() {
-    if (getResult() == null || getResult().length() == 0) {
-      if (getReason()[0] == null || getReason()[0].length() == 0)
-        setResult("黑获胜");
-      else
-        setResult("白获胜");
-    }
-    getRecord().set("result", getResult());
   }
 }
