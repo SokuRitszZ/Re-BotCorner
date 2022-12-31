@@ -74,6 +74,8 @@ public class GameSocketServer {
 
   AbsGame createGameObject(String mode, GameMatch match, List<RunningBot> bots) {
     switch (this.gameClass) {
+      case "gomoku":
+        return new GomokuGame(mode, match, bots);
       case "hex":
         return new HexGame(mode, match, bots);
       case "snake":

@@ -16,6 +16,7 @@ public class MatchingServiceImpl implements MatchingService {
     pools.put("reversi", new ReversiPool());
     pools.put("backgammon", new BackgammonPool());
     pools.put("hex", new HexPool());
+    pools.put("gomoku", new GomokuPool());
 
     for (MatchPool matchPool : pools.values()) {
       matchPool.start();
