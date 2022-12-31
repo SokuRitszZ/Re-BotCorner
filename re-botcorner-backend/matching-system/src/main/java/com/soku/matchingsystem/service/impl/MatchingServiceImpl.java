@@ -1,9 +1,6 @@
 package com.soku.matchingsystem.service.impl;
 
-import com.soku.matchingsystem.pools.BackgammonPool;
-import com.soku.matchingsystem.pools.MatchPool;
-import com.soku.matchingsystem.pools.ReversiPool;
-import com.soku.matchingsystem.pools.SnakePool;
+import com.soku.matchingsystem.pools.*;
 import com.soku.matchingsystem.service.MatchingService;
 import org.springframework.stereotype.Service;
 
@@ -13,12 +10,14 @@ import java.util.Map;
 @Service
 public class MatchingServiceImpl implements MatchingService {
   public final static Map<String, MatchPool> pools = new HashMap<>();
+
   static {
     pools.put("snake", new SnakePool());
     pools.put("reversi", new ReversiPool());
     pools.put("backgammon", new BackgammonPool());
+    pools.put("hex", new HexPool());
 
-    for (MatchPool matchPool: pools.values()) {
+    for (MatchPool matchPool : pools.values()) {
       matchPool.start();
     }
   }
