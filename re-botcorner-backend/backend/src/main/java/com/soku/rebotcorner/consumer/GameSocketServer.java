@@ -3,10 +3,7 @@ package com.soku.rebotcorner.consumer;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.consumer.match.GameMatch;
-import com.soku.rebotcorner.games.AbsGame;
-import com.soku.rebotcorner.games.BackgammonGame;
-import com.soku.rebotcorner.games.ReversiGame;
-import com.soku.rebotcorner.games.SnakeGame;
+import com.soku.rebotcorner.games.*;
 import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.pojo.SnakeRating;
 import com.soku.rebotcorner.pojo.User;
@@ -77,6 +74,8 @@ public class GameSocketServer {
 
   AbsGame createGameObject(String mode, GameMatch match, List<RunningBot> bots) {
     switch (this.gameClass) {
+      case "hex":
+        return new HexGame(mode, match, bots);
       case "snake":
         return new SnakeGame(mode, match, bots);
       case "reversi":
@@ -273,6 +272,8 @@ public class GameSocketServer {
         return 2;
       case "backgammon":
         return 3;
+      case "hex":
+        return 4;
     }
     return 0;
   }
