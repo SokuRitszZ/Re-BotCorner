@@ -276,6 +276,8 @@ public class GameSocketServer {
         return 3;
       case "hex":
         return 4;
+      case "gomoku":
+        return 5;
     }
     return 0;
   }

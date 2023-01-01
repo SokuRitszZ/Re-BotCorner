@@ -18,7 +18,7 @@ public class GomokuGame extends AbsGame {
 
   private int rows = 15, cols = 15;
   private int[][] g = new int[rows][cols];
-  private int[] rc = new int[]{-1, -1};
+  private int[] rc = new int[]{66, 66};
   private AtomicInteger ok = new AtomicInteger();
   private int cur = 0;
   private int step = 0;
@@ -81,7 +81,7 @@ public class GomokuGame extends AbsGame {
     for (int i = 0; i < rows; i++)
       for (int j = 0; j < cols; j++)
         g.append(this.g[i][j]).append(" ");
-    data.append(g);
+    data.append(g).append(" ").append(rc[0]).append(" ").append(rc[1]);
     return data.toString().trim();
   }
 
@@ -128,18 +128,18 @@ public class GomokuGame extends AbsGame {
         _setStep(
           new JSONObject()
             .set("id", cur)
-            .set("x", -1)
-            .set("y", -1)
+            .set("r", -1)
+            .set("c", -1)
         );
       } else {
         String[] rc = input.split(" ");
-        int from = Integer.parseInt(rc[0]);
-        int to = Integer.parseInt(rc[1]);
+        int r = Integer.parseInt(rc[0]);
+        int c = Integer.parseInt(rc[1]);
         _setStep(
           new JSONObject()
             .set("id", cur)
-            .set("x", from)
-            .set("y", to)
+            .set("r", r)
+            .set("c", c)
         );
       }
     }
