@@ -33,7 +33,7 @@ public class BGroupServiceImpl implements BGroupService {
   /**
    * 创建小组
    *
-   * @param file 图标
+   * @param file         图标
    * @param groupMessage 属性
    * @return
    */
@@ -52,11 +52,11 @@ public class BGroupServiceImpl implements BGroupService {
     JSONObject saveResult = FileUtil.saveAndGetIcon(file, filename, "/group");
     String icon = saveResult.getStr("newUrl");
 
-    BGroup group = new BGroup( null, title, icon, description, createTime, creatorId );
+    BGroup group = new BGroup(null, title, icon, description, createTime, creatorId);
     bGroupMapper.insert(group);
 
     // 把自己加进小组里面
-    bGroupMemberMapper.insert(new BGroupMember( group.getId(), creatorId ));
+    bGroupMemberMapper.insert(new BGroupMember(group.getId(), creatorId));
 
     JSONObject json = JSONUtil.parseObj(group);
     json.put("creatorUsername", UserDAO.mapper.selectById(creatorId).getUsername());
@@ -65,6 +65,7 @@ public class BGroupServiceImpl implements BGroupService {
 
   /**
    * 解散小组
+   *
    * @param groupId
    * @return
    */
@@ -91,7 +92,7 @@ public class BGroupServiceImpl implements BGroupService {
     List<BGroup> list = bGroupMapper.selectList(null);
     List<JSONObject> jsonList = new ArrayList<>();
     Map<Integer, String> usernameMap = new HashMap<>();
-    for (BGroup gp: list) {
+    for (BGroup gp : list) {
       JSONObject json = JSONUtil.parseObj(gp);
       Integer creatorId = json.getInt("creatorId");
       if (!usernameMap.containsKey(creatorId)) {
@@ -194,7 +195,7 @@ public class BGroupServiceImpl implements BGroupService {
     User user = JwtAuthenticationUtil.getCurrentUser();
     String key = CACHE_APPLICATION_KEY + user.getId() + ":" + groupId + ":" + applicantId;
     if (!CacheClient.deleteKey(key)) return Res.fail("不存在此申请");
-    if (state) bGroupMemberMapper.insert(new BGroupMember( groupId, applicantId ));
+    if (state) bGroupMemberMapper.insert(new BGroupMember(groupId, applicantId));
     return Res.ok("处理完毕");
   }
 

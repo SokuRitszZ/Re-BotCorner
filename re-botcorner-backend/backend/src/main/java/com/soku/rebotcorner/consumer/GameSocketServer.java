@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.consumer.match.GameMatch;
 import com.soku.rebotcorner.games.*;
 import com.soku.rebotcorner.pojo.Bot;
-import com.soku.rebotcorner.pojo.SnakeRating;
+import com.soku.rebotcorner.pojo.Rating;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.utils.*;
@@ -99,9 +99,6 @@ public class GameSocketServer {
     this.user = UserDAO.mapper.selectById(userId);
     users.put(userId, this);
     this.gameClass = game;
-
-    SnakeRating snakeRating = SnakeRatingDAO.selectById(userId);
-    if (snakeRating == null) SnakeRatingDAO.insert(new SnakeRating(userId, 1500));
   }
 
   @OnClose
@@ -350,9 +347,14 @@ public class GameSocketServer {
    */
   public void addToMatch() {
     MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
+    Rating rating = RatingDAO.mapper.selectOne(new QueryWrapper<Rating>().eq("game_id", getGameId()).eq("user_id", user.getId()));
+    if (rating == null) {
+      rating = new Rating(user.getId(), getGameId(), 1500);
+      RatingDAO.mapper.insert(rating);
+    }
     data.add("game", this.gameClass);
     data.add("userId", user.getId().toString());
-    data.add("rating", SnakeRatingDAO.selectById(user.getId()).getRating().toString());
+    data.add("rating", rating.getScore().toString());
     RT.POST(addUrl, data);
   }
 

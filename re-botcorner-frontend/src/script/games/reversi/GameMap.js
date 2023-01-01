@@ -49,7 +49,7 @@ export default class GameMap extends GameObject {
           x1: this.rows * L,
           y1: i * L,
           width: L / 100,
-          color: '#000000'
+          color: "#000000",
         });
       }
       for (let i = 0; i < this.rows; ++i) {
@@ -59,7 +59,7 @@ export default class GameMap extends GameObject {
           x1: i * L,
           y1: this.cols * L,
           width: L / 100,
-          color: '#000000'
+          color: "#000000",
         });
       }
     };

@@ -24,9 +24,7 @@ public class WebSocketConfig {
     BotMapper botMapper,
     RestTemplate restTemplate,
     LangMapper langMapper,
-    SnakeRatingMapper snakeRatingMapper,
-    ReversiRatingMapper reversiRatingMapper,
-    BackgammonRatingMapper backgammonRatingMapper,
+    RatingMapper ratingMapper,
     StringRedisTemplate redis
   ) {
     RecordDAO.mapper = recordMapper;
@@ -34,9 +32,7 @@ public class WebSocketConfig {
     BotDAO.mapper = botMapper;
     RT.restTemplate = restTemplate;
     LangDAO.langMapper = langMapper;
-    SnakeRatingDAO.snakeRatingMapper = snakeRatingMapper;
-    ReversiRatingDAO.reversiRatingMapper = reversiRatingMapper;
-    BackgammonRatingDAO.backgammonRatingMapper = backgammonRatingMapper;
+    RatingDAO.mapper = ratingMapper;
     CacheClient.redis = redis;
   }
 }

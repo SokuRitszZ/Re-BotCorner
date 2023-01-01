@@ -3,11 +3,14 @@ package com.soku.rebotcorner.pojo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BackgammonRating {
-  private Integer id;
-  private Integer rating;
+@Accessors(chain = true)
+public class Rating {
+  private Integer userId;
+  private Integer gameId;
+  private Integer score;
 }
