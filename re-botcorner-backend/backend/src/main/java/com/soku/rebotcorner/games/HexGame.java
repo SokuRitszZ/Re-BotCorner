@@ -77,12 +77,12 @@ public class HexGame extends AbsGame {
   @Override
   public String parseDataString() {
     StringBuilder data = new StringBuilder().append(cur).append(" ").append(step).append(" ");
-    data.append(rows).append(" ").append(cols).append(" ");
+    data.append(rows).append(" ").append(cols).append("\n");
     StringBuilder g = new StringBuilder();
-    for (int i = 0; i < rows; i++)
-      for (int j = 0; j < cols; j++)
-        g.append(this.g[i][j]).append(" ");
-    data.append(g);
+    for (int[] ints : this.g)
+      for (int anInt : ints)
+        g.append(anInt).append(" ");
+    data.append(g).append(xy[0]).append(" ").append(xy[1]);
     return data.toString().trim();
   }
 
@@ -192,6 +192,7 @@ public class HexGame extends AbsGame {
 
   private boolean checkValid(int id, int x, int y) {
     if (id != cur) return false;
+    if (x == -1) return true;
     if (step == 0) return x == 1 && y == 2;
     return g[x][y] == 2;
   }
@@ -239,6 +240,7 @@ public class HexGame extends AbsGame {
   private void addStep_put() {
     StringBuilder step = new StringBuilder();
     step.append(transform(xy[0], 36)).append(transform(xy[1], 36));
+    getSteps().append(step);
     getMatch().broadCast(
       new JSONObject()
         .set("action", "set step truly")
@@ -246,7 +248,6 @@ public class HexGame extends AbsGame {
           new JSONObject()
             .set("step", step.toString()))
     );
-    getSteps().append(step);
   }
 
   private boolean isIn(int x, int y) {
