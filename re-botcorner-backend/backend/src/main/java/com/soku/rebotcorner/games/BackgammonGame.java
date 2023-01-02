@@ -124,6 +124,35 @@ public class BackgammonGame extends AbsGame {
   }
 
   @Override
+  void _saveScores() {
+    int total = 0;
+    for (int i = 0; i < 2; i++) {
+      String s = getReason()[i];
+      if (s == null) continue;
+      switch (s) {
+        case "被全胜":
+          total += 9;
+          setScore(i, -9);
+          break;
+        case "被完胜":
+          total += 6;
+          setScore(i, -6);
+          break;
+        case "被单胜":
+          total += 3;
+          setScore(i, -3);
+          break;
+        default:
+          setScore(i, -10);
+          break;
+      }
+    }
+    for (int i = 0; i < 2; i++) {
+      if (getScores()[i] == 0) setScore(i, total);
+    }
+  }
+
+  @Override
   protected JSONObject makeInitData() {
     StringBuilder mask = new StringBuilder();
     for (List<Integer> integers : g) {
@@ -332,12 +361,20 @@ public class BackgammonGame extends AbsGame {
     int jh = jd == 0 ? 0 : 25;
     StringBuilder result = new StringBuilder();
     result.append(id == 0 ? "白方" : "红方");
+    int type = 0;
     if (g[26 + jd].size() == 0) {
-      if (g[jh].size() > 0 || checkBQ(jd, jd == 0 ? 1 : 19) > 0) result.append("全胜");
-      else result.append("完胜");
-    } else result.append("单胜");
+      if (g[jh].size() > 0 || checkBQ(jd, jd == 0 ? 1 : 19) > 0) {
+        result.append("全胜");
+        setReason(jd, "被全胜");
+      } else {
+        result.append("完胜");
+        setReason(jd, "被完胜");
+      }
+    } else {
+      result.append("单胜");
+      setReason(jd, "被单胜");
+    }
     setResult(result.toString());
-    setReason(jd, "战败");
     ft[0] = 99;
   }
 

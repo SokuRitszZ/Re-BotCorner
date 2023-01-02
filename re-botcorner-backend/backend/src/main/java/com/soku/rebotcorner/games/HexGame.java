@@ -114,6 +114,27 @@ public class HexGame extends AbsGame {
     return 2;
   }
 
+  @Override
+  void _saveScores() {
+    int total = 0;
+    for (int i = 0; i < getReason().length; i++) {
+      String s = getReason()[i];
+      if (s == null) continue;
+      switch (s) {
+        case "战败":
+          total += 5;
+          setScore(i, -5);
+          break;
+        default:
+          setScore(i, -10);
+          break;
+      }
+    }
+    for (int i = 0; i < getReason().length; i++) {
+      if (getScores()[i] == 0) setScore(i, total);
+    }
+  }
+
   private boolean checkOver() {
     return xy[0] == -1 || xy[0] == 99;
   }

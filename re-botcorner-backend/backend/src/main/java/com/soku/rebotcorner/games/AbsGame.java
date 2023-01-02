@@ -1,12 +1,16 @@
 package com.soku.rebotcorner.games;
 
 import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.consumer.match.GameMatch;
 import com.soku.rebotcorner.pojo.Bot;
+import com.soku.rebotcorner.pojo.Rating;
 import com.soku.rebotcorner.pojo.Record;
 import com.soku.rebotcorner.runningbot.RunningBot;
+import com.soku.rebotcorner.utils.RatingDAO;
 import com.soku.rebotcorner.utils.RecordDAO;
 import lombok.Data;
+import lombok.experimental.Accessors;
 import org.apache.logging.log4j.util.Strings;
 
 import java.util.ArrayList;
@@ -19,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 游戏抽象类
  */
 @Data
+@Accessors(chain = true)
 public abstract class AbsGame {
   // 模式
   private String mode;
@@ -42,6 +47,10 @@ public abstract class AbsGame {
   private StringBuilder steps;
   // 是否已开始
   private boolean hasStart;
+  // 结算分数
+  private int[] scores;
+  // 游戏创局者
+  private int starterId;
 
   // 游戏准备阶段
 
@@ -58,7 +67,8 @@ public abstract class AbsGame {
     this.setBots(bots);
 
     // init reason
-    this.setReason(new String[2]);
+    this.setReason(new String[getPlayerCount()]);
+    this.setScores(new int[getPlayerCount()]);
 
     // init record
     this.setRecord(new JSONObject());
@@ -152,6 +162,7 @@ public abstract class AbsGame {
     this.hasOver = true;
 
     this.describeResult();
+    this.saveScores();
 
     this.tellResult();
     this.stopBots();
@@ -249,4 +260,27 @@ public abstract class AbsGame {
    * @return
    */
   public abstract Integer getPlayerCount();
+
+  private void saveScores() {
+    if (!mode.equals("multi")) return;
+    _saveScores();
+    int i = 0;
+    while (i < getPlayerCount()) {
+      int userId = getUserIds().get(i);
+      Rating rating = RatingDAO.mapper.selectOne(new QueryWrapper<Rating>().eq("game_id", gameId).eq("user_id", getUserIds().get(i)));
+      if (rating == null) {
+        rating = new Rating(userId, gameId, 1500);
+        RatingDAO.mapper.insert(rating);
+      }
+      rating.setScore(rating.getScore() + scores[i]);
+      RatingDAO.mapper.update(rating.getUserId(), rating.getGameId(), rating.getScore());
+      i++;
+    }
+  }
+
+  abstract void _saveScores();
+
+  protected void setScore(int id, int score) {
+    scores[id] = score;
+  }
 }

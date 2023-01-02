@@ -146,6 +146,35 @@ public class ReversiGame extends AbsGame {
     return 2;
   }
 
+  @Override
+  void _saveScores() {
+    int total = 0;
+    for (int i = 0; i < this.getReason().length; i++) {
+      String s = getReason()[i];
+      if (s == null) continue;
+      switch (s) {
+        case "失去所有棋子":
+          total += 4;
+          setScore(i, -4);
+          break;
+        case "棋数更少":
+          total += 2;
+          setScore(i, -2);
+          break;
+        case "棋子数相等":
+          total += 3;
+          setScore(i, -3);
+          break;
+        default:
+          setScore(i, -6);
+          break;
+      }
+    }
+    for (int i = 0; i < getReason().length; i++) {
+      if (getScores()[i] == 0) setScore(i, total);
+    }
+  }
+
   public boolean beforeSetStep(int id, int r, int c) {
     this.rc[0] = r;
     this.rc[1] = c;
@@ -198,7 +227,7 @@ public class ReversiGame extends AbsGame {
     int id = cnt[0] == 0 ? 0 : 1;
     if (cnt[id] == 0) {
       this.setResult((id == 0 ? "白子" : "黑子") + "胜利");
-      this.setReason(id, (id == 0 ? "黑子" : "白子") + "失去所有棋子");
+      this.setReason(id, "失去所有棋子");
       rc[0] = -1;
       return;
     }

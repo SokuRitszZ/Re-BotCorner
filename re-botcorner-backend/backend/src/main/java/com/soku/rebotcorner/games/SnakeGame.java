@@ -37,6 +37,26 @@ public class SnakeGame extends AbsGame {
     return 2;
   }
 
+  @Override
+  void _saveScores() {
+    int total = 0;
+    for (int i = 0; i < getReason().length; i++) {
+      String s = getReason()[i];
+      if (s == null) continue;
+      if (s.isEmpty()) continue;
+      if (s.equals("碰撞致死")) {
+        total += 5;
+        setScore(i, -5);
+      } else {
+        setScore(i, -10);
+      }
+    }
+    for (int i = 0; i < getScores().length; i++) {
+      int avg = total;
+      if (getScores()[i] == 0) setScore(i, avg);
+    }
+  }
+
   /**
    * 构造函数
    *

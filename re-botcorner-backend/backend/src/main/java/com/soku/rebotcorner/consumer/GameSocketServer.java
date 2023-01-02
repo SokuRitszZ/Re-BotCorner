@@ -309,7 +309,7 @@ public class GameSocketServer {
     this.initMatch();
 
     // 创建游戏
-    AbsGame game = createGameObject("single", match, bots);
+    AbsGame game = createGameObject("single", match, bots).setStarterId(user.getId());
     game.setMatch(this.match);
     this.match.setGame(game);
 
@@ -372,7 +372,7 @@ public class GameSocketServer {
    * 开始多人游戏
    */
   void startMultiGaming() {
-    AbsGame game = createGameObject("multi", this.match, this.match.getBots());
+    AbsGame game = createGameObject("multi", this.match, this.match.getBots()).setStarterId(user.getId());
     game.setMatch(this.match);
     this.match.setGame(game);
 
