@@ -186,9 +186,7 @@ public class GameSocketServer {
     boolean isOk = json.getJSONObject("data").getBool("isOk");
     this.match.setOk(this, isOk);
     if (this.match.allOk())
-      new Thread(() -> {
-        this.startMultiGaming();
-      }).start();
+      new Thread(this::startMultiGaming).start();
     return new JSONObject()
       .set("action", "toggle match")
       .set("data", new JSONObject()
@@ -255,7 +253,26 @@ public class GameSocketServer {
    * @return
    */
   public boolean findBot(Integer id) {
-    return BotDAO.selectOne(new QueryWrapper<Bot>().eq("id", id).eq("game_id", this.getGameId())) != null;
+    try {
+      Bot bot = BotDAO.mapper.selectOne(
+        new QueryWrapper<Bot>()
+          .eq("id", id)
+          .eq("game_id", getGameId())
+          .eq("visible", true)
+      );
+      if (bot != null) return true;
+      Integer userId = getUser().getId();
+      System.out.println("userId = " + userId);
+      bot = BotDAO.mapper.selectOne(
+        new QueryWrapper<Bot>()
+          .eq("id", id)
+          .eq("game_id", getGameId())
+          .eq("user_id", userId)
+      );
+      return bot != null;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   /**
@@ -297,8 +314,8 @@ public class GameSocketServer {
     List<RunningBot> bots = new ArrayList<>();
     for (Integer botId : botIds) {
       if (botId > 0) {
-        if (!this.findBot(botId)) {
-          data.set("error", "不存在此编号的Bot");
+        if (!findBot(botId)) {
+          data.set("error", String.format("不存在编号为#%d的Bot", botId));
           ret.set("data", data);
           return ret;
         } else bots.add(new RunningBot(botId));
