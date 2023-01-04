@@ -3,14 +3,16 @@ package com.soku.rebotcorner.service.impl.record;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.pojo.Record;
-import com.soku.rebotcorner.service.bot.record.RecordService;
+import com.soku.rebotcorner.service.record.RecordService;
 import com.soku.rebotcorner.utils.BotDAO;
 import com.soku.rebotcorner.utils.NewRes;
 import com.soku.rebotcorner.utils.RecordDAO;
 import com.soku.rebotcorner.utils.UserDAO;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class RecordServiceImpl implements RecordService {
@@ -33,7 +35,7 @@ public class RecordServiceImpl implements RecordService {
 
         JSONObject bot, user;
 
-        if (botId != "0")  {
+        if (botId != "0") {
           if (!botMap.containsKey(botId)) botMap.put(botId, BotDAO.mapper.getBaseBotById(Integer.valueOf(botId)));
           bot = botMap.get(botId);
         } else bot = null;
@@ -74,6 +76,6 @@ public class RecordServiceImpl implements RecordService {
 
   @Override
   public JSONObject getRecordJson(Integer id) {
-    return NewRes.ok(new JSONObject( RecordDAO.mapper.getRecordJson(id)));
+    return NewRes.ok(new JSONObject(RecordDAO.mapper.getRecordJson(id)));
   }
 }

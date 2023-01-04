@@ -1,7 +1,7 @@
 package com.soku.rebotcorner.controller.record;
 
 import cn.hutool.json.JSONObject;
-import com.soku.rebotcorner.service.bot.record.RecordService;
+import com.soku.rebotcorner.service.record.RecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
