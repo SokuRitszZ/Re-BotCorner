@@ -5,18 +5,14 @@ import com.soku.rebotcorner.utils.BotDAO;
 import com.soku.rebotcorner.utils.CacheClient;
 import com.soku.rebotcorner.utils.LangDAO;
 import com.soku.rebotcorner.utils.RT;
-import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import javax.annotation.Resource;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import static com.soku.rebotcorner.utils.Constancts.MODE;
 import static com.soku.rebotcorner.utils.RedisConstants.CACHE_BOT_KEY;
-import static com.soku.rebotcorner.utils.RedisConstants.CACHE_BOT_TTL;
 
 public class RunningBot {
   private final static String URL = new String[]{"http://39.107.100.77:8000/api", "http://localhost:8000/api"}[0];
@@ -34,7 +30,7 @@ public class RunningBot {
   }
 
   public RunningBot(Integer id) {
-    this.bot = CacheClient.queryWithPassThrough(CACHE_BOT_KEY, id, Bot.class, BotDAO::selectById, 10L, TimeUnit.MINUTES);
+    this.bot = CacheClient.queryWithPassThrough(CACHE_BOT_KEY, id, Bot.class, BotDAO.mapper::selectById, 10L, TimeUnit.MINUTES);
   }
 
   public String getUuid() {
