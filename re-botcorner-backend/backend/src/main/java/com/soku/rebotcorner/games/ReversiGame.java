@@ -80,7 +80,7 @@ public class ReversiGame extends AbsGame {
       while (!checkOver()) {
         if (ok.get() > 0) {
           ok.decrementAndGet();
-          nextStep();
+          runBot();
         }
       }
     }).start();
@@ -301,13 +301,6 @@ public class ReversiGame extends AbsGame {
   }
 
   /**
-   * 下一步
-   */
-  private void nextStep() {
-    runBot();
-  }
-
-  /**
    * 运行Bot
    */
   private void runBot() {
@@ -375,7 +368,7 @@ public class ReversiGame extends AbsGame {
    */
   private boolean checkValid(int id, int r, int c) {
     if (id != step % 2) return false;
-    if (r == 9) return true;
+    if (r == 9 || r == -1) return true;
     if (!isIn(r, c) || g[r][c] != 2)
       return false;
     for (int i = 0; i < 8; ++i)
