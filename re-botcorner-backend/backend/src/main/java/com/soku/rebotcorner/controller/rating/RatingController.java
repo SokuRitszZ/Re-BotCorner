@@ -1,4 +1,4 @@
-package com.soku.rebotcorner.controller.getrating;
+package com.soku.rebotcorner.controller.rating;
 
 import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.service.rating.RatingService;
@@ -17,5 +17,10 @@ public class RatingController {
   @GetMapping("/top10")
   public JSONObject getTop10ByGameId(@RequestParam("gameId") Integer gameId) {
     return service.getTop10ByGameId(gameId);
+  }
+
+  @GetMapping("/my")
+  public JSONObject getMyRating(@RequestParam("gameId") Integer gameId) {
+    return service.getMyRating(gameId);
   }
 }
