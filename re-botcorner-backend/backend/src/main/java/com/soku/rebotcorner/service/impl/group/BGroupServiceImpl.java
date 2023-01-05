@@ -49,7 +49,7 @@ public class BGroupServiceImpl implements BGroupService {
     Integer creatorId = loginUser.getUser().getId();
 
     String filename = title + "_" + RandomUtil.randomNumbers(10) + ".png";
-    JSONObject saveResult = FileUtil.saveAndGetIcon(file, filename, "/group");
+    JSONObject saveResult = FileUtil.saveAndGetUrl(file, filename, "/group");
     String icon = saveResult.getStr("newUrl");
 
     BGroup group = new BGroup(null, title, icon, description, createTime, creatorId);

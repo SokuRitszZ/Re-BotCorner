@@ -6,7 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 
-import static com.soku.rebotcorner.utils.Constancts.MODE;
+import static com.soku.rebotcorner.utils.Constants.MODE;
 
 @Component
 public class FileUtil {

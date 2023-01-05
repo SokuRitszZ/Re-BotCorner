@@ -1,5 +1,5 @@
 package com.soku.rebotcorner.utils;
 
-public class Constancts {
+public class Constants {
   public static Integer MODE = 0;
 }
