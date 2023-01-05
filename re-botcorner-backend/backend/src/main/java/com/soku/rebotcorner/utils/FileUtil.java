@@ -10,7 +10,7 @@ import static com.soku.rebotcorner.utils.Constancts.MODE;
 
 @Component
 public class FileUtil {
-  public static JSONObject saveAndGetIcon(MultipartFile file, String filename, String path) {
+  public static JSONObject saveAndGetUrl(MultipartFile file, String filename, String path) {
     JSONObject result = new JSONObject();
     result.put("result", "fail");
 

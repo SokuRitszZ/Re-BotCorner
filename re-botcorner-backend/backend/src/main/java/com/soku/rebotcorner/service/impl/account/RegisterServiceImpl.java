@@ -1,57 +1,49 @@
 package com.soku.rebotcorner.service.impl.account;
 
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.mapper.UserMapper;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.service.account.RegisterService;
+import com.soku.rebotcorner.utils.NewRes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class RegisterServiceImpl implements RegisterService {
   @Autowired
-  private UserMapper userMapper;
+  private UserMapper mapper;
 
   @Autowired
   private PasswordEncoder passwordEncoder;
 
   @Override
-  public Map<String, String> register(String username, String password, String confirmedPassword) {
-    Map<String, String> map = new HashMap<>();
+  public JSONObject register(String username, String password, String confirmedPassword) {
     // 检测格式
     if (username == null) {
-      map.put("result", "用户名为空");
-      return map;
+      return NewRes.fail("用户名为空");
     } else if (password == null || confirmedPassword == null || password.length() == 0 || confirmedPassword.length() == 0) {
-      map.put("result", "密码为空");
-      return map;
+      return NewRes.fail("密码为空");
     }
     username = username.trim();
     if (username.length() == 0) {
-      map.put("result", "用户名为空");
-      return map;
+      return NewRes.fail("用户名为空");
     } else if (username.length() > 32) {
-      map.put("result", "用户名长度大于32");
-      return map;
+      return NewRes.fail("用户名长度超过32");
     } else if (password.length() > 32 || confirmedPassword.length() > 32) {
-      map.put("result", "密码长度大于32");
-      return map;
+      return NewRes.fail("密码长度超过32");
     } else if (!password.equals(confirmedPassword)) {
-      map.put("result", "两次密码不一致");
-      return map;
+      return NewRes.fail("两次密码不一致");
     }
 
     QueryWrapper<User> qw = new QueryWrapper<>();
     qw.eq("username", username);
-    List<User> users = userMapper.selectList(qw);
+    List<User> users = mapper.selectList(qw);
     if (!users.isEmpty()) {
-      map.put("result", "用户名已存在");
-      return map;
+      return NewRes.fail("用户名已存在");
     }
 
     // 加密密码
@@ -66,8 +58,10 @@ public class RegisterServiceImpl implements RegisterService {
       null,
       null
     );
-    userMapper.insert(user);
-    map.put("result", "success");
-    return map;
+    mapper.insert(user);
+    return NewRes.ok(
+      new JSONObject()
+        .set("result", "success")
+    );
   }
 }
