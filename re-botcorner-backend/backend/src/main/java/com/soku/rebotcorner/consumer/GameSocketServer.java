@@ -17,10 +17,7 @@ import org.springframework.util.MultiValueMap;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -156,7 +153,9 @@ public class GameSocketServer {
       case "start single game":
         res = startSingleGaming(json.getJSONObject("data"));
         break;
-//      case "send talk": res = sendTalk(json); break;
+      case "send talk":
+        res = sendTalk(json);
+        break;
       case "start match":
         res = startMatching(json);
         break;
@@ -353,10 +352,12 @@ public class GameSocketServer {
    * @param json
    * @return
    */
-  Res sendTalk(JSONObject json) {
-    json.set("userId", this.user.getId());
-    json.set("username", this.user.getUsername());
-    return Res.ok(json);
+  JSONObject sendTalk(JSONObject json) {
+    return new JSONObject()
+      .set("action", "send talk")
+      .set("data",
+        json.getJSONObject("data")
+          .set("time", new Date()));
   }
 
   /**
