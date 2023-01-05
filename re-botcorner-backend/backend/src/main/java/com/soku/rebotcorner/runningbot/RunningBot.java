@@ -1,10 +1,7 @@
 package com.soku.rebotcorner.runningbot;
 
 import com.soku.rebotcorner.pojo.Bot;
-import com.soku.rebotcorner.utils.BotDAO;
-import com.soku.rebotcorner.utils.CacheClient;
-import com.soku.rebotcorner.utils.LangDAO;
-import com.soku.rebotcorner.utils.RT;
+import com.soku.rebotcorner.utils.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -15,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import static com.soku.rebotcorner.utils.RedisConstants.CACHE_BOT_KEY;
 
 public class RunningBot {
-  private final static String URL = new String[]{"http://39.107.100.77:8000/api", "http://localhost:8000/api"}[0];
+  private final static String URL = new String[]{"http://39.107.100.77:8000/api", "http://localhost:8000/api"}[Constancts.MODE];
   private final static String startBotUrl = String.format("%s/runbot/start/", URL);
   private final static String compileUrl = String.format("%s/runbot/compile/", URL);
   private final static String prepareDataUrl = String.format("%s/runbot/prepare/", URL);
