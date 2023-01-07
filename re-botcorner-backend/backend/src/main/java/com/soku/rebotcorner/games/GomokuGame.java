@@ -123,6 +123,8 @@ public class GomokuGame extends AbsGame {
           total += 5;
           setScore(i, -5);
           break;
+        case "平局":
+          setScore(i, -5);
         default:
           setScore(i, -10);
           break;
@@ -222,12 +224,18 @@ public class GomokuGame extends AbsGame {
   private void afterPutChess() {
     addStep_put();
 
-    if (!checkLink(rc[0], rc[1])) return;
+    if (!checkLink(rc[0], rc[1]) && step + 1 != rows * cols) return;
     // 游戏结束
     StringBuilder result = new StringBuilder();
-    result.append(cur == 0 ? "黑子" : "白子").append("获胜");
+    if (step + 1 != rows * cols) {
+      result.append(cur == 0 ? "黑子" : "白子").append("获胜");
+      setReason(cur ^ 1, "战败");
+    } else {
+      result.append("平局");
+      setReason(0, "平局");
+      setReason(1, "平局");
+    }
     setResult(result.toString());
-    setReason(cur ^ 1, "战败");
 
     rc[0] = 99;
   }

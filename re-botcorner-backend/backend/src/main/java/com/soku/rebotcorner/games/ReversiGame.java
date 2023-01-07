@@ -11,11 +11,11 @@ import java.util.regex.Pattern;
 
 public class ReversiGame extends AbsGame {
   private static final int[] dx = {-1, -1, 0, 1, 1, 1, 0, -1};
-  private static final int dy[] = {0, 1, 1, 1, 0, -1, -1, -1};
+  private static final int[] dy = {0, 1, 1, 1, 0, -1, -1, -1};
 
   private final int rows;
   private final int cols;
-  private final int[] rc = new int[2];
+  private final int[] rc = new int[]{8, 8};
   private final int[][] g;
   private final AtomicInteger ok = new AtomicInteger();
   private int step;
@@ -184,6 +184,7 @@ public class ReversiGame extends AbsGame {
   private void afterSetStep(JSONObject json) {
     if (checkOver()) {
       gameOver();
+      return;
     }
     if (checkPass()) {
       _setStep(
@@ -248,7 +249,6 @@ public class ReversiGame extends AbsGame {
     }
 
     ++this.step;
-    rc[0] = 8; // 还能继续
   }
 
   /**

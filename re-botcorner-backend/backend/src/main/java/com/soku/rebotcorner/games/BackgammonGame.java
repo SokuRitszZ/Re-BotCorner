@@ -53,7 +53,7 @@ public class BackgammonGame extends AbsGame {
 
   private List<Integer> g[] = new List[28];
   private Vector<Integer> dice = new Vector<>();
-  private int cur;
+  private int cur = 0;
 
   /**
    * 构造函数
@@ -252,6 +252,7 @@ public class BackgammonGame extends AbsGame {
         String[] rc = input.split(" ");
         int from = Integer.parseInt(rc[0]);
         int to = Integer.parseInt(rc[1]);
+        if (to == 25 || to == 0) to = to == 25 ? 26 : 27;
         _setStep(
           new JSONObject()
             .set("id", cur)
@@ -272,6 +273,7 @@ public class BackgammonGame extends AbsGame {
     String[] rc = input.split(" ");
     int from = Integer.parseInt(rc[0]);
     int to = Integer.parseInt(rc[1]);
+    if (to == 0 || to == 25) to = to == 25 ? 26 : 27;
     if (from < 0 || from > 27 || to < 0 || to > 27)
       return String.format("非法输出1: %s", input);
     if (!checkValid(cur, from, to))
@@ -280,27 +282,28 @@ public class BackgammonGame extends AbsGame {
   }
 
   private boolean checkValid(int id, int from, int to) {
-    if (from == -1) return true;
-    if (!isIn(from) || !isIn(to)) return false;
-    if (from == 26 || from == 27) return false;
-    if (id == 0 && to == 27 || id == 1 && to == 26) return false;
-    if (id != cur) return false;
-    if (g[from].size() == 0) return false;
+    if (from == -1) return true; // 非法操作
+    if (!isIn(from) || !isIn(to)) return false; // 不在范围内
+    if (from == 26 || from == 27) return false; // 不能从终点出来
+    if (id == 0 && to == 27 || id == 1 && to == 26) return false; // 走错地方
+    if (id != cur) return false; // 不是当前的棋子操作
+    if (g[from].size() == 0) return false; // 从没棋子的地方出来
+    if (g[from].get(0) != cur) return false;
     // 老家有没有人
     int home = id == 0 ? 0 : 25;
-    if (g[home].size() > 0 && from != home) return false;
+    if (g[home].size() > 0 && from != home) return false; // 老家还有人但不是从老家出来的
     // 普通的移动
     int end = 26 + id;
     int step = to - from;
     if (27 - to <= 1) step = (id == 0 ? 25 : 0) - from;
     if (cur == 1 && step < 0) step *= -1;
 //    System.out.println(id + " " + from + " " + to + " " + step + " " + end);
-    if (to != end && !hasDice(step)) return false;
-    if (to != end && g[to].size() > 1 && g[to].get(0) != id) return false;
+    if (to != end && !hasDice(step)) return false; // 不是走到终点，没有骰子
+    if (to != end && g[to].size() > 1 && g[to].get(0) != id) return false; // 不是走向终点，目标地有两人以上的敌人
     // 归位的移动
-    if (to == end && checkBQ(id, id == 0 ? 19 : 1) + g[end].size() != 15) return false;
-    if (to == end && !hasDice(step) && !hasMoreDice(step)) return false;
-    if (to == end && !hasDice(step) && !checkOutest(id, from)) return false;
+    if (to == end && checkBQ(id, id == 0 ? 19 : 1) + g[end].size() != 15) return false; // 走向终点，但本区+终点的人没有凑够15人
+    if (to == end && !hasDice(step) && !hasMoreDice(step)) return false; // 走向终点，没有合适的骰子提供
+    if (to == end && !hasDice(step) && !checkOutest(id, from)) return false; // 走向终点，没有骰子，不是最外层
 
     return true;
   }
