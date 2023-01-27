@@ -29,7 +29,7 @@ public class InfoServiceImpl implements InfoService {
       JSONObject json = new JSONObject();
       json.set("id", user.getId());
       json.set("username", user.getUsername());
-      json.set("avatar", user.getAvatar());
+      json.set("headIcon", user.getHeadIcon());
       return NewRes.ok(json);
     } catch (Exception e) {
       return NewRes.fail("Token无效");

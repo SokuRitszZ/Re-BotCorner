@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface UserMapper extends BaseMapper<User> {
   @Select("" +
-    "select id, username, avatar as avatar " +
+    "select id, username, head_icon as headIcon " +
     "from user " +
     "where id=#{id}; "
   )

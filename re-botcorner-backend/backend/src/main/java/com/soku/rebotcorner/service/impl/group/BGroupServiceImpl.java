@@ -172,7 +172,7 @@ public class BGroupServiceImpl implements BGroupService {
       User user = userMap.get(applicantId);
       BGroup group = groupMap.get(groupId);
       json.put("applicantUsername", user.getUsername());
-      json.put("applicantHeadIcon", user.getAvatar());
+      json.put("applicantHeadIcon", user.getHeadIcon());
       if (group != null) {
         json.put("groupIcon", group.getIcon());
         json.put("groupTitle", group.getTitle());
@@ -213,7 +213,7 @@ public class BGroupServiceImpl implements BGroupService {
       JSONObject json = JSONUtil.parseObj(member);
       User user = UserDAO.mapper.selectById(json.getInt("userId"));
       json.put("id", user.getId());
-      json.put("headIcon", user.getAvatar());
+      json.put("headIcon", user.getHeadIcon());
       json.put("username", user.getUsername());
       infos.add(json);
     });

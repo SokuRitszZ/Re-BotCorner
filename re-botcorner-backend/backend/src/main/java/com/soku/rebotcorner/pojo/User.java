@@ -14,7 +14,7 @@ public class User {
   private Integer id;
   private String username;
   private String password;
-  private String avatar;
+  private String headIcon;
   private Integer rating;
   private String openid;
   private String phone;
