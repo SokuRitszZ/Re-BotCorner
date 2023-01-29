@@ -32,6 +32,7 @@ public class GameSocketServer {
 
   private static ExecutorService es = Executors.newFixedThreadPool(10);
   private static ConcurrentHashMap<Integer, GameSocketServer> users = new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, GameSocketServer>> game2users = new ConcurrentHashMap<>();
 
   private Session session;
   private User user;
@@ -66,8 +67,11 @@ public class GameSocketServer {
     match.broadCast(ret);
   }
 
-  private static void allBroadCast(JSONObject json) {
-    for (GameSocketServer value : users.values()) {
+  private static void allBroadCast(Integer gameId, JSONObject json) {
+    if (!game2users.containsKey(gameId)) {
+      game2users.put(gameId, new ConcurrentHashMap<>());
+    }
+    for (GameSocketServer value : game2users.get(gameId).values()) {
       value.sendMessage(json);
     }
   }
@@ -106,19 +110,19 @@ public class GameSocketServer {
     Integer userId = JwtAuthenticationUtil.getUserId(token);
     this.user = UserDAO.mapper.selectById(userId);
     this.gameClass = game;
-
     this.initMatch();
 
     // 广播有人加入了游戏（不包括自己）
-    allBroadCast(
+    allBroadCast(getGameId(),
       new JSONObject()
         .set("action", "join")
         .set("data", packUser(user))
     );
 
     users.put(userId, this);
+    game2users.get(getGameId()).put(userId, this);
 
-    Stream<JSONObject> objectStream = users.values()
+    Stream<JSONObject> objectStream = game2users.get(getGameId()).values()
       .stream()
       .map(server -> packUser(server.getUser()));
 
@@ -142,14 +146,15 @@ public class GameSocketServer {
       }
     }
     if (this.user != null) {
-      users.remove(this.user.getId());
+      users.remove(user.getId());
+      game2users.get(getGameId()).remove(user.getId());
       removeFromMatch();
     }
-    allBroadCast(
+    allBroadCast(getGameId(),
       new JSONObject()
         .set("action", "leave")
         .set("data", new JSONObject()
-          .set("id", this.user.getId())
+          .set("id", user.getId())
         )
     );
   }
