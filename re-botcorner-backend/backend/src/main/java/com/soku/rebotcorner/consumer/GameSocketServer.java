@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Stream;
 
 @Data
 @Component
@@ -65,6 +66,20 @@ public class GameSocketServer {
     match.broadCast(ret);
   }
 
+  private static void allBroadCast(JSONObject json) {
+    for (GameSocketServer value : users.values()) {
+      value.sendMessage(json);
+    }
+  }
+
+  private static JSONObject packUser(User user) {
+    JSONObject json = new JSONObject()
+      .set("id", user.getId())
+      .set("username", user.getUsername())
+      .set("avatar", user.getAvatar());
+    return json;
+  }
+
   public void setMatch(GameMatch match) {
     this.match = match;
   }
@@ -89,13 +104,29 @@ public class GameSocketServer {
   public void onOpen(Session session, @PathParam("game") String game, @PathParam("token") String token) {
     this.session = session;
     Integer userId = JwtAuthenticationUtil.getUserId(token);
+    this.user = UserDAO.mapper.selectById(userId);
+    this.gameClass = game;
 
     this.initMatch();
 
-    System.out.println(String.format("%d connected.", userId));
-    this.user = UserDAO.mapper.selectById(userId);
+    // 广播有人加入了游戏（不包括自己）
+    allBroadCast(
+      new JSONObject()
+        .set("action", "join")
+        .set("data", packUser(user))
+    );
+
     users.put(userId, this);
-    this.gameClass = game;
+
+    Stream<JSONObject> objectStream = users.values()
+      .stream()
+      .map(server -> packUser(server.getUser()));
+
+    sendMessage(
+      new JSONObject()
+        .set("action", "init")
+        .set("data", objectStream.toArray())
+    );
   }
 
   @OnClose
@@ -113,8 +144,14 @@ public class GameSocketServer {
     if (this.user != null) {
       users.remove(this.user.getId());
       removeFromMatch();
-      System.out.println(String.format("%d disconnected.", this.user.getId()));
     }
+    allBroadCast(
+      new JSONObject()
+        .set("action", "leave")
+        .set("data", new JSONObject()
+          .set("id", this.user.getId())
+        )
+    );
   }
 
   @OnError
@@ -147,7 +184,6 @@ public class GameSocketServer {
 
   private void route(JSONObject json) {
     String action = json.getStr("action");
-    System.out.println(this.user.getId() + " action = " + action);
     JSONObject res = null;
     switch (action) {
       case "start single game":
@@ -261,7 +297,6 @@ public class GameSocketServer {
       );
       if (bot != null) return true;
       Integer userId = getUser().getId();
-      System.out.println("userId = " + userId);
       bot = BotDAO.mapper.selectOne(
         new QueryWrapper<Bot>()
           .eq("id", id)
