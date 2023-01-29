@@ -1,6 +1,6 @@
 package com.soku.rebotcorner.service.impl.account;
 
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.service.account.acwing.AcappService;
@@ -16,7 +16,9 @@ import org.springframework.stereotype.Service;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.time.Duration;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 
 @Service
 public class AcappServiceImpl implements AcappService {
@@ -69,9 +71,9 @@ public class AcappServiceImpl implements AcappService {
 
     String getString = HttpClientUtil.get(applyAccessToken, nameValuePairs);
     if (getString == null) return resp;
-    JSONObject getResp = JSONObject.parseObject(getString);
-    String accessToken = getResp.getString("access_token");
-    String openid = getResp.getString("openid");
+    JSONObject getResp = new JSONObject(getString);
+    String accessToken = getResp.getStr("access_token");
+    String openid = getResp.getStr("openid");
     if (accessToken == null || openid == null) return resp;
 
     QueryWrapper<User> qw = new QueryWrapper<>();
@@ -89,8 +91,8 @@ public class AcappServiceImpl implements AcappService {
     nameValuePairs.add(new BasicNameValuePair("openid", openid));
     getString = HttpClientUtil.get(getUserInfoUrl, nameValuePairs);
     if (getString == null) return resp;
-    getResp = JSONObject.parseObject(getString);
-    StringBuilder username = new StringBuilder(getResp.getString("username"));
+    getResp = new JSONObject(getString);
+    StringBuilder username = new StringBuilder(getResp.getStr("username"));
     for (int i = 0; i < 100; ++i) {
       QueryWrapper<User> qwx = new QueryWrapper<>();
       qwx.eq("username", username.toString());
@@ -98,7 +100,7 @@ public class AcappServiceImpl implements AcappService {
       username.append(random.nextInt(10));
       if (i == 99) return resp;
     }
-    String headIcon = getResp.getString("photo");
+    String headIcon = getResp.getStr("photo");
     user = new User(
       null,
       username.toString(),

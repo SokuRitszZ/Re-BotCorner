@@ -1,6 +1,6 @@
 package com.soku.rebotcorner.service.impl.account;
 
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.service.account.acwing.WebService;
 import org.springframework.stereotype.Service;
 

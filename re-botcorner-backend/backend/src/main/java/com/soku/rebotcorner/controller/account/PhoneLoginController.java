@@ -1,6 +1,6 @@
 package com.soku.rebotcorner.controller.account;
 
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.service.account.PhoneLoginService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,8 +16,8 @@ public class PhoneLoginController {
 
   @PostMapping("/api/account/phonelogin")
   public Map<String, String> phoneLogin(@RequestBody JSONObject json) {
-    String phone = json.getString("phone");
-    String authCode = json.getString("authCode");
+    String phone = json.getStr("phone");
+    String authCode = json.getStr("authCode");
     return phoneLoginService.phoneLogin(phone, authCode);
   }
 }

@@ -1,6 +1,6 @@
 package com.soku.rebotcorner.controller.account;
 
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.service.account.acwing.WebService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -1,8 +1,9 @@
 package com.soku.rebotcorner.service.account.acwing;
 
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
 
 public interface WebService {
   JSONObject applyCode();
+
   JSONObject receiveCode(String code, String state);
 }
