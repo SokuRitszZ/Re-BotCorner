@@ -17,11 +17,11 @@ import org.springframework.util.MultiValueMap;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Stream;
 
 @Data
 @Component
@@ -30,18 +30,17 @@ public class GameSocketServer {
   private final static String addUrl = "http://localhost:8081/api/matching/add/";
   private final static String removeUrl = "http://localhost:8081/api/matching/remove/";
 
-  private static ExecutorService es = Executors.newFixedThreadPool(10);
   private static ConcurrentHashMap<Integer, GameSocketServer> users = new ConcurrentHashMap<>();
   private static ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, GameSocketServer>> game2users = new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<Integer, ConcurrentHashMap<UUID, GameMatch>> game2matches = new ConcurrentHashMap<>();
 
   private Session session;
   private User user;
   private boolean hasClosed;
+  private GameMatch matchWatching = null;
   private GameMatch match;
   private String gameClass;
   private RunningBot bot;
-
-  private Queue<Thread> threadQueue = new LinkedList<>();
 
   public static void makeMatching(List<Integer> userIds) {
     // 获取基本信息
@@ -67,7 +66,7 @@ public class GameSocketServer {
     match.broadCast(ret);
   }
 
-  private static void allBroadCast(Integer gameId, JSONObject json) {
+  public static void allBroadCast(Integer gameId, JSONObject json) {
     if (!game2users.containsKey(gameId)) {
       game2users.put(gameId, new ConcurrentHashMap<>());
     }
@@ -81,6 +80,26 @@ public class GameSocketServer {
       .set("id", user.getId())
       .set("username", user.getUsername())
       .set("avatar", user.getAvatar());
+    return json;
+  }
+
+  private static JSONObject packMatch(GameMatch match) {
+    List<GameSocketServer> sockets = match.getSockets();
+    Object[] users = sockets.stream().map(s -> packUser(s.getUser())).toArray();
+
+    Object[] bots = match.getGame().getBots().stream()
+      .map(b -> {
+        if (b == null) return null;
+        else {
+          JSONObject pack = b.pack();
+          return pack.set("user", UserDAO.mapper.getBaseById(pack.getInt("user")));
+        }
+      }).toArray();
+
+    JSONObject json = new JSONObject()
+      .set("uuid", match.getUuid())
+      .set("users", users)
+      .set("bots", bots);
     return json;
   }
 
@@ -122,14 +141,22 @@ public class GameSocketServer {
     users.put(userId, this);
     game2users.get(getGameId()).put(userId, this);
 
-    Stream<JSONObject> objectStream = game2users.get(getGameId()).values()
+    Object[] onlineUsers = game2users.get(getGameId()).values()
       .stream()
-      .map(server -> packUser(server.getUser()));
+      .map(server -> packUser(server.getUser())).toArray();
+
+    if (!game2matches.containsKey(getGameId()))
+      game2matches.put(getGameId(), new ConcurrentHashMap<>());
+    Object[] matches = game2matches.get(getGameId()).values().stream()
+      .map(m -> packMatch(m)).toArray();
 
     sendMessage(
       new JSONObject()
         .set("action", "init")
-        .set("data", objectStream.toArray())
+        .set("data", new JSONObject()
+          .set("users", onlineUsers)
+          .set("matches", matches)
+        )
     );
   }
 
@@ -212,27 +239,29 @@ public class GameSocketServer {
       case "start game":
         res = startGame();
         break;
+      case "to watch":
+        res = toWatch(json.getJSONObject("data"));
+        break;
       default:
         break;
     }
-    this.match.broadCast(res);
-    while (!this.threadQueue.isEmpty()) {
-      Thread thread = threadQueue.poll();
-      es.execute(thread);
-    }
+    if (res != null) this.match.broadCast(res);
   }
 
   private JSONObject toggleMatch(JSONObject json) {
     boolean isOk = json.getJSONObject("data").getBool("isOk");
     this.match.setOk(this, isOk);
+    this.match.broadCast(
+      new JSONObject()
+        .set("action", "toggle match")
+        .set("data", new JSONObject()
+          .set("id", this.match.getMe(this))
+          .set("isOk", isOk)
+        )
+    );
     if (this.match.allOk())
-      new Thread(this::startMultiGaming).start();
-    return new JSONObject()
-      .set("action", "toggle match")
-      .set("data", new JSONObject()
-        .set("id", this.match.getMe(this))
-        .set("isOk", isOk)
-      );
+      this.startMultiGaming();
+    return null;
   }
 
   /**
@@ -342,6 +371,8 @@ public class GameSocketServer {
    * @return
    */
   JSONObject startSingleGaming(JSONObject json) {
+    beforeStartGame();
+
     JSONObject ret = new JSONObject();
     ret.set("action", "start single game");
 
@@ -382,8 +413,24 @@ public class GameSocketServer {
     // 启动所有机器人
     game.compileBots();
 
-    return new JSONObject()
-      .set("action", "allow to control");
+    this.match.broadCast(new JSONObject()
+      .set("action", "allow to control")
+    );
+
+    // 通知所有在房间里的人，有新游戏开了
+    allBroadCast(getGameId(), new JSONObject()
+      .set("action", "one game start")
+      .set("data", packMatch(this.match))
+    );
+    // 记录正在进行的比赛
+    if (!game2matches.containsKey(getGameId()))
+      game2matches.put(getGameId(), new ConcurrentHashMap<>());
+
+    ConcurrentHashMap<UUID, GameMatch> gameMatches = game2matches.get(getGameId());
+    gameMatches.put(this.match.getUuid(), this.match);
+    this.match.setBelong(gameMatches);
+
+    return null;
   }
 
   /**
@@ -430,6 +477,8 @@ public class GameSocketServer {
    * 开始多人游戏
    */
   void startMultiGaming() {
+    beforeStartGame();
+
     AbsGame game = createGameObject("multi", this.match, this.match.getBots()).setStarterId(user.getId());
     game.setMatch(this.match);
     this.match.setGame(game);
@@ -438,7 +487,7 @@ public class GameSocketServer {
     JSONObject initData = game.getInitDataAndSave();
 
     // 获取botIds
-    List<RunningBot> bots = this.match.getBots();
+    List<RunningBot> bots = this.match.getGame().getBots();
     List<Integer> ids = new ArrayList<>();
     for (RunningBot runningBot : bots) {
       if (runningBot != null) ids.add(runningBot.getBot().getId());
@@ -459,6 +508,22 @@ public class GameSocketServer {
     this.match.broadCast(new JSONObject()
       .set("action", "allow to control")
     );
+
+    // 通知所有在房间里的人，有新游戏开了
+    allBroadCast(getGameId(), new JSONObject()
+      .set("action", "one game start")
+      .set("data", packMatch(this.match))
+    );
+    // 记录正在进行的比赛
+    if (!game2matches.containsKey(getGameId()))
+      game2matches.put(getGameId(), new ConcurrentHashMap<>());
+    ConcurrentHashMap<UUID, GameMatch> gameMatches = game2matches.get(getGameId());
+    gameMatches.put(this.match.getUuid(), this.match);
+    this.match.setBelong(gameMatches);
+  }
+
+  void beforeStartGame() {
+    toWatch((GameMatch) null);
   }
 
   /**
@@ -471,5 +536,29 @@ public class GameSocketServer {
     );
     return new JSONObject()
       .set("action", "nothing");
+  }
+
+  JSONObject toWatch(JSONObject json) {
+    String strUuid = json.getStr("uuid");
+    UUID uuid = UUID.fromString(strUuid);
+    GameMatch match = game2matches.get(getGameId()).get(uuid);
+
+    JSONObject current;
+    if (match != null) current = match.getGame().getCurrent();
+    else current = null;
+
+    toWatch(match);
+    return new JSONObject()
+      .set("action", "get current")
+      .set("data", current);
+  }
+
+  public void toWatch(GameMatch match) {
+    if (matchWatching != null) {
+      matchWatching.delWatcher(this);
+      matchWatching = null;
+    }
+    if (match != null) match.addWatcher(this);
+    matchWatching = match;
   }
 }

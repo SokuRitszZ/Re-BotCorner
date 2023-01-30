@@ -214,7 +214,8 @@ public class ReversiGame extends AbsGame {
               .set("step", step)
           )
       );
-    getSteps().append(step);
+
+    addStep(step);
 
     // 处理正常输
     int[] cnt = new int[2];

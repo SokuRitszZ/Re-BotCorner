@@ -226,7 +226,7 @@ public class BackgammonGame extends AbsGame {
           new JSONObject()
             .set("step", step.toString()))
     );
-    getSteps().append(step);
+    addStep(step.toString());
   }
 
   private boolean checkOver() {
@@ -444,7 +444,7 @@ public class BackgammonGame extends AbsGame {
           new JSONObject()
             .set("step", step.toString()))
     );
-    getSteps().append(step);
+    addStep(step.toString());
   }
 
   private boolean checkTurn() {
@@ -505,7 +505,7 @@ public class BackgammonGame extends AbsGame {
           new JSONObject()
             .set("step", "t"))
     );
-    getSteps().append("t");
+    addStep("t");
   }
 
   private void addStep_pass() {
@@ -516,7 +516,7 @@ public class BackgammonGame extends AbsGame {
           new JSONObject()
             .set("step", "p"))
     );
-    getSteps().append("p");
+    addStep("p");
   }
 
   private void test_initG() {

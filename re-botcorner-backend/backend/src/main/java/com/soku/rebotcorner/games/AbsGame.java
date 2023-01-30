@@ -43,8 +43,10 @@ public abstract class AbsGame {
   private boolean hasOver;
   // 初始数据
   private JSONObject initData;
-  // 步
-  private StringBuilder steps;
+  // 步（字符串）
+  private StringBuilder strSteps = new StringBuilder();
+  // 步（数组）
+  private List<String> listSteps = new ArrayList<>();
   // 是否已开始
   private boolean hasStart;
   // 结算分数
@@ -72,7 +74,7 @@ public abstract class AbsGame {
 
     // init record
     this.setRecord(new JSONObject());
-    this.setSteps(new StringBuilder());
+    this.setStrSteps(new StringBuilder());
   }
 
   /**
@@ -168,6 +170,7 @@ public abstract class AbsGame {
     this.stopBots();
 
     this.saveRecord();
+    this.match.gameOver();
   }
 
   public abstract void describeResult();
@@ -213,7 +216,7 @@ public abstract class AbsGame {
         .setBotIds(Strings.join(getBotIds(), ','))
         .setRecordJson(new JSONObject()
           .set("initData", initData)
-          .set("steps", steps).toString())
+          .set("steps", strSteps).toString())
         .setResult(result)
         .setReason(Strings.join(Arrays.asList(reason), ','));
       RecordDAO.mapper.insert(record);
@@ -282,5 +285,16 @@ public abstract class AbsGame {
 
   protected void setScore(int id, int score) {
     scores[id] = score;
+  }
+
+  protected void addStep(String step) {
+    strSteps.append(step);
+    listSteps.add(step);
+  }
+
+  public JSONObject getCurrent() {
+    return new JSONObject()
+      .set("initData", initData)
+      .set("steps", listSteps);
   }
 }

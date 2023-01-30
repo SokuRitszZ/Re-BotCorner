@@ -261,7 +261,7 @@ public class HexGame extends AbsGame {
   private void addStep_put() {
     StringBuilder step = new StringBuilder();
     step.append(transform(xy[0], 36)).append(transform(xy[1], 36));
-    getSteps().append(step);
+    addStep(step.toString());
     getMatch().broadCast(
       new JSONObject()
         .set("action", "set step truly")

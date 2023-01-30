@@ -8,14 +8,18 @@ import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.utils.Res;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class GameMatch {
+  private UUID uuid = UUID.randomUUID();
   private List<GameSocketServer> sockets;
+  private ConcurrentHashMap<Integer, GameSocketServer> watchers = new ConcurrentHashMap<>();
   private AbsGame game;
   private boolean[] isOk;
   private boolean[] canStartGame;
   private ReentrantLock lock;
+  private ConcurrentHashMap<UUID, GameMatch> belong;
 
   /**
    * 构造函数
@@ -47,6 +51,9 @@ public class GameMatch {
         set.add(socket);
         socket.sendMessage(res);
       }
+    }
+    for (GameSocketServer watcher : watchers.values()) {
+      watcher.sendMessage(res);
     }
   }
 
@@ -155,5 +162,31 @@ public class GameMatch {
 
   public void setGame(AbsGame game) {
     this.game = game;
+  }
+
+  public void setBelong(ConcurrentHashMap<UUID, GameMatch> belong) {
+    this.belong = belong;
+  }
+
+  public UUID getUuid() {
+    return uuid;
+  }
+
+  public void gameOver() {
+    this.belong.remove(this.uuid);
+
+    GameSocketServer.allBroadCast(this.game.getGameId(), new JSONObject()
+      .set("action", "one game over")
+      .set("data", new JSONObject()
+        .set("uuid", this.uuid))
+    );
+  }
+
+  public void addWatcher(GameSocketServer socket) {
+    watchers.put(socket.getUser().getId(), socket);
+  }
+
+  public void delWatcher(GameSocketServer socket) {
+    watchers.remove(socket.getUser().getId());
   }
 }

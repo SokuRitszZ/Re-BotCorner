@@ -254,7 +254,7 @@ public class GomokuGame extends AbsGame {
           new JSONObject()
             .set("step", step.toString()))
     );
-    getSteps().append(step);
+    addStep(step.toString());
   }
 
   private boolean checkLink(int r, int c) {

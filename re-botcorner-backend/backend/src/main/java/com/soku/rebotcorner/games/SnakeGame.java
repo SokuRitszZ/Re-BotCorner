@@ -174,7 +174,7 @@ public class SnakeGame extends AbsGame {
       + (state[0] == "die" ? 1 : 0) + (state[1] == "die" ? 1 : 0);
 
     // 保存在steps
-    getSteps().append(step);
+    addStep(step);
 
     // 发送信息
     getMatch()
