@@ -42,11 +42,19 @@ public class RunningBot {
     this.bot = bot;
   }
 
+  public JSONObject pack() {
+    JSONObject json = new JSONObject()
+      .set("id", bot.getId())
+      .set("title", bot.getTitle())
+      .set("user", bot.getUserId());
+    return json;
+  }
+
   public void start() {
     this.uuid = UUID.randomUUID().toString().replaceAll("-", "");
     bots.put(uuid, this);
     MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
-    data.add("uuid", uuid.toString());
+    data.add("uuid", uuid);
     data.add("code", bot.getCode());
     data.add("lang", LangDAO.getLang(bot.getLangId()));
     RT.POST(startBotUrl, data);
@@ -54,27 +62,27 @@ public class RunningBot {
 
   public String compile() {
     MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
-    data.add("uuid", uuid.toString());
+    data.add("uuid", uuid);
     return RT.POST(compileUrl, data);
   }
 
   public void prepareData(String data) {
     MultiValueMap<String, String> request = new LinkedMultiValueMap<>();
-    request.add("uuid", uuid.toString());
+    request.add("uuid", uuid);
     request.add("data", data);
     RT.POST(prepareDataUrl, request);
   }
 
   public String run() {
     MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
-    data.add("uuid", uuid.toString());
+    data.add("uuid", uuid);
     return RT.POST(runUrl, data);
   }
 
   public void stop() {
     new Thread(() -> {
       MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
-      data.add("uuid", uuid.toString());
+      data.add("uuid", uuid);
       RT.POST(stopUrl, data);
     }).start();
     bots.remove(this.uuid);
