@@ -34,6 +34,13 @@ public class GameSocketServer {
   private static ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, GameSocketServer>> game2users = new ConcurrentHashMap<>();
   private static ConcurrentHashMap<Integer, ConcurrentHashMap<UUID, GameMatch>> game2matches = new ConcurrentHashMap<>();
 
+  static {
+    for (int i = 0; i < 5; i++) {
+      game2users.put(i + 1, new ConcurrentHashMap<>());
+      game2matches.put(i + 1, new ConcurrentHashMap<>());
+    }
+  }
+
   private Session session;
   private User user;
   private boolean hasClosed;
@@ -67,9 +74,6 @@ public class GameSocketServer {
   }
 
   public static void allBroadCast(Integer gameId, JSONObject json) {
-    if (!game2users.containsKey(gameId)) {
-      game2users.put(gameId, new ConcurrentHashMap<>());
-    }
     for (GameSocketServer value : game2users.get(gameId).values()) {
       value.sendMessage(json);
     }
@@ -145,8 +149,6 @@ public class GameSocketServer {
       .stream()
       .map(server -> packUser(server.getUser())).toArray();
 
-    if (!game2matches.containsKey(getGameId()))
-      game2matches.put(getGameId(), new ConcurrentHashMap<>());
     Object[] matches = game2matches.get(getGameId()).values().stream()
       .map(m -> packMatch(m)).toArray();
 
@@ -423,9 +425,6 @@ public class GameSocketServer {
       .set("data", packMatch(this.match))
     );
     // 记录正在进行的比赛
-    if (!game2matches.containsKey(getGameId()))
-      game2matches.put(getGameId(), new ConcurrentHashMap<>());
-
     ConcurrentHashMap<UUID, GameMatch> gameMatches = game2matches.get(getGameId());
     gameMatches.put(this.match.getUuid(), this.match);
     this.match.setBelong(gameMatches);
@@ -515,8 +514,6 @@ public class GameSocketServer {
       .set("data", packMatch(this.match))
     );
     // 记录正在进行的比赛
-    if (!game2matches.containsKey(getGameId()))
-      game2matches.put(getGameId(), new ConcurrentHashMap<>());
     ConcurrentHashMap<UUID, GameMatch> gameMatches = game2matches.get(getGameId());
     gameMatches.put(this.match.getUuid(), this.match);
     this.match.setBelong(gameMatches);

@@ -296,8 +296,7 @@ public class BackgammonGame extends AbsGame {
     int end = 26 + id;
     int step = to - from;
     if (27 - to <= 1) step = (id == 0 ? 25 : 0) - from;
-    if (cur == 1 && step < 0) step *= -1;
-//    System.out.println(id + " " + from + " " + to + " " + step + " " + end);
+    if (cur == 1) step *= -1;
     if (to != end && !hasDice(step)) return false; // 不是走到终点，没有骰子
     if (to != end && g[to].size() > 1 && g[to].get(0) != id) return false; // 不是走向终点，目标地有两人以上的敌人
     // 归位的移动
