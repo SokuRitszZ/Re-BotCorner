@@ -18,11 +18,11 @@ public class RatingServiceImpl implements RatingService {
   private RatingMapper mapper;
 
   @Override
-  public JSONObject getTop10ByGameId(Integer gameId) {
-    List<JSONObject> top10 = mapper.getTop10(gameId);
+  public JSONObject getTop(Integer gameId, Integer count) {
+    List<JSONObject> top = mapper.getTop(gameId, count);
     return NewRes.ok(
       new JSONObject()
-        .set("ratings", top10)
+        .set("ratings", top)
     );
   }
 

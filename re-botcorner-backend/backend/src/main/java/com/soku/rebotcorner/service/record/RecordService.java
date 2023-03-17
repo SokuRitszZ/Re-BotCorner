@@ -8,4 +8,6 @@ public interface RecordService {
   JSONObject getRecordCount(Integer gameId);
 
   JSONObject getRecordJson(Integer id);
+
+  JSONObject getTopRecord();
 }

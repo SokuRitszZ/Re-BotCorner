@@ -17,9 +17,9 @@ public interface RatingMapper extends BaseMapper<Rating> {
     "from user u, rating rt\n" +
     "where u.id = rt.user_id and game_id = #{game_id}\n" +
     "order by rt.score desc\n" +
-    "limit 0,10;"
+    "limit 0,#{count};"
   )
-  List<JSONObject> getTop10(@Param("game_id") Integer gameId);
+  List<JSONObject> getTop(@Param("game_id") Integer gameId, @Param("count") Integer count);
 
   @Update("" +
     "update rating set score = #{score} " +

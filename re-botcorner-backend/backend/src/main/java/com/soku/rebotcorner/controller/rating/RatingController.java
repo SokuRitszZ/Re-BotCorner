@@ -14,9 +14,9 @@ public class RatingController {
   @Autowired
   private RatingService service;
 
-  @GetMapping("/top10")
-  public JSONObject getTop10ByGameId(@RequestParam("gameId") Integer gameId) {
-    return service.getTop10ByGameId(gameId);
+  @GetMapping("/top")
+  public JSONObject getTop10ByGameId(@RequestParam("gameId") Integer gameId, @RequestParam("count") Integer count) {
+    return service.getTop(gameId, count);
   }
 
   @GetMapping("/my")

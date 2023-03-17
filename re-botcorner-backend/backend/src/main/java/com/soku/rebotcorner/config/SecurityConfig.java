@@ -44,15 +44,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         "/api/account/info",
         "/api/lang/getall",
         "/api/game/getall",
+        "/api/rating/top",
         "/api/getrating/**",
+        "/api/record/**",
+        "/api/bot/other",
+        "/api/bot/getcode",
         "/static/**",
         "/",
-        "/api/getrating/**","/api/user/account/acwing/acapp/apply_code/",
+        "/api/user/account/acwing/acapp/apply_code/",
         "/api/user/account/acwing/acapp/receive_code/",
         "/api/user/account/acwing/web/receive_code/",
         "/api/user/account/acwing/web/apply_code/",
         "/api/account/phoneauth/"
-        ).permitAll()
+      ).permitAll()
       .antMatchers("/api/game/startgame/").hasIpAddress("localhost")
       .antMatchers(HttpMethod.OPTIONS).permitAll()
       .anyRequest().authenticated();
