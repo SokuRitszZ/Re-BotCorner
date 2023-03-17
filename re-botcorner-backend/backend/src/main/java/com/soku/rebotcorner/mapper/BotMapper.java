@@ -32,4 +32,11 @@ public interface BotMapper extends BaseMapper<Bot> {
     "where id = #{id} and user_id = #{user_id};"
   )
   void changeVisible(@Param("user_id") Integer userId, @Param("id") Integer id, @Param("visible") boolean visible);
+
+  @Select("" +
+    "select id, title, description, game_id as gameId, lang_id as langId, create_time as createTime, modify_time as modifyTime " +
+    "from bot " +
+    "where user_id = #{user_id} and visible = true;"
+  )
+  List<JSONObject> getOthersBots(@Param("user_id") Integer userId);
 }

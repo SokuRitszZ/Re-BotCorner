@@ -42,4 +42,9 @@ public class BotController {
     Boolean visible = json.getBool("visible");
     return service.changeVisible(id, visible);
   }
+
+  @GetMapping("/other")
+  public JSONObject getOthersBots(@RequestParam("id") Integer id) {
+    return service.getOthersBots(id);
+  }
 }

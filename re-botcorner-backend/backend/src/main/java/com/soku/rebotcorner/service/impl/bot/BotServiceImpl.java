@@ -7,9 +7,7 @@ import com.soku.rebotcorner.pojo.Bot;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.runningbot.RunningBot;
 import com.soku.rebotcorner.service.bot.BotService;
-import com.soku.rebotcorner.utils.GetUserByToken;
-import com.soku.rebotcorner.utils.NewRes;
-import com.soku.rebotcorner.utils.UserDetailsImpl;
+import com.soku.rebotcorner.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -135,7 +133,11 @@ public class BotServiceImpl implements BotService {
   public JSONObject getCode(int id) {
     try {
       Bot bot = mapper.selectById(id);
-      return NewRes.ok(new JSONObject().set("code", bot.getCode()));
+      User user = JwtAuthenticationUtil.getCurrentUser();
+      if (user.getId() == bot.getUserId() || bot.getVisible()) {
+        return NewRes.ok(new JSONObject().set("code", bot.getCode()));
+      }
+      throw new Exception("此Bot已被隐藏，不可查看代码");
     } catch (Exception e) {
       return NewRes.fail("不存在此Bot");
     }
@@ -219,6 +221,15 @@ public class BotServiceImpl implements BotService {
       }
     } catch (Exception e) {
       return NewRes.fail("Token无效");
+    }
+  }
+
+  @Override
+  public JSONObject getOthersBots(Integer id) {
+    try {
+      return NewRes.ok(new JSONObject().set("bots", BotDAO.mapper.getOthersBots(id)));
+    } catch (Exception e) {
+      return NewRes.fail("获取失败");
     }
   }
 }

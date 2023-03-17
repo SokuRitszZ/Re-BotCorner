@@ -14,4 +14,6 @@ public interface BotService {
   JSONObject updateBot(JSONObject data);
 
   JSONObject changeVisible(int id, boolean visible);
+
+  JSONObject getOthersBots(Integer id);
 }
