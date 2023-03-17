@@ -4,11 +4,9 @@ import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.service.account.AvatarService;
 import com.soku.rebotcorner.utils.FileUtil;
+import com.soku.rebotcorner.utils.JwtAuthenticationUtil;
 import com.soku.rebotcorner.utils.NewRes;
 import com.soku.rebotcorner.utils.UserDAO;
-import com.soku.rebotcorner.utils.UserDetailsImpl;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,9 +19,7 @@ public class AvatarServiceImpl implements AvatarService {
   public JSONObject updateAvatar(MultipartFile multipartFile) throws FileNotFoundException {
     User user = null;
     try {
-      UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-      UserDetailsImpl loginUser = (UserDetailsImpl) token.getPrincipal();
-      user = loginUser.getUser();
+      user = JwtAuthenticationUtil.getCurrentUser();
     } catch (Exception e) {
       return NewRes.fail("上传失败，请重试");
     }

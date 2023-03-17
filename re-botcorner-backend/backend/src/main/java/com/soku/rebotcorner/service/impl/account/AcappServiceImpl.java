@@ -100,16 +100,12 @@ public class AcappServiceImpl implements AcappService {
       username.append(random.nextInt(10));
       if (i == 99) return resp;
     }
-    String headIcon = getResp.getStr("photo");
-    user = new User(
-      null,
-      username.toString(),
-      null,
-      headIcon,
-      1500,
-      openid,
-      null
-    );
+    String avatar = getResp.getStr("photo");
+    user = new User()
+      .setUsername(username.toString())
+      .setAvatar(avatar)
+      .setOpenid(openid);
+
     UserDAO.mapper.insert(user);
     String jwt = JwtUtil.createJWT(user.getId().toString());
     resp.put("result", "success");

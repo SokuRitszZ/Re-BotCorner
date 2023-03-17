@@ -60,15 +60,12 @@ public class PhoneLoginServiceImpl implements PhoneLoginService {
   }
 
   private User createUserWithPhone(String phone) {
-    User user = new User(
-      null,
-      String.format("用户%s", phone),
-      passwordEncoder.encode("123456"),
-      "https://sdfsdf.dev/500x500.jpg,0000ff,ffff00",
-      1500,
-      null,
-      phone
-    );
+    User user = new User()
+      .setUsername(String.format("用户%s", phone))
+      .setPassword(passwordEncoder.encode("123456"))
+      .setAvatar("https://sdfsdf.dev/100x100.png")
+      .setPhone(phone);
+
     while (UserDAO.mapper.selectList(new QueryWrapper<User>().eq("username", user.getUsername())).size() > 0)
       user.setUsername(user.getUsername() + RandomUtil.randomNumbers(1));
     UserDAO.mapper.insert(user);
