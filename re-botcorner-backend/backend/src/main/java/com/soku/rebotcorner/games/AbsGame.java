@@ -66,6 +66,10 @@ public abstract class AbsGame {
   public AbsGame(String mode, GameMatch match, List<RunningBot> bots) {
     this.setMode(mode);
     this.setMatch(match);
+
+    while (bots.size() < this.getPlayerCount()) {
+      bots.add(null);
+    }
     this.setBots(bots);
 
     // init reason

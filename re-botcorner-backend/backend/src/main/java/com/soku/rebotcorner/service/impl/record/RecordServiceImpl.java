@@ -78,4 +78,60 @@ public class RecordServiceImpl implements RecordService {
   public JSONObject getRecordJson(Integer id) {
     return NewRes.ok(new JSONObject(RecordDAO.mapper.getRecordJson(id)));
   }
+
+  @Override
+  public JSONObject getTopRecord() {
+    try {
+      List<JSONObject> list = RecordDAO.mapper.getTop();
+      Map<String, JSONObject>
+        userMap = new HashMap<>(),
+        botMap = new HashMap<>();
+
+      // 一个 Record
+      for (JSONObject json : list) {
+        String[] botIds = json.getStr("botIds").split(",");
+        String[] userIds = json.getStr("userIds").split(",");
+        String[] titles = new String[2];
+        JSONObject[] users = new JSONObject[2];
+
+        for (int i = 0; i < botIds.length; i++) {
+          String botId = botIds[i];
+          String userId = userIds[i];
+
+          JSONObject bot, user;
+
+          if (botId != "0") {
+            if (!botMap.containsKey(botId)) botMap.put(botId, BotDAO.mapper.getBaseBotById(Integer.valueOf(botId)));
+            bot = botMap.get(botId);
+          } else bot = null;
+          // user
+          if (!userMap.containsKey(userId)) {
+            userMap.put(userId, UserDAO.mapper.getBaseById(Integer.valueOf(userId)));
+          }
+          user = userMap.get(userId);
+
+          if (bot != null) {
+            titles[i] = String.format("%s[%s]", user.getStr("username"), bot.getStr("title"));
+          } else {
+            titles[i] = user.getStr("username");
+          }
+          users[i] = user;
+        }
+
+        json.remove("userIds");
+        json.remove("botIds");
+        json
+          .set("titles", titles)
+          .set("users", users);
+      }
+
+      return NewRes.ok(
+        new JSONObject()
+          .set("records", list)
+      );
+    } catch (Error error) {
+      System.out.println("[Record]Get top error.");
+      return NewRes.fail("Get top error.");
+    }
+  }
 }

@@ -12,7 +12,7 @@ import java.util.List;
 @Mapper
 public interface RecordMapper extends BaseMapper<Record> {
   @Select("" +
-    "select id, create_time as time, result, reason, bot_ids as botIds, user_ids as userIds " +
+    "select id, create_time as time, result, reason, bot_ids as botIds, user_ids as userIds, game_id as gameId " +
     "from record " +
     "where game_id = #{game_id} " +
     "order by create_time desc " +
@@ -26,4 +26,12 @@ public interface RecordMapper extends BaseMapper<Record> {
     "where id = #{id};"
   )
   String getRecordJson(@Param("id") Integer id);
+
+  @Select("" +
+    "select id, create_time as time, result, reason, bot_ids as botIds, user_ids as userIds, game_id as gameId " +
+    "from record " +
+    "order by create_time desc " +
+    "limit 0, 6;"
+  )
+  List<JSONObject> getTop();
 }

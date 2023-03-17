@@ -1,6 +1,7 @@
 package com.soku.rebotcorner.controller.record;
 
 import cn.hutool.json.JSONObject;
+import com.soku.rebotcorner.consumer.GameSocketServer;
 import com.soku.rebotcorner.service.record.RecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,5 +28,15 @@ public class RecordController {
   @GetMapping("/json")
   public JSONObject getRecordJson(@RequestParam("id") Integer id) {
     return service.getRecordJson(id);
+  }
+
+  @GetMapping("/top")
+  public JSONObject getTopRecord() {
+    return service.getTopRecord();
+  }
+
+  @GetMapping("/current")
+  public JSONObject getCurrent() {
+    return GameSocketServer.getCurrentPlayingMatches();
   }
 }
