@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.soku.rebotcorner.consumer.SocketServerUtils.packMatch;
+import static com.soku.rebotcorner.consumer.SocketServerUtils.packUser;
+
 @Data
 @Component
 @ServerEndpoint("/websocket/{game}/{token}")  // 注意不要以'/'结尾
@@ -33,6 +36,20 @@ public class GameSocketServer {
   private static ConcurrentHashMap<Integer, GameSocketServer> users = new ConcurrentHashMap<>();
   private static ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, GameSocketServer>> game2users = new ConcurrentHashMap<>();
   private static ConcurrentHashMap<Integer, ConcurrentHashMap<UUID, GameMatch>> game2matches = new ConcurrentHashMap<>();
+  public static ConcurrentHashMap<UUID, GameMatch> matchesCurrent = new ConcurrentHashMap<>();
+
+  public static JSONObject getCurrentPlayingMatches() {
+    List<JSONObject> list = new ArrayList<>();
+    Object[] packs = matchesCurrent.entrySet().stream().map(e -> {
+      JSONObject pack = packMatch(e.getValue());
+      return pack.set("gameId", e.getValue().getGame().getGameId());
+    }).toArray();
+
+    return NewRes.ok(
+      new JSONObject()
+        .set("results", packs)
+    );
+  }
 
   static {
     for (int i = 0; i < 5; i++) {
@@ -77,34 +94,6 @@ public class GameSocketServer {
     for (GameSocketServer value : game2users.get(gameId).values()) {
       value.sendMessage(json);
     }
-  }
-
-  private static JSONObject packUser(User user) {
-    JSONObject json = new JSONObject()
-      .set("id", user.getId())
-      .set("username", user.getUsername())
-      .set("avatar", user.getAvatar());
-    return json;
-  }
-
-  private static JSONObject packMatch(GameMatch match) {
-    List<GameSocketServer> sockets = match.getSockets();
-    Object[] users = sockets.stream().map(s -> packUser(s.getUser())).toArray();
-
-    Object[] bots = match.getGame().getBots().stream()
-      .map(b -> {
-        if (b == null) return null;
-        else {
-          JSONObject pack = b.pack();
-          return pack.set("user", UserDAO.mapper.getBaseById(pack.getInt("user")));
-        }
-      }).toArray();
-
-    JSONObject json = new JSONObject()
-      .set("uuid", match.getUuid())
-      .set("users", users)
-      .set("bots", bots);
-    return json;
   }
 
   public void setMatch(GameMatch match) {
@@ -427,6 +416,7 @@ public class GameSocketServer {
     // 记录正在进行的比赛
     ConcurrentHashMap<UUID, GameMatch> gameMatches = game2matches.get(getGameId());
     gameMatches.put(this.match.getUuid(), this.match);
+    matchesCurrent.put(this.match.getUuid(), this.match);
     this.match.setBelong(gameMatches);
 
     return null;
@@ -516,6 +506,7 @@ public class GameSocketServer {
     // 记录正在进行的比赛
     ConcurrentHashMap<UUID, GameMatch> gameMatches = game2matches.get(getGameId());
     gameMatches.put(this.match.getUuid(), this.match);
+    matchesCurrent.put(this.match.getUuid(), this.match);
     this.match.setBelong(gameMatches);
   }
 
