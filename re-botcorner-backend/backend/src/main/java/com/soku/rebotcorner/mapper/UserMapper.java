@@ -15,4 +15,11 @@ public interface UserMapper extends BaseMapper<User> {
     "where id=#{id}; "
   )
   JSONObject getBaseById(@Param("id") Integer id);
+
+  @Select("" +
+    "select id, username, avatar, signature " +
+    "from user " +
+    "where id=#{id}; "
+  )
+  JSONObject getProfileById(@Param("id") Integer id);
 }

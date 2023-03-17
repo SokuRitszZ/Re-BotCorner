@@ -17,7 +17,7 @@ public class User {
   private String username;
   private String password;
   private String avatar;
-  private Integer rating;
   private String openid;
   private String phone;
+  private String signature;
 }
