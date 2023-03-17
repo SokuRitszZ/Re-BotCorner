@@ -41,6 +41,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
       .antMatchers(
         "/api/account/token/",
         "/api/account/register/",
+        "/api/account/info",
         "/api/lang/getall",
         "/api/game/getall",
         "/api/getrating/**",

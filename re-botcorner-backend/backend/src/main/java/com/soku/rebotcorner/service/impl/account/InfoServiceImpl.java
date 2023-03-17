@@ -4,13 +4,11 @@ import cn.hutool.json.JSONObject;
 import com.soku.rebotcorner.pojo.User;
 import com.soku.rebotcorner.service.account.InfoService;
 import com.soku.rebotcorner.utils.NewRes;
+import com.soku.rebotcorner.utils.UserDAO;
 import com.soku.rebotcorner.utils.UserDetailsImpl;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class InfoServiceImpl implements InfoService {
@@ -21,18 +19,22 @@ public class InfoServiceImpl implements InfoService {
    */
   @Override
   public JSONObject getInfo() {
-    Map<String, String> map = new HashMap<>();
     try {
       UsernamePasswordAuthenticationToken authentication = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
       UserDetailsImpl loginUser = (UserDetailsImpl) authentication.getPrincipal();
       User user = loginUser.getUser();
-      JSONObject json = new JSONObject();
-      json.set("id", user.getId());
-      json.set("username", user.getUsername());
-      json.set("avatar", user.getAvatar());
-      return NewRes.ok(json);
+      return NewRes.ok(UserDAO.mapper.getProfileById(user.getId()));
     } catch (Exception e) {
       return NewRes.fail("Token无效");
+    }
+  }
+
+  @Override
+  public JSONObject getInfoById(Integer id) {
+    try {
+      return NewRes.ok(new JSONObject().set("result", UserDAO.mapper.getProfileById(id)));
+    } catch (Exception e) {
+      return NewRes.fail("获取失败");
     }
   }
 }
