@@ -174,6 +174,7 @@ public class GameMatch {
 
   public void gameOver() {
     this.belong.remove(this.uuid);
+    GameSocketServer.matchesCurrent.remove(this.uuid);
 
     GameSocketServer.allBroadCast(this.game.getGameId(), new JSONObject()
       .set("action", "one game over")
